@@ -1,0 +1,239 @@
+name: Squad Issue Assign
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  assign-work:
+    if: startsWith(github.event.label.name, 'squad:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Identify assigned member and trigger work
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+            const label = context.payload.label.name;
+
+            const teamFile = '.squad/team.md';
+            if (!fs.existsSync(teamFile)) {
+              core.warning('No .squad/team.md found — cannot assign work');
+              return;
+            }
+
+            const content = fs.readFileSync(teamFile, 'utf8');
+            const lines = content.split('\n');
+
+            function slugify(text) {
+              return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            }
+
+            const members = [];
+            let inMembersTable = false;
+            for (const line of lines) {
+              if (line.match(/^##\s+(Members|Team Roster)/i)) {
+                inMembersTable = true;
+                continue;
+              }
+              if (inMembersTable && line.startsWith('## ')) {
+                break;
+              }
+              if (inMembersTable && line.startsWith('|') && !line.includes('---') && !line.includes('Name')) {
+                const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+                if (cells.length >= 3) {
+                  members.push({
+                    name: cells[0],
+                    role: cells[1],
+                    charter: cells[2],
+                    label: `squad:${slugify(cells[0])}`
+                  });
+                }
+              }
+            }
+
+            function labelNames(labels) {
+              return (labels || []).map(label => typeof label === 'string' ? label : label.name).filter(Boolean);
+            }
+
+            function findOwnerMember(labels) {
+              const names = labelNames(labels);
+              return members.find(member => names.includes(member.label)) || null;
+            }
+
+            const ownerMember = findOwnerMember(issue.labels);
+            const hasCopilotExecutionLabel = labelNames(issue.labels).includes('squad:copilot');
+
+            let body;
+            if (label === 'squad:copilot') {
+              if (!ownerMember) {
+                body = [
+                  '### 🤖 Copilot execution label needs an owner',
+                  '',
+                  `**Issue:** #${issue.number} — ${issue.title}`,
+                  '',
+                  '`squad:copilot` is an execution label, but this issue is missing its owning `squad:{member}` label.',
+                  'Add the correct owning squad label first so @copilot can inherit the right charter and voice.',
+                ].join('\n');
+              } else {
+                body = [
+                  `### 🤖 Routed to @copilot as ${ownerMember.name}`,
+                  '',
+                  `**Issue:** #${issue.number} — ${issue.title}`,
+                  `**Owning squad member:** ${ownerMember.name} (${ownerMember.role})`,
+                  `**Charter:** ${ownerMember.charter}`,
+                  '',
+                  '@copilot will execute this issue using the paired squad member\'s charter, voice, and boundaries.',
+                  '',
+                  '> Keep the owning `squad:{member}` label in place; `squad:copilot` is the execution label only.',
+                ].join('\n');
+              }
+            } else if (ownerMember && label === ownerMember.label) {
+              body = [
+                `### 📋 Assigned to ${ownerMember.name} (${ownerMember.role})`,
+                '',
+                `**Issue:** #${issue.number} — ${issue.title}`,
+                '',
+                hasCopilotExecutionLabel
+                  ? `@copilot will execute this issue as ${ownerMember.name}.`
+                  : `${ownerMember.name} will pick this up in the next Copilot session.`,
+                '',
+                `> Owner label: \`${ownerMember.label}\``,
+                hasCopilotExecutionLabel ? '> Execution label: `squad:copilot`' : '> Add `squad:copilot` only when GitHub should execute the issue through @copilot.',
+              ].join('\n');
+            }
+
+            if (!body) {
+              core.info(`No assignment comment needed for label ${label}`);
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body
+            });
+
+      - name: Assign @copilot coding agent
+        if: contains(join(github.event.issue.labels.*.name, ','), 'squad:copilot')
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.COPILOT_ASSIGN_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+
+            const teamFile = '.squad/team.md';
+            if (!fs.existsSync(teamFile)) {
+              core.warning('No .squad/team.md found — cannot assign @copilot');
+              return;
+            }
+
+            const content = fs.readFileSync(teamFile, 'utf8');
+            const lines = content.split('\n');
+            const hasCopilot = content.includes('🤖 Coding Agent') || content.includes('| @copilot |');
+            const autoAssign = content.includes('<!-- copilot-auto-assign: true -->');
+            if (!hasCopilot || !autoAssign) {
+              core.info('@copilot auto-assign is not enabled');
+              return;
+            }
+
+            function slugify(text) {
+              return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            }
+
+            function labelNames(labels) {
+              return (labels || []).map(label => typeof label === 'string' ? label : label.name).filter(Boolean);
+            }
+
+            const members = [];
+            let inMembersTable = false;
+            for (const line of lines) {
+              if (line.match(/^##\s+(Members|Team Roster)/i)) {
+                inMembersTable = true;
+                continue;
+              }
+              if (inMembersTable && line.startsWith('## ')) {
+                break;
+              }
+              if (inMembersTable && line.startsWith('|') && !line.includes('---') && !line.includes('Name')) {
+                const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+                if (cells.length >= 3) {
+                  members.push({
+                    name: cells[0],
+                    role: cells[1],
+                    charter: cells[2],
+                    label: `squad:${slugify(cells[0])}`
+                  });
+                }
+              }
+            }
+
+            const ownerMember = members.find(member => labelNames(issue.labels).includes(member.label));
+            if (!ownerMember) {
+              core.warning('Skipping @copilot assignment — squad:copilot requires a paired owning squad:{member} label');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '⚠️ `squad:copilot` is present, but no owning `squad:{member}` label was found. Add the owner label so @copilot can inherit the correct charter context.'
+              });
+              return;
+            }
+
+            const existingAssignees = (issue.assignees || []).map(assignee => assignee.login);
+            if (existingAssignees.includes('copilot-swe-agent[bot]') || existingAssignees.includes('copilot-swe-agent')) {
+              core.info(`@copilot is already assigned to #${issue.number}`);
+              return;
+            }
+
+            function buildCopilotInstructions(member) {
+              return [
+                `This GitHub issue is being executed by @copilot on behalf of ${member.name} (${member.role}).`,
+                '',
+                'Read these first:',
+                '- .github/copilot-instructions.md',
+                '- .squad/team.md',
+                '- .squad/routing.md',
+                `- ${member.charter}`,
+                '',
+                'Persona handoff rules:',
+                `- Treat ${member.label} as the authoritative squad-member identity for this issue.`,
+                '- Ignore squad:copilot when choosing persona; it is the execution label only.',
+                `- Work in ${member.name}'s voice and stay within the boundaries in ${member.charter}.`,
+                `- In the PR body include: Working as ${member.name} (${member.role})`,
+                '- If you spawn a follow-up session/subagent, pass through the same member name, role, label, and charter path.',
+              ].join('\n');
+            }
+
+            const { data: repoData } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              assignees: ['copilot-swe-agent[bot]'],
+              agent_assignment: {
+                target_repo: `${context.repo.owner}/${context.repo.repo}`,
+                base_branch: repoData.default_branch,
+                custom_instructions: buildCopilotInstructions(ownerMember),
+                custom_agent: '',
+                model: ''
+              },
+              headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+              }
+            });
+
+            core.info(`Assigned @copilot to issue #${issue.number} as ${ownerMember.name}`);
