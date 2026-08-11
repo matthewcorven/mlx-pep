@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MlxPep.Cli/MlxPep.Cli.csproj" />
+    <Project Path="src/MlxPep.Core/MlxPep.Core.csproj" />
+    <Project Path="src/MlxPep.Service/MlxPep.Service.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MlxPep.Cli.Tests/MlxPep.Cli.Tests.csproj" />
+    <Project Path="tests/MlxPep.Core.Tests/MlxPep.Core.Tests.csproj" />
+    <Project Path="tests/MlxPep.Service.Tests/MlxPep.Service.Tests.csproj" />
+  </Folder>
+</Solution>
