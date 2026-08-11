@@ -1,0 +1,20 @@
+## .NET
+bin/
+obj/
+*.user
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+.vs/
+
+## Tooling
+.DS_Store
+*.log
+
+## Local runtime state
+.mlx-pep/
+results/
+
+## Python prototype
+__pycache__/
+*.pyc
