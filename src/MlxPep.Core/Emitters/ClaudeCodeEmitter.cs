@@ -55,7 +55,7 @@ public class ClaudeCodeEmitter : IHarnessEmitter
                 ["modelId"] = profile.ModelHfId,
                 ["tier"] = profile.Tier,
                 ["engine"] = profile.Engine,
-                ["generatedAt"] = DateTime.UtcNow.ToString("O")
+                ["generatedAt"] = profile.Provenance?.CreatedAt ?? DateTime.UtcNow.ToString("O")
             }
         };
 
