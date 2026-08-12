@@ -30,9 +30,10 @@ public class ApplyCommand
         try
         {
             // Validate harness parameter
-            if (string.IsNullOrEmpty(harness) || (harness != "vscode" && harness != "copilot-cli"))
+            if (string.IsNullOrEmpty(harness) || 
+                (harness != "vscode" && harness != "copilot-cli" && harness != "opencode" && harness != "claude-code"))
             {
-                var err = "Error: --harness must be 'vscode' or 'copilot-cli'";
+                var err = "Error: --harness must be 'vscode', 'copilot-cli', 'opencode', or 'claude-code'";
                 if (context.JsonOutput)
                 {
                     return CommandResult.Failure(err, 1);
@@ -63,6 +64,8 @@ public class ApplyCommand
             {
                 "vscode" => new VscodeHarnessApplier(),
                 "copilot-cli" => new CopilotCliHarnessApplier(),
+                "opencode" => new OpenCodeHarnessApplier(),
+                "claude-code" => new ClaudeCodeHarnessApplier(),
                 _ => throw new InvalidOperationException($"Unknown harness: {harness}")
             };
 
