@@ -50,7 +50,7 @@ public class BackupManager
         try
         {
             Debug.Log($"Creating backup for {harness} harness with {changes.Count} files");
-            
+
             var timestamp = HarnessUtilities.GetTimestampForBackup();
             var backupRoot = HarnessUtilities.ExpandPath("~/.mlx-pep/backups");
             var harnessBackupDir = Path.Combine(backupRoot, harness);
@@ -120,7 +120,7 @@ public class BackupManager
         try
         {
             Debug.Log($"Restoring from backup: {backupSessionDir}");
-            
+
             if (!Directory.Exists(backupSessionDir))
             {
                 var error = $"Backup directory not found: {backupSessionDir}";
@@ -129,7 +129,7 @@ public class BackupManager
             }
 
             var files = Directory.GetFiles(backupSessionDir);
-            
+
             foreach (var backupFile in files)
             {
                 // Restore each file (the original path is stored in manifest)

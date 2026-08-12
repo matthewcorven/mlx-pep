@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 public interface IHarnessApplier
 {
     string HarnessName { get; }
-    
+
     /// <summary>
     /// Applies a profile to the harness.
     /// </summary>

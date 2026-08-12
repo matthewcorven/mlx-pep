@@ -44,7 +44,7 @@ public class VscodeHarnessApplier : IHarnessApplier
 
             var vscodeConfigObj = profile.Harness["vscode"];
             var vscodeConfig = ConvertToDict(vscodeConfigObj);
-            
+
             if (vscodeConfig == null || vscodeConfig.Count == 0)
             {
                 return new HarnessApplyResult(
@@ -57,8 +57,8 @@ public class VscodeHarnessApplier : IHarnessApplier
             }
 
             var changes = new List<FileChangeResult>();
-            var vscodeDir = requestedInsiders 
-                ? GetVscodeInsidersUserDir() 
+            var vscodeDir = requestedInsiders
+                ? GetVscodeInsidersUserDir()
                 : GetVscodeUserDir();
 
             // Allow dry-run even if directory doesn't exist (for testing), but fail for real applies
@@ -83,7 +83,7 @@ public class VscodeHarnessApplier : IHarnessApplier
                 {
                     var customSettingsObj = vscodeConfig["customSettings"];
                     var customSettings = ConvertToDict(customSettingsObj);
-                    
+
                     if (customSettings != null && customSettings.Count > 0)
                     {
                         var settingsChange = await ProcessSettingsJsonAsync(vscodeDir, customSettings);
@@ -104,7 +104,7 @@ public class VscodeHarnessApplier : IHarnessApplier
                 {
                     var modelsObj = vscodeConfig["chatLanguageModels"];
                     var models = ConvertToDict(modelsObj);
-                    
+
                     if (models != null && models.Count > 0)
                     {
                         var modelsChange = await ProcessChatModelsJsonAsync(vscodeDir, models);
@@ -117,13 +117,13 @@ public class VscodeHarnessApplier : IHarnessApplier
                     throw;
                 }
             }
-            
+
 
             if (!isDryRun && changes.Any(c => c.Status != "unchanged"))
             {
                 var backupMgr = new BackupManager();
                 var (backupSuccess, backupLocation, backupError) = await backupMgr.CreateBackupAsync(HarnessName, profile.Id, changes);
-                
+
                 if (!backupSuccess)
                 {
                     return new HarnessApplyResult(
@@ -205,7 +205,7 @@ public class VscodeHarnessApplier : IHarnessApplier
         var settingsPath = Path.Combine(vscodeDir, "settings.json");
         var existingContent = File.Exists(settingsPath) ? await File.ReadAllTextAsync(settingsPath) : "{}";
 
-        var settings = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions) 
+        var settings = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions)
             ?? new Dictionary<string, object>();
 
         // Convert and merge customSettings (handle JsonElement)
@@ -258,7 +258,7 @@ public class VscodeHarnessApplier : IHarnessApplier
                 Status: "unchanged");
         }
 
-        var models = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions) 
+        var models = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions)
             ?? new Dictionary<string, object>();
 
         // Convert and merge chatModels (handle JsonElement)

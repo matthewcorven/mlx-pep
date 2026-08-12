@@ -39,7 +39,7 @@ public class ClaudeCodeHarnessApplier : IHarnessApplier
 
             // Emit the config using ClaudeCodeEmitter
             var emitter = new ClaudeCodeEmitter();
-            
+
             // Validate profile first
             var validationErrors = emitter.Validate(profile);
             if (validationErrors.Count > 0)
@@ -65,7 +65,7 @@ public class ClaudeCodeHarnessApplier : IHarnessApplier
 
             // Compute diff
             var diffOutput = ComputeDiff(existingContent ?? "", proposedContent, configFile);
-            
+
             var changes = new List<FileChangeResult>
             {
                 new FileChangeResult(
@@ -140,7 +140,7 @@ public class ClaudeCodeHarnessApplier : IHarnessApplier
         var proposedLines = proposedContent.Split('\n');
 
         var diff = new List<string> { $"--- {filePath}", $"+++ {filePath}" };
-        
+
         var maxLines = Math.Max(existingLines.Length, proposedLines.Length);
         for (int i = 0; i < maxLines; i++)
         {

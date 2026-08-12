@@ -37,7 +37,7 @@ public abstract class RuntimeEngineBase : IRuntimeEngine
     public virtual ValidationResult ValidateSettings(Profile profile)
     {
         var errors = new List<string>();
-        
+
         if (!profile.Engine.Equals(EngineId, StringComparison.OrdinalIgnoreCase))
             errors.Add($"Profile engine '{profile.Engine}' does not match handler engine '{EngineId}'.");
 
