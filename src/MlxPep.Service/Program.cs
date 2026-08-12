@@ -2,6 +2,52 @@ using Azure.Storage.Blobs;
 using MlxPep.Core;
 using System.Text.Json;
 
+// Middleware to check authentication for write operations
+static bool IsWriteOperation(HttpContext context)
+{
+    return context.Request.Method is "POST" or "PUT" or "DELETE";
+}
+
+static bool ValidateAuthToken(string? authHeader)
+{
+    if (string.IsNullOrEmpty(authHeader))
+    {
+        return false;
+    }
+
+    const string bearerPrefix = "Bearer ";
+    if (!authHeader.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+        return false;
+    }
+
+    var token = authHeader[bearerPrefix.Length..];
+    return !string.IsNullOrEmpty(token);
+}
+
+async Task AuthenticationMiddleware(HttpContext context, RequestDelegate next)
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    
+    if (IsWriteOperation(context))
+    {
+        logger.LogDebug("Write operation {Method} {Path} - checking authentication", context.Request.Method, context.Request.Path);
+        
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        if (!ValidateAuthToken(authHeader))
+        {
+            logger.LogWarning("Unauthorized write attempt {Method} {Path} - missing or invalid token", context.Request.Method, context.Request.Path);
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { message = "Unauthorized: valid token required for write operations" });
+            return;
+        }
+        
+        logger.LogDebug("Write operation {Method} {Path} - authorization successful", context.Request.Method, context.Request.Path);
+    }
+    
+    await next(context);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Initialize Azure Blob Storage client
@@ -22,6 +68,9 @@ if (!string.IsNullOrEmpty(connectionString))
 }
 
 var app = builder.Build();
+
+// Apply authentication middleware for write operations
+app.Use(AuthenticationMiddleware);
 
 // Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
