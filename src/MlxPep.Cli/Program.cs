@@ -113,11 +113,15 @@ async Task HandleModelsList(string[] cmdArgs)
 
 async Task HandleModelsGet(string[] cmdArgs)
 {
-    if (cmdArgs.Length < 3)
+    if (cmdArgs.Length < 3 || cmdArgs[2] == "--help" || cmdArgs[2] == "-h" || cmdArgs[2] == "help")
     {
-        Console.Error.WriteLine("Error: repo-id is required");
         PrintModelsHelp();
-        Environment.Exit(1);
+        if (cmdArgs.Length < 3 || (cmdArgs[2] != "--help" && cmdArgs[2] != "-h" && cmdArgs[2] != "help"))
+        {
+            Console.Error.WriteLine("Error: repo-id is required");
+            Environment.Exit(1);
+        }
+        return;
     }
     
     var repoId = cmdArgs[2];
