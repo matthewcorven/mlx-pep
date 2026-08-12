@@ -12,7 +12,7 @@ public class AssessCommand
         CommandContext? context = null)
     {
         context ??= new CommandContext();
-        
+
         try
         {
             if (context.JsonOutput)
@@ -22,7 +22,7 @@ public class AssessCommand
                     command = "assess",
                     status = "ok",
                     hfId = hfId,
-                    profiles = new[] 
+                    profiles = new[]
                     {
                         new { tier = "high-performance", saved = true },
                         new { tier = "balanced", saved = true },
@@ -38,7 +38,7 @@ public class AssessCommand
                 if (publish)
                     Console.WriteLine("Will publish profiles to community service");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)

@@ -27,7 +27,7 @@ public class ProfileValidator
 
         if (string.IsNullOrWhiteSpace(profile.Id))
             errors.Add("Profile ID is required.");
-        
+
         if (string.IsNullOrWhiteSpace(profile.ModelHfId))
             errors.Add("Model HuggingFace ID is required.");
 

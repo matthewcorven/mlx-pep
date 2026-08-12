@@ -24,7 +24,7 @@ public class ModelsListCommand
             {
                 Console.WriteLine("Models in Hugging Face cache:");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)
@@ -54,7 +54,7 @@ public class ModelsGetCommand
             {
                 Console.WriteLine($"Getting model: {hfId}");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)

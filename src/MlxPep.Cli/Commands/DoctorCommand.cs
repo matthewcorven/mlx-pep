@@ -41,7 +41,7 @@ public class DoctorCommand
                 Console.WriteLine("✓ VS Code Insiders: " + GetStatusString(DetectVsCodeInsiders()));
                 Console.WriteLine("✓ Copilot CLI: " + GetStatusString(DetectCopilotCli()));
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)
@@ -49,49 +49,49 @@ public class DoctorCommand
             return CommandResult.Failure($"Doctor check failed: {ex.Message}");
         }
     }
-    
+
     private DependencyStatus DetectDotnet()
     {
         // TODO: Implement dotnet detection
         return new DependencyStatus { Installed = true, Version = "10.0.0" };
     }
-    
+
     private DependencyStatus DetectHfCli()
     {
         // TODO: Implement hf CLI detection
         return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
     }
-    
+
     private DependencyStatus DetectPython3()
     {
         // TODO: Implement python3 detection
         return new DependencyStatus { Installed = true, Version = "3.11.0" };
     }
-    
+
     private DependencyStatus DetectOmlx()
     {
         // TODO: Implement oMLX detection
         return new DependencyStatus { Installed = false, Message = "Not installed" };
     }
-    
+
     private DependencyStatus DetectVsCode()
     {
         // TODO: Implement VS Code detection
         return new DependencyStatus { Installed = true, Version = "1.92.0" };
     }
-    
+
     private DependencyStatus DetectVsCodeInsiders()
     {
         // TODO: Implement VS Code Insiders detection
         return new DependencyStatus { Installed = false, Message = "Not installed" };
     }
-    
+
     private DependencyStatus DetectCopilotCli()
     {
         // TODO: Implement Copilot CLI detection
         return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
     }
-    
+
     private string GetStatusString(DependencyStatus status)
     {
         if (status.Installed)

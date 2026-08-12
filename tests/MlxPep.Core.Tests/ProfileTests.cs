@@ -1,10 +1,10 @@
 namespace MlxPep.Core.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for Profile, ProfileValidator, and ProfileReader.
@@ -207,10 +207,10 @@ public class ProfileTests
             // Assert
             Assert.Single(readProfiles);
             var readProfile = readProfiles[0];
-            
+
             Assert.Equal(originalProfile.Id, readProfile.Id);
             Assert.Equal(originalProfile.ModelHfId, readProfile.ModelHfId);
-            
+
             Assert.NotNull(readProfile.Community);
             Assert.Equal("test-dedup", readProfile.Community.DedupKey);
             Assert.NotNull(readProfile.Community.Keywords);

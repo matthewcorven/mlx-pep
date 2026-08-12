@@ -54,7 +54,7 @@ public class OpenCodeEmitter : IHarnessEmitter
             {
                 ["generatedFrom"] = profile.Id,
                 ["tier"] = profile.Tier,
-                ["generatedAt"] = DateTime.UtcNow.ToString("O")
+                ["generatedAt"] = profile.Provenance?.CreatedAt ?? DateTime.UtcNow.ToString("O")
             }
         };
 
