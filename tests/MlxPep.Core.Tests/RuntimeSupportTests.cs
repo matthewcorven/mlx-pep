@@ -208,7 +208,7 @@ public class RuntimeEngineTests
 
         // Assert
         Assert.Contains(engine, serialized);
-        Assert.Contains(modelId, serialized);  // Profile stores ModelHfId as-is
+        Assert.Contains(modelId.Replace("/", "--"), serialized);  // Sanitized model ID in JSON
     }
 
     [Fact]

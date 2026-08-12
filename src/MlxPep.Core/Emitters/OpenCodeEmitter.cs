@@ -88,6 +88,12 @@ public class OpenCodeEmitter : IHarnessEmitter
                 config["sampler"] = samplerConfig;
         }
 
+        // Include hardware memory if available
+        if (profile.Hardware?.MemoryGb > 0)
+        {
+            config["hardware"] = new JsonObject { ["memory"] = profile.Hardware.MemoryGb };
+        }
+
         return config;
     }
 

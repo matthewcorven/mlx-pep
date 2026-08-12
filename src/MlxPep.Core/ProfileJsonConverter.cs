@@ -15,10 +15,17 @@ public class ProfileJsonConverter : JsonConverter<Profile>
         using var jsonDoc = JsonDocument.ParseValue(ref reader);
         var root = jsonDoc.RootElement;
 
+        // Reverse-sanitize: replace "--" back to "/" in model IDs for round-trip fidelity
+        var modelHfId = root.GetProperty("modelHfId").GetString() ?? "";
+        if (modelHfId.Contains("--") && !modelHfId.Contains("/"))
+        {
+            modelHfId = modelHfId.Replace("--", "/");
+        }
+
         return new Profile(
             SchemaVersion: root.GetProperty("schemaVersion").GetInt32(),
             Id: root.GetProperty("id").GetString() ?? "",
-            ModelHfId: root.GetProperty("modelHfId").GetString() ?? "",
+            ModelHfId: modelHfId,
             Tier: root.GetProperty("tier").GetString() ?? "",
             Engine: root.GetProperty("engine").GetString() ?? "",
             System: JsonSerializer.Deserialize<Dictionary<string, object>>(root.GetProperty("system").GetRawText()) ?? new(),

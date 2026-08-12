@@ -79,7 +79,7 @@ public class ProfileCRUDEndpointTests
         // Assert: Verify JSON contains expected fields
         Assert.Contains("\"schemaVersion\":1", json);
         Assert.Contains("\"id\":\"test-profile-1\"", json);
-        Assert.Contains("\"modelHfId\":\"test-model/test-1b\"", json);
+        Assert.Contains("\"modelHfId\":\"test-model--test-1b\"", json);  // Note: "/" is sanitized to "--"
         Assert.Contains("\"tier\":\"balanced\"", json);
     }
 
