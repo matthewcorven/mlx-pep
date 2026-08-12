@@ -5,8 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Custom JSON converter for Profile that sanitizes ModelHfId during serialization.
-/// Replaces "/" with "--" in model IDs to create safe slugs for file storage and URLs.
+/// Custom JSON converter for Profile to handle serialization/deserialization of complex types.
 /// </summary>
 public class ProfileJsonConverter : JsonConverter<Profile>
 {
@@ -38,14 +37,11 @@ public class ProfileJsonConverter : JsonConverter<Profile>
 
     public override void Write(Utf8JsonWriter writer, Profile value, JsonSerializerOptions options)
     {
-        // Sanitize the ModelHfId by replacing "/" with "--"
-        var sanitizedModelId = value.ModelHfId.Replace("/", "--");
-        
         writer.WriteStartObject();
         
         writer.WriteNumber("schemaVersion", value.SchemaVersion);
         writer.WriteString("id", value.Id);
-        writer.WriteString("modelHfId", sanitizedModelId);
+        writer.WriteString("modelHfId", value.ModelHfId);
         writer.WriteString("tier", value.Tier);
         writer.WriteString("engine", value.Engine);
         
