@@ -1,9 +1,9 @@
 namespace MlxPep.Core.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for runtime engine support: mlx-lm, llama.cpp, vLLM.
@@ -183,7 +183,7 @@ public class RuntimeEngineTests
     {
         // Arrange
         var omlxProfile = CreateProfileForEngine("omlx");
-        
+
         // Act: Create a new profile based on existing but with different engine
         var llamaCppProfile = omlxProfile with { Engine = "llama.cpp" };
 
@@ -357,8 +357,8 @@ public class RuntimeCompatibilityTests
     public void AllRuntimes_SupportSameModelFormats()
     {
         // Arrange
-        var models = new[] 
-        { 
+        var models = new[]
+        {
             "meta-llama/Llama-2-7b",
             "mistralai/Mistral-7B",
             "NousResearch/Nous-Hermes-2-7b"

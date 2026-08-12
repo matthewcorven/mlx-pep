@@ -29,12 +29,12 @@ class RateLimitingMiddleware
         var ipAddress = GetClientIpAddress(context);
         var key = $"{endpoint}:{ipAddress}";
 
-        var limit = _config.EndpointLimits.TryGetValue(endpoint, out var endpointLimit) 
-            ? endpointLimit 
+        var limit = _config.EndpointLimits.TryGetValue(endpoint, out var endpointLimit)
+            ? endpointLimit
             : _config.DefaultLimit;
 
         var now = DateTime.UtcNow;
-        
+
         var window = _windows.AddOrUpdate(key,
             _ => new RateLimitWindow { ResetTime = now.AddSeconds(_config.WindowSizeSeconds), RequestCount = 0 },
             (_, existing) =>
@@ -60,7 +60,7 @@ class RateLimitingMiddleware
         _windows[key] = incrementedWindow;
         var remaining = limit - incrementedWindow.RequestCount;
         _logger.LogDebug("Rate limit check passed for {Key} ({RequestCount}/{Limit})", key, incrementedWindow.RequestCount, limit);
-        
+
         context.Response.OnStarting(() =>
         {
             if (!context.Response.Headers.ContainsKey("X-RateLimit-Limit"))

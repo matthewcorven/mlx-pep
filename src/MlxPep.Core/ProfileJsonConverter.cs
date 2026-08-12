@@ -38,40 +38,40 @@ public class ProfileJsonConverter : JsonConverter<Profile>
     public override void Write(Utf8JsonWriter writer, Profile value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        
+
         writer.WriteNumber("schemaVersion", value.SchemaVersion);
         writer.WriteString("id", value.Id);
         writer.WriteString("modelHfId", value.ModelHfId);
         writer.WriteString("tier", value.Tier);
         writer.WriteString("engine", value.Engine);
-        
+
         writer.WritePropertyName("system");
         JsonSerializer.Serialize(writer, value.System, options);
-        
+
         writer.WritePropertyName("omlx");
         JsonSerializer.Serialize(writer, value.OMLXSettings, options);
-        
+
         writer.WritePropertyName("harness");
         JsonSerializer.Serialize(writer, value.Harness, options);
-        
+
         writer.WritePropertyName("provenance");
         JsonSerializer.Serialize(writer, value.Provenance, options);
-        
+
         writer.WritePropertyName("hardware");
         JsonSerializer.Serialize(writer, value.Hardware, options);
-        
+
         if (value.Sampler != null)
         {
             writer.WritePropertyName("sampler");
             JsonSerializer.Serialize(writer, value.Sampler, options);
         }
-        
+
         if (value.Community != null)
         {
             writer.WritePropertyName("community");
             JsonSerializer.Serialize(writer, value.Community, options);
         }
-        
+
         writer.WriteEndObject();
     }
 }

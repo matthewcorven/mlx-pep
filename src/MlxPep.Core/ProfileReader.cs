@@ -209,7 +209,7 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByEngine(List<Profile> profiles, string engine)
     {
-        return profiles.Where(p => 
+        return profiles.Where(p =>
             p.Engine.Equals(engine, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
