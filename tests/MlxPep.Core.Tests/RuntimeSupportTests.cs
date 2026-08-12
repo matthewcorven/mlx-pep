@@ -208,7 +208,7 @@ public class RuntimeEngineTests
 
         // Assert
         Assert.Contains(engine, serialized);
-        Assert.Contains(modelId.Replace("/", "--"), serialized);  // Sanitized model ID in JSON
+        Assert.Contains(modelId, serialized);  // Model ID with "/" stored as-is in JSON
     }
 
     [Fact]
