@@ -5,4 +5,14 @@
   <ItemGroup>
     <ProjectReference Include="..\MlxPep.Core\MlxPep.Core.csproj" />
   </ItemGroup>
+
+  <!-- Configuration for single-file deployment (used by: dotnet publish -c Release) -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
 </Project>

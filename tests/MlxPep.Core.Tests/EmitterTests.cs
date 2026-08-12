@@ -1,11 +1,11 @@
 namespace MlxPep.Core.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using MlxPep.Core.Emitters;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for IHarnessEmitter implementations (ClaudeCodeEmitter, OpenCodeEmitter).
@@ -23,16 +23,16 @@ public class ClaudeCodeEmitterTests
             Engine: "mlx",
             System: new Dictionary<string, object> { { "os", "macOS" } },
             OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
-            Harness: new Dictionary<string, object> 
-            { 
-                { harness, new Dictionary<string, object> 
+            Harness: new Dictionary<string, object>
+            {
+                { harness, new Dictionary<string, object>
                     {
                         { "maxInputTokens", 64000 },
                         { "maxOutputTokens", 16000 },
                         { "modelId", "claude-3-5-sonnet-20241022" },
                         { "temperature", 0.7 }
                     }
-                } 
+                }
             },
             Provenance: new ProfileProvenance(
                 Author: "test-author",
@@ -172,16 +172,16 @@ public class OpenCodeEmitterTests
             Engine: "mlx",
             System: new Dictionary<string, object> { { "os", "macOS" } },
             OMLXSettings: new Dictionary<string, object> { { "compute_units", "GPU_HIGH" } },
-            Harness: new Dictionary<string, object> 
-            { 
-                { harness, new Dictionary<string, object> 
+            Harness: new Dictionary<string, object>
+            {
+                { harness, new Dictionary<string, object>
                     {
                         { "maxInputTokens", 128000 },
                         { "maxOutputTokens", 32000 },
                         { "modelId", "claude-opus-4" },
                         { "topP", 0.9 }
                     }
-                } 
+                }
             },
             Provenance: new ProfileProvenance(
                 Author: "test-author",
@@ -257,9 +257,9 @@ public class OpenCodeEmitterTests
     {
         // Arrange: Profile for high-memory machine
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile() with 
-        { 
-            Hardware = new HardwareFingerprint("Apple M4 Max", 256, "MacBook16,5") 
+        var profile = CreateTestProfile() with
+        {
+            Hardware = new HardwareFingerprint("Apple M4 Max", 256, "MacBook16,5")
         };
 
         // Act

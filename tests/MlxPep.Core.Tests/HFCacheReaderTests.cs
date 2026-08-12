@@ -1,12 +1,12 @@
 namespace MlxPep.Core.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MlxPep.Core;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for HFCacheReader.
@@ -117,7 +117,7 @@ public class HFCacheReaderTests
 
         // Act
         var allModels = await reader.ListModelsAsync();
-        
+
         // Assert: Should be able to search by repo ID
         if (allModels.Any())
         {
@@ -194,7 +194,7 @@ public class HFCacheReaderTests
         // Assert: Models might have multiple revisions; all should be returned
         Assert.NotNull(models);
         var modelList = models.ToList();
-        
+
         // If we have models, they should be accessible
         if (modelList.Count > 0)
         {

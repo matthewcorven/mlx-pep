@@ -29,18 +29,18 @@ public class HardwareProfileMatcher
     /// </summary>
     private static readonly Dictionary<string, HashSet<string>> HardwareFamilies = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "Apple Silicon", new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+        { "Apple Silicon", new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "Apple M1", "Apple M2", "Apple M3", "Apple M4", "Apple M4 Pro", "Apple M4 Max", "Apple M1 Pro", "Apple M1 Max", "Apple M2 Pro", "Apple M2 Max", "Apple M3 Pro", "Apple M3 Max" } },
-        
-        { "Intel", new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+
+        { "Intel", new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "Intel Core i5", "Intel Core i7", "Intel Core i9", "Intel Xeon", "Intel Core Ultra" } },
-        
-        { "AMD", new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+
+        { "AMD", new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "AMD Ryzen", "AMD EPYC", "Ryzen" } },
-        
+
         { "GPU Cluster", new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "A100", "H100", "L40S", "RTX 6000 Ada", "RTX 5880 Ada", "V100", "A40" } },
-        
+
         { "Mobile GPU", new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { "RTX 3090 Mobile", "RTX 4090 Mobile", "RTX 4080 Mobile", "RTX 4070 Mobile", "A6000 Mobile", "L40S" } }
     };
@@ -216,7 +216,7 @@ public class HardwareProfileMatcher
     {
         var family = profile.Community?.HardwareFamily ?? DetermineHardwareFamily(profile.Hardware.Chip) ?? "Unknown";
         var chip = profile.Hardware.Chip;
-        
+
         var memoryStr = "any";
         if (profile.Community?.MinMemoryGb.HasValue == true || profile.Community?.MaxMemoryGb.HasValue == true)
         {

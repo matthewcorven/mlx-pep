@@ -43,7 +43,7 @@ public class CopilotCliHarnessApplier : IHarnessApplier
 
             var copilotConfigObj = profile.Harness["copilotCli"];
             var copilotConfig = ConvertToDict(copilotConfigObj);
-            
+
             if (copilotConfig == null || copilotConfig.Count == 0)
             {
                 return new HarnessApplyResult(
@@ -77,7 +77,7 @@ public class CopilotCliHarnessApplier : IHarnessApplier
             {
                 var backupMgr = new BackupManager();
                 var (backupSuccess, backupLocation, backupError) = await backupMgr.CreateBackupAsync(HarnessName, profile.Id, changes);
-                
+
                 if (!backupSuccess)
                 {
                     return new HarnessApplyResult(
@@ -145,11 +145,11 @@ public class CopilotCliHarnessApplier : IHarnessApplier
         string profileId,
         Dictionary<string, object> copilotConfig)
     {
-        var existingContent = File.Exists(profilesPath) 
-            ? await File.ReadAllTextAsync(profilesPath) 
+        var existingContent = File.Exists(profilesPath)
+            ? await File.ReadAllTextAsync(profilesPath)
             : "{ \"profiles\": {} }";
 
-        var profilesData = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions) 
+        var profilesData = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions)
             ?? new Dictionary<string, object> { { "profiles", new Dictionary<string, object>() } };
 
         if (!profilesData.ContainsKey("profiles") || profilesData["profiles"] is not Dictionary<string, object> profilesDict)

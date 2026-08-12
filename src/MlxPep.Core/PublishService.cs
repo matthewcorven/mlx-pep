@@ -144,12 +144,12 @@ public class PublishService
         foreach (var profile in profiles)
         {
             var checkResult = ValidateForPublish(profile, existingProfiles);
-            
+
             if (checkResult.IsValid)
             {
                 var enrichedProfile = EnrichForPublish(profile);
                 validProfiles.Add(enrichedProfile);
-                
+
                 results.Add(new ProfilePublishStatus(
                     ProfileId: profile.Id,
                     IsValid: true,

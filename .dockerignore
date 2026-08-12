@@ -1,0 +1,9 @@
+bin/
+obj/
+publish/
+.git/
+.gitignore
+.vscode/
+**/bin/
+**/obj/
+**/publish/

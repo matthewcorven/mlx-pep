@@ -26,11 +26,11 @@ public class ApplyCommand
         CommandContext? context = null)
     {
         context ??= new CommandContext();
-        
+
         try
         {
             // Validate harness parameter
-            if (string.IsNullOrEmpty(harness) || 
+            if (string.IsNullOrEmpty(harness) ||
                 (harness != "vscode" && harness != "copilot-cli" && harness != "opencode" && harness != "claude-code"))
             {
                 var err = "Error: --harness must be 'vscode', 'copilot-cli', 'opencode', or 'claude-code'";
@@ -45,7 +45,7 @@ public class ApplyCommand
             // Load and parse profile
             var profileReader = new ProfileReader();
             var profiles = await profileReader.ReadProfileSetAsync(profilePath);
-            
+
             if (profiles.Count == 0)
             {
                 var err = $"Error: No profiles found in {profilePath}";
@@ -112,7 +112,7 @@ public class ApplyCommand
                 Console.WriteLine(JsonSerializer.Serialize(jsonResult, new JsonSerializerOptions { WriteIndented = true }));
             }
 
-            return result.Success 
+            return result.Success
                 ? CommandResult.Success()
                 : CommandResult.Failure(result.Error ?? "Apply failed", 1);
         }
