@@ -23,20 +23,20 @@ public class OpenCodeEmitter : IHarnessEmitter
     {
         var errors = new List<string>();
 
-        // Validate harness has vscode config
-        if (profile.Harness == null || !profile.Harness.ContainsKey("vscode"))
+        // Validate harness has opencode config
+        if (profile.Harness == null || !profile.Harness.ContainsKey("opencode"))
         {
-            errors.Add("Profile harness must contain 'vscode' configuration for OpenCode emitter");
+            errors.Add("Profile harness must contain 'opencode' configuration for OpenCode emitter");
         }
 
-        // Validate vscode has maxInputTokens and maxOutputTokens
-        if (profile.Harness?.TryGetValue("vscode", out var vscodeObj) == true)
+        // Validate opencode has maxInputTokens and maxOutputTokens
+        if (profile.Harness?.TryGetValue("opencode", out var opencodeObj) == true)
         {
-            if (vscodeObj is Dictionary<string, object> vscode)
+            if (opencodeObj is Dictionary<string, object> opencode)
             {
-                if (!vscode.ContainsKey("maxInputTokens") || !vscode.ContainsKey("maxOutputTokens"))
+                if (!opencode.ContainsKey("maxInputTokens") || !opencode.ContainsKey("maxOutputTokens"))
                 {
-                    errors.Add("harness.vscode must include maxInputTokens and maxOutputTokens");
+                    errors.Add("harness.opencode must include maxInputTokens and maxOutputTokens");
                 }
             }
         }
@@ -65,19 +65,19 @@ public class OpenCodeEmitter : IHarnessEmitter
             ["metadata"] = metadata
         };
 
-        // Extract vscode settings
-        if (profile.Harness?.TryGetValue("vscode", out var vscodeObj) == true &&
-            vscodeObj is Dictionary<string, object> vscode)
+        // Extract opencode settings
+        if (profile.Harness?.TryGetValue("opencode", out var opencodeObj) == true &&
+            opencodeObj is Dictionary<string, object> opencode)
         {
-            var vscodeConfig = new JsonObject();
+            var opencodeConfig = new JsonObject();
 
-            if (vscode.TryGetValue("maxInputTokens", out var maxInput))
-                vscodeConfig["maxTokens"] = Convert.ToInt32(maxInput);
+            if (opencode.TryGetValue("maxInputTokens", out var maxInput))
+                opencodeConfig["maxTokens"] = Convert.ToInt32(maxInput);
 
-            if (vscode.TryGetValue("maxOutputTokens", out var maxOutput))
-                vscodeConfig["maxOutputTokens"] = Convert.ToInt32(maxOutput);
+            if (opencode.TryGetValue("maxOutputTokens", out var maxOutput))
+                opencodeConfig["maxOutputTokens"] = Convert.ToInt32(maxOutput);
 
-            config["vscode"] = vscodeConfig;
+            config["vscode"] = opencodeConfig;
         }
 
         // Extract sampler settings

@@ -13,7 +13,7 @@ using MlxPep.Core.Emitters;
 /// </summary>
 public class ClaudeCodeEmitterTests
 {
-    private static Profile CreateTestProfile(string harness = "vscode")
+    private static Profile CreateTestProfile(string harness = "claude-code")
     {
         return new Profile(
             SchemaVersion: 1,
@@ -28,8 +28,9 @@ public class ClaudeCodeEmitterTests
                 { harness, new Dictionary<string, object> 
                     {
                         { "maxInputTokens", 64000 },
-                        { "maxOutputTokens", 4096 },
-                        { "modelId", "claude-3-5-sonnet-20241022" }
+                        { "maxOutputTokens", 16000 },
+                        { "modelId", "claude-3-5-sonnet-20241022" },
+                        { "temperature", 0.7 }
                     }
                 } 
             },
@@ -44,7 +45,7 @@ public class ClaudeCodeEmitterTests
                 ModelIdentifier: "MacBookPro18,2"
             ),
             Sampler: new SamplerSettings(
-                Type: "default",
+                Type: "top-k-nucleus",
                 Parameters: new Dictionary<string, object>
                 {
                     { "temperature", 0.7 },
@@ -61,7 +62,7 @@ public class ClaudeCodeEmitterTests
     {
         // Arrange
         var emitter = new ClaudeCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -76,7 +77,7 @@ public class ClaudeCodeEmitterTests
     {
         // Arrange
         var emitter = new ClaudeCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -91,7 +92,7 @@ public class ClaudeCodeEmitterTests
     {
         // Arrange
         var emitter = new ClaudeCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var validationErrors = emitter.Validate(profile);
@@ -105,7 +106,7 @@ public class ClaudeCodeEmitterTests
     {
         // Arrange
         var emitter = new ClaudeCodeEmitter();
-        var profile = CreateTestProfile("copilot-cli");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -161,7 +162,7 @@ public class ClaudeCodeEmitterTests
 
 public class OpenCodeEmitterTests
 {
-    private static Profile CreateTestProfile(string harness = "vscode")
+    private static Profile CreateTestProfile(string harness = "opencode")
     {
         return new Profile(
             SchemaVersion: 1,
@@ -176,8 +177,9 @@ public class OpenCodeEmitterTests
                 { harness, new Dictionary<string, object> 
                     {
                         { "maxInputTokens", 128000 },
-                        { "maxOutputTokens", 8192 },
-                        { "modelId", "claude-opus-4" }
+                        { "maxOutputTokens", 32000 },
+                        { "modelId", "claude-opus-4" },
+                        { "topP", 0.9 }
                     }
                 } 
             },
@@ -192,12 +194,12 @@ public class OpenCodeEmitterTests
                 ModelIdentifier: "MacBook16,5"
             ),
             Sampler: new SamplerSettings(
-                Type: "nucleus",
+                Type: "top-k-nucleus",
                 Parameters: new Dictionary<string, object>
                 {
                     { "temperature", 0.7 },
                     { "topP", 0.9 },
-                    { "topK", 50 }
+                    { "topK", 40 }
                 }
             ),
             Community: null
@@ -209,7 +211,7 @@ public class OpenCodeEmitterTests
     {
         // Arrange
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -224,7 +226,7 @@ public class OpenCodeEmitterTests
     {
         // Arrange
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -239,7 +241,7 @@ public class OpenCodeEmitterTests
     {
         // Arrange
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
         // Act
         var configJson = await emitter.EmitAsync(profile);
@@ -255,7 +257,7 @@ public class OpenCodeEmitterTests
     {
         // Arrange: Profile for high-memory machine
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile("vscode") with 
+        var profile = CreateTestProfile() with 
         { 
             Hardware = new HardwareFingerprint("Apple M4 Max", 256, "MacBook16,5") 
         };
@@ -263,27 +265,27 @@ public class OpenCodeEmitterTests
         // Act
         var configJson = await emitter.EmitAsync(profile);
 
-        // Assert: Verify config is valid (OpenCodeEmitter doesn't serialize hardware memory to output)
+        // Assert
         Assert.NotNull(configJson);
-        Assert.Contains("opencode", configJson.ToLowerInvariant());
+        Assert.Contains("256", configJson);
     }
 
     [Fact]
-    public async Task OpenCodeEmitter_GeneratesIdempotentConfigs()
+    public async Task OpenCodeEmitter_GeneratesValidConfigWithMetadata()
     {
         // Arrange
         var emitter = new OpenCodeEmitter();
-        var profile = CreateTestProfile("vscode");
+        var profile = CreateTestProfile();
 
-       // Act: Emit configuration
-       var content = await emitter.EmitAsync(profile);
+        // Act: Emit configuration
+        var content = await emitter.EmitAsync(profile);
 
-       // Assert: Config should be valid JSON with profile metadata
-       Assert.NotNull(content);
-       var doc = System.Text.Json.JsonDocument.Parse(content);
-       Assert.Equal(System.Text.Json.JsonValueKind.Object, doc.RootElement.ValueKind);
-       Assert.True(doc.RootElement.TryGetProperty("metadata", out var metadata), "Should have metadata");
-       Assert.True(metadata.TryGetProperty("generatedFrom", out _), "Metadata should track source profile ID");
+        // Assert: Config should be valid JSON with profile metadata
+        Assert.NotNull(content);
+        var doc = System.Text.Json.JsonDocument.Parse(content);
+        Assert.Equal(System.Text.Json.JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.True(doc.RootElement.TryGetProperty("metadata", out var metadata), "Should have metadata");
+        Assert.True(metadata.TryGetProperty("generatedFrom", out _), "Metadata should track source profile ID");
     }
 }
 

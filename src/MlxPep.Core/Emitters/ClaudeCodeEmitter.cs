@@ -23,20 +23,20 @@ public class ClaudeCodeEmitter : IHarnessEmitter
     {
         var errors = new List<string>();
 
-        // Validate harness has vscode config
-        if (profile.Harness == null || !profile.Harness.ContainsKey("vscode"))
+        // Validate harness has claude-code config
+        if (profile.Harness == null || !profile.Harness.ContainsKey("claude-code"))
         {
-            errors.Add("Profile harness must contain 'vscode' configuration for Claude Code emitter");
+            errors.Add("Profile harness must contain 'claude-code' configuration for Claude Code emitter");
         }
 
-        // Validate vscode has maxInputTokens and maxOutputTokens
-        if (profile.Harness?.TryGetValue("vscode", out var vscodeObj) == true)
+        // Validate claude-code has maxInputTokens and maxOutputTokens
+        if (profile.Harness?.TryGetValue("claude-code", out var claudeObj) == true)
         {
-            if (vscodeObj is Dictionary<string, object> vscode)
+            if (claudeObj is Dictionary<string, object> claude)
             {
-                if (!vscode.ContainsKey("maxInputTokens") || !vscode.ContainsKey("maxOutputTokens"))
+                if (!claude.ContainsKey("maxInputTokens") || !claude.ContainsKey("maxOutputTokens"))
                 {
-                    errors.Add("harness.vscode must include maxInputTokens and maxOutputTokens");
+                    errors.Add("harness.claude-code must include maxInputTokens and maxOutputTokens");
                 }
             }
         }
@@ -59,16 +59,16 @@ public class ClaudeCodeEmitter : IHarnessEmitter
             }
         };
 
-        // Extract vscode settings for limits
-        if (profile.Harness?.TryGetValue("vscode", out var vscodeObj) == true &&
-            vscodeObj is Dictionary<string, object> vscode)
+        // Extract claude-code settings for limits
+        if (profile.Harness?.TryGetValue("claude-code", out var claudeObj) == true &&
+            claudeObj is Dictionary<string, object> claude)
         {
             var limits = new JsonObject();
 
-            if (vscode.TryGetValue("maxInputTokens", out var maxInput))
+            if (claude.TryGetValue("maxInputTokens", out var maxInput))
                 limits["maxInputTokens"] = Convert.ToInt32(maxInput);
 
-            if (vscode.TryGetValue("maxOutputTokens", out var maxOutput))
+            if (claude.TryGetValue("maxOutputTokens", out var maxOutput))
                 limits["maxOutputTokens"] = Convert.ToInt32(maxOutput);
 
             if (limits.Count > 0)
