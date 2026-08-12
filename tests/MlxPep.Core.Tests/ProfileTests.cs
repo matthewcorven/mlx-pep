@@ -602,6 +602,321 @@ public class ProfileTests
         Assert.Contains(mlxVariants, p => p.Engine == "mlx");
         Assert.Contains(mlxVariants, p => p.Engine == "mlx-lm");
     }
+
+    [Fact]
+    public void HardwareProfileMatcher_DetermineHardwareFamily_RecognizesAppleSilicon()
+    {
+        // Arrange
+        var matcher = new HardwareProfileMatcher();
+
+        // Act
+        var family1 = matcher.DetermineHardwareFamily("Apple M4 Max");
+        var family2 = matcher.DetermineHardwareFamily("Apple M2 Pro");
+        var family3 = matcher.DetermineHardwareFamily("Apple M1");
+
+        // Assert
+        Assert.Equal("Apple Silicon", family1);
+        Assert.Equal("Apple Silicon", family2);
+        Assert.Equal("Apple Silicon", family3);
+    }
+
+    [Fact]
+    public void HardwareProfileMatcher_DetermineHardwareFamily_RecognizesIntel()
+    {
+        // Arrange
+        var matcher = new HardwareProfileMatcher();
+
+        // Act
+        var family1 = matcher.DetermineHardwareFamily("Intel Core i9");
+        var family2 = matcher.DetermineHardwareFamily("Intel Xeon");
+
+        // Assert
+        Assert.Equal("Intel", family1);
+        Assert.Equal("Intel", family2);
+    }
+
+    [Fact]
+    public void HardwareProfileMatcher_FindExactChipMatches_ReturnsExactMatches()
+    {
+        // Arrange
+        var matcher = new HardwareProfileMatcher();
+        var profile1 = CreateTestProfile();
+        var profile2 = new Profile(
+            SchemaVersion: 1,
+            Id: "intel-profile",
+            ModelHfId: "meta-llama/Llama-2-13b",
+            Tier: "production",
+            Engine: "llama.cpp",
+            System: new Dictionary<string, object>(),
+            OMLXSettings: new Dictionary<string, object>(),
+            Harness: new Dictionary<string, object>(),
+            Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+            Hardware: new HardwareFingerprint("Intel Core i9", 32, "Server")
+        );
+        var profiles = new List<Profile> { profile1, profile2 };
+
+        // Act
+        var matches = matcher.FindExactChipMatches(profiles, "Apple M2");
+
+        // Assert
+        Assert.Single(matches);
+        Assert.Equal("test-profile-001", matches[0].Profile.Id);
+        Assert.Equal(1.0, matches[0].Score);
+    }
+
+    [Fact]
+    public void HardwareProfileMatcher_FindCompatibleProfiles_RanksByScore()
+    {
+        // Arrange
+        var matcher = new HardwareProfileMatcher();
+        var profiles = new List<Profile>
+        {
+            // Exact match
+            CreateTestProfile(),
+            // Different chip but same family
+            new Profile(
+                SchemaVersion: 1,
+                Id: "m3-profile",
+                ModelHfId: "meta-llama/Llama-2-7b",
+                Tier: "experimental",
+                Engine: "mlx",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("Apple M3", 16, "MacBook"),
+                Community: new CommunityMetadata(HardwareFamily: "Apple Silicon")
+            ),
+            // Different family
+            new Profile(
+                SchemaVersion: 1,
+                Id: "intel-profile",
+                ModelHfId: "meta-llama/Llama-2-7b",
+                Tier: "experimental",
+                Engine: "llama.cpp",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("Intel Core i7", 32, "Laptop"),
+                Community: new CommunityMetadata(HardwareFamily: "Intel")
+            ),
+        };
+
+        // Act
+        var matches = matcher.FindCompatibleProfiles(profiles, targetMemoryGb: 16, targetChip: "Apple M2");
+
+        // Assert
+        Assert.Equal(3, matches.Count);
+        // Exact match first
+        Assert.Equal("test-profile-001", matches[0].Profile.Id);
+        Assert.Equal(1.0, matches[0].Score);
+        // Family match second
+        Assert.Equal("m3-profile", matches[1].Profile.Id);
+        // Different family last
+        Assert.Equal("intel-profile", matches[2].Profile.Id);
+    }
+
+    [Fact]
+    public void HardwareProfileMatcher_GenerateHardwareFingerprint_CreatesConsistentKey()
+    {
+        // Arrange
+        var matcher = new HardwareProfileMatcher();
+        var profile = new Profile(
+            SchemaVersion: 1,
+            Id: "test",
+            ModelHfId: "model",
+            Tier: "tier",
+            Engine: "mlx",
+            System: new Dictionary<string, object>(),
+            OMLXSettings: new Dictionary<string, object>(),
+            Harness: new Dictionary<string, object>(),
+            Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "source"),
+            Hardware: new HardwareFingerprint("Apple M4 Max", 128, "MacBook"),
+            Community: new CommunityMetadata(MinMemoryGb: 64, MaxMemoryGb: 128, HardwareFamily: "Apple Silicon")
+        );
+
+        // Act
+        var fingerprint = matcher.GenerateHardwareFingerprint(profile);
+
+        // Assert
+        Assert.Contains("Apple Silicon", fingerprint);
+        Assert.Contains("Apple M4 Max", fingerprint);
+        Assert.Contains("64-128GB", fingerprint);
+    }
+
+    [Fact]
+    public async Task PublishService_ValidateForPublish_ChecksAllRequirements()
+    {
+        // Arrange
+        var service = new PublishService();
+        var validProfile = CreateTestProfile(new CommunityMetadata(
+            Tags: new List<string> { "production" },
+            Description: "Valid profile",
+            DedupKey: "valid-key"
+        ));
+
+        // Act
+        var result = service.ValidateForPublish(validProfile);
+
+        // Assert
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public async Task PublishService_EnrichForPublish_AutoGeneratesMetadata()
+    {
+        // Arrange
+        var service = new PublishService();
+        var profile = CreateTestProfile(new CommunityMetadata(
+            Description: "Test profile",
+            DedupKey: null  // No dedupKey provided
+        ));
+
+        // Act
+        var enriched = service.EnrichForPublish(profile);
+
+        // Assert
+        Assert.NotNull(enriched.Community);
+        Assert.NotNull(enriched.Community.DedupKey);
+        Assert.NotEmpty(enriched.Community.DedupKey);
+        Assert.NotNull(enriched.Community.HardwareFamily);
+    }
+
+    [Fact]
+    public async Task PublishService_GenerateDedupKey_CreatesConsistentKey()
+    {
+        // Arrange
+        var service = new PublishService();
+        var profile = new Profile(
+            SchemaVersion: 1,
+            Id: "test",
+            ModelHfId: "meta-llama/Llama-2-7b",
+            Tier: "production",
+            Engine: "omlx",
+            System: new Dictionary<string, object>(),
+            OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
+            Harness: new Dictionary<string, object>(),
+            Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "source"),
+            Hardware: new HardwareFingerprint("Apple M4 Max", 128, "MacBook")
+        );
+
+        // Act
+        var key1 = service.GenerateDedupKey(profile);
+        var key2 = service.GenerateDedupKey(profile);
+
+        // Assert
+        Assert.Equal(key1, key2);
+        Assert.Contains("llama", key1.ToLowerInvariant());
+        Assert.Contains("omlx", key1.ToLowerInvariant());
+        Assert.Contains("production", key1.ToLowerInvariant());
+    }
+
+    [Fact]
+    public async Task PublishService_PrepareForPublishAsync_DeduplicatesProfiles()
+    {
+        // Arrange
+        var service = new PublishService();
+        var oldTime = DateTime.UtcNow.AddDays(-1).ToIso8601String();
+        var newTime = DateTime.UtcNow.ToIso8601String();
+
+        var profiles = new List<Profile>
+        {
+            new Profile(
+                SchemaVersion: 1,
+                Id: "old-profile",
+                ModelHfId: "meta-llama/Llama-2-7b",
+                Tier: "production",
+                Engine: "mlx",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", oldTime, "source"),
+                Hardware: new HardwareFingerprint("Apple M2", 16, "MacBook"),
+                Community: new CommunityMetadata(Description: "Old", DedupKey: "shared-key")
+            ),
+            new Profile(
+                SchemaVersion: 1,
+                Id: "new-profile",
+                ModelHfId: "meta-llama/Llama-2-7b",
+                Tier: "production",
+                Engine: "mlx",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", newTime, "source"),
+                Hardware: new HardwareFingerprint("Apple M2", 16, "MacBook"),
+                Community: new CommunityMetadata(Description: "New", DedupKey: "shared-key")
+            ),
+        };
+
+        // Act
+        var result = await service.PrepareForPublishAsync(profiles);
+
+        // Assert
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.ValidCount);
+        Assert.Equal(1, result.DeduplicatedCount); // Deduped to 1
+        Assert.Single(result.ReadyProfiles);
+        Assert.Equal("new-profile", result.ReadyProfiles[0].Id); // Newer one kept
+    }
+
+    [Fact]
+    public void PublishService_FindSimilarProfiles_ReturnsCompatible()
+    {
+        // Arrange
+        var service = new PublishService();
+        var candidate = CreateTestProfile();
+        var published = new List<Profile>
+        {
+            candidate,
+            new Profile(
+                SchemaVersion: 1,
+                Id: "different",
+                ModelHfId: "different/model",
+                Tier: "production",
+                Engine: "llama.cpp",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "source"),
+                Hardware: new HardwareFingerprint("Intel Core i9", 32, "Server"),
+                Community: new CommunityMetadata(HardwareFamily: "Intel")
+            ),
+        };
+
+        // Act
+        var similar = service.FindSimilarProfiles(candidate, published);
+
+        // Assert
+        Assert.NotEmpty(similar);
+        // Should find the exact match at minimum
+        Assert.Contains(similar, m => m.Profile.Id == "test-profile-001");
+    }
+
+    [Fact]
+    public async Task PublishService_GenerateReport_IncludesMetrics()
+    {
+        // Arrange
+        var service = new PublishService();
+        var profiles = new List<Profile>
+        {
+            CreateTestProfile(new CommunityMetadata(DedupKey: "key1", Description: "p1")),
+            CreateTestProfile(new CommunityMetadata(DedupKey: "key2", Description: "p2")),
+        };
+
+        var batchResult = await service.PrepareForPublishAsync(profiles);
+
+        // Act
+        var report = service.GenerateReport(batchResult);
+
+        // Assert
+        Assert.Equal(2, report.TotalProfiles);
+        Assert.Equal(2, report.ValidProfiles);
+        Assert.Equal(100, report.SuccessRate);
+        Assert.False(report.HasErrors);
+    }
 }
 
 /// <summary>

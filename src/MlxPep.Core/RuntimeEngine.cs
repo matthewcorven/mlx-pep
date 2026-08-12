@@ -216,7 +216,9 @@ public class RuntimeEngineRegistry
         if (engine == null)
             return new ValidationResult(false, new List<string> { $"Unknown engine: {profile.Engine}" });
 
-        return engine.ValidateSettings(profile);
+        // Normalize profile engine ID to the canonical engine ID (e.g., "mlx" → "omlx")
+        var normalizedProfile = profile with { Engine = engine.EngineId };
+        return engine.ValidateSettings(normalizedProfile);
     }
 
     /// <summary>
