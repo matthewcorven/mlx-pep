@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 /// Represents a complete MLX profile with optional community metadata.
 /// Issue #27: profiling: publish-flow polish + community metadata
 /// </summary>
+[JsonConverter(typeof(ProfileJsonConverter))]
 public record Profile(
     [property: JsonPropertyName("schemaVersion")]
     int SchemaVersion,
