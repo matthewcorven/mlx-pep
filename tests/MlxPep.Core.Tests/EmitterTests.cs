@@ -269,21 +269,21 @@ public class OpenCodeEmitterTests
     }
 
     [Fact]
-    public async Task OpenCodeEmitter_GeneratesValidConfigWithMetadata()
+    public async Task OpenCodeEmitter_GeneratesIdempotentConfigs()
     {
         // Arrange
         var emitter = new OpenCodeEmitter();
         var profile = CreateTestProfile("vscode");
 
-        // Act: Emit configuration
-        var content = await emitter.EmitAsync(profile);
+       // Act: Emit configuration
+       var content = await emitter.EmitAsync(profile);
 
-        // Assert: Config should be valid JSON with profile metadata
-        Assert.NotNull(content);
-        var doc = System.Text.Json.JsonDocument.Parse(content);
-        Assert.Equal(System.Text.Json.JsonValueKind.Object, doc.RootElement.ValueKind);
-        Assert.True(doc.RootElement.TryGetProperty("metadata", out var metadata), "Should have metadata");
-        Assert.True(metadata.TryGetProperty("generatedFrom", out _), "Metadata should track source profile ID");
+       // Assert: Config should be valid JSON with profile metadata
+       Assert.NotNull(content);
+       var doc = System.Text.Json.JsonDocument.Parse(content);
+       Assert.Equal(System.Text.Json.JsonValueKind.Object, doc.RootElement.ValueKind);
+       Assert.True(doc.RootElement.TryGetProperty("metadata", out var metadata), "Should have metadata");
+       Assert.True(metadata.TryGetProperty("generatedFrom", out _), "Metadata should track source profile ID");
     }
 }
 
