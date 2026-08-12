@@ -70,6 +70,20 @@ if (!string.IsNullOrEmpty(connectionString))
 var app = builder.Build();
 
 // Apply authentication middleware for write operations
+// Configure and apply rate limiting middleware
+var rateLimitConfig = new RateLimitConfig
+{
+    DefaultLimit = 100,
+    WindowSizeSeconds = 60,
+    EndpointLimits = new Dictionary<string, int>
+    {
+        { "/api/v1/profiles", 100 },
+        { "/assess", 100 },
+        { "/publish", 10 }
+    }
+};
+app.UseMiddleware<RateLimitingMiddleware>(rateLimitConfig);
+
 app.Use(AuthenticationMiddleware);
 
 // Log startup information
