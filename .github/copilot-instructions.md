@@ -1,69 +1,18 @@
-# Copilot Coding Agent — Squad Instructions
+## PR Review Delegation
 
-You are working on a project that uses **Squad**, an AI team framework. When picking up issues autonomously, follow these guidelines.
+- When a PR review session is created, do **not** begin by reading files, running branch-diff, or performing any review work directly.
+- The correct flow is to **immediately delegate** to Morpheus (or the designated code reviewer on the team roster) as the first action — before any file reads or diff analysis.
+- The designated reviewer — not the PR review session shell — is responsible for branch-diff, all file reads, and all review analysis.
+- A PR review session that reads files or inspects diffs before delegating violates this protocol.
 
-## Coordinator Canary Check
+## Agent Tool Use
 
-**IMPORTANT — run this check on EVERY session start, before doing any work:**
+- When asking questions of the human operator, use the ask_questions/askQuestions tool.
 
-Look for the exact token `SQUAD_COORDINATOR_CANARY_a8f3` in your `agent_instructions`. This token is placed at the end of `squad.agent.md`. If it is missing, the coordinator file is missing or truncated.
+## Issue-driven work queue
 
-**When the token is missing, you MUST:**
-1. **STOP** — do not proceed with standard Squad behavior.
-2. **WARN the user** with this exact message:
-   ```
-   ⚠️ Squad coordinator (squad.agent.md) appears to be missing or truncated. The canary token was not found. Do NOT proceed with standard Squad behavior — Squad's safety rails are not loaded. Please restart your session.
-   ```
-3. Do not continue with normal Squad routing, spawning, PR, or branch-protection behavior after emitting the warning.
-
-## Team Context
-
-Before starting work on any issue:
-
-1. Read `.squad/team.md` for the team roster, member roles, and your capability profile.
-2. Read `.squad/routing.md` for work routing rules.
-3. If the issue has a non-copilot `squad:{member}` label, read that member's charter from `.squad/team.md` to understand their domain expertise and coding style — work in their voice. Ignore `squad:copilot` for persona selection.
-
-## Squad-Member Identity Handoff
-
-When GitHub assigns an issue to @copilot, treat the owning non-copilot `squad:{member}` label as authoritative.
-
-1. Find the issue's `squad:{member}` label that is **not** `squad`, `squad:copilot`, or `squad:untriaged`.
-2. Read that member's charter from the path listed in `.squad/team.md` before making changes.
-3. Work in that member's role, boundaries, and Voice section — @copilot is the execution engine, not the persona.
-4. If you spawn a subagent/session, pass through the same member name, role, charter path, and `Working as {member} ({role})` context so the handoff keeps the same identity.
-
-## Capability Self-Check
-
-Before starting work, check your capability profile in `.squad/team.md` under the **Coding Agent → Capabilities** section.
-
-- **🟢 Good fit** — proceed autonomously.
-- **🟡 Needs review** — proceed, but note in the PR description that a squad member should review.
-- **🔴 Not suitable** — do NOT start work. Instead, comment on the issue:
-  ```
-  🤖 This issue doesn't match my capability profile (reason: {why}). Suggesting reassignment to a squad member.
-  ```
-
-## Branch Naming
-
-Use the squad branch convention:
-```
-squad/{issue-number}-{kebab-case-slug}
-```
-Example: `squad/42-fix-login-validation`
-
-## PR Guidelines
-
-When opening a PR:
-- Reference the issue: `Closes #{issue-number}`
-- If the issue had a `squad:{member}` label, mention the member: `Working as {member} ({role})`
-- If this is a 🟡 needs-review task, add to the PR description: `⚠️ This task was flagged as "needs review" — please have a squad member review before merging.`
-- Follow any project conventions in `.squad/decisions.md`
-
-## Decisions
-
-If you make a decision that affects other team members, write it to:
-```
-.squad/decisions/inbox/copilot-{brief-slug}.md
-```
-The Scribe will merge it into the shared decisions file.
+- GitHub issues are the authoritative execution queue for implementation work in this repository.
+- When deciding what to work on next, check the issue bodies and use the `## Depends On` and `## Blocked By` sections as the source of truth for readiness and blockers.
+- Do not infer readiness from issue titles or from a retired task manifest.
+- Use `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text` to inspect the current ready-vs-blocked queue before choosing work. For Ralph status / queue status, MUST use `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text --mode status`. Add `--label squad:{member}` when you need a member-scoped view.
+- NEVER infer readiness or board status from raw `gh issue list` output; the issue helper and the issue body's `## Depends On` / `## Blocked By` sections are the source of truth.

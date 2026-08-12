@@ -62,9 +62,11 @@ Fast:     claude-haiku-4.5 → gpt-5.4-mini → gpt-5.1-codex-mini → gpt-4.1 �
 - Never fall back UP in tier — a fast/cheap task should not land on a premium model
 - Log fallbacks to the orchestration log for debugging, but never surface to the user unless asked
 
-**Passing the model to spawns:**
+**Passing the model to spawns — TOOL SHAPE MATTERS:**
 
-Pass the resolved model as the `model` parameter on every `task` tool call:
+The `model` parameter lives in DIFFERENT places depending on the spawn tool. Getting this wrong is a **silent footgun**: a misplaced `model` is dropped without error, and the session inherits the coordinator's default model instead.
+
+**`task` tool (CLI) — top-level `model`:**
 
 ```
 agent_type: "general-purpose"
@@ -76,7 +78,23 @@ prompt: |
   ...
 ```
 
-Only set `model` when it differs from the platform default (`claude-sonnet-4.6`). If the resolved model IS `claude-sonnet-4.6`, you MAY omit the `model` parameter — the platform uses it as default.
+**`create_session` tool (App mode) — `model` at top level, NOT inside `kickoff`:**
+
+```
+project_id: "{project_id}"
+name: "{Name} {verb}ing {noun}"
+coordinate_with_creator: true
+notify_on_idle: "once"
+model: "{resolved_model}"        // ← model lives HERE, at top level of create_session
+kickoff: {
+  "mode": "autopilot",
+  "prompt": "..."
+}
+```
+
+⚠ **CRITICAL:** On `create_session`, the model goes at the **top level** of the tool call (parallel to `project_id`, `name`, etc.), NOT inside `kickoff`. A model inside `kickoff` is silently ignored — the session launches on the platform default instead. Third-party model IDs require the full UUID-prefixed form (`{uuid}/provider/model`); bare short IDs like `moonshotai/kimi-k3` will fail with "model provider not found" unless fully resolved.
+
+Only set `model` when it differs from the platform default. If the resolved model IS the platform default, you MAY omit `model` entirely.
 
 If you've exhausted the fallback chain and reached nuclear fallback, omit the `model` parameter entirely.
 
@@ -94,8 +112,21 @@ When spawning, include the model in your acknowledgment:
 
 Include tier annotation only when the model was bumped or a specialist was chosen. Default-tier spawns just show the model name.
 
-**Valid models (current platform catalog):**
+**Resolving model IDs (once per session — no static catalog):**
 
-Premium: `claude-opus-4.6`, `claude-opus-4.6-1m` (Internal only), `claude-opus-4.5`
-Standard: `claude-sonnet-4.6`, `claude-sonnet-4.5`, `claude-sonnet-4`, `gpt-5.4`, `gpt-5.3-codex`, `gpt-5.2-codex`, `gpt-5.2`, `gpt-5.1-codex-max`, `gpt-5.1-codex`, `gpt-5.1`, `gemini-3-pro-preview`
-Fast/Cheap: `claude-haiku-4.5`, `gpt-5.4-mini`, `gpt-5.1-codex-mini`, `gpt-5-mini`, `gpt-4.1`
+Two ID shapes: **bare** (`claude-haiku-4.5`, first-party) and **prefixed** (`{uuid}/{vendor}/{model}`, all models). Catalog shifts over time — resolve at spawn, don't hardcode.
+
+**HARD GATE — run before the first `create_session`/`task` spawn of the session.** If you skip this and pass a short ID straight through, `create_session` fails with `model provider not found` and you waste a spawn cycle.
+
+1. **Discover (HARD GATE):** BEFORE the first spawn, call `create_session` with `model: "__discover__"` at the **top level** (parallel to `project_id`, `name`, etc., NOT inside `kickoff`). The response returns the live catalog of valid prefixed IDs. Copy the IDs verbatim — never hand-build the `{uuid}`. Cache the resolved short→prefixed mapping in **coordinator session memory only** (e.g. a `model_resolution` row in the session SQL DB, or an in-prompt variable). If `__discover__` fails for any reason, fall back to writing the prefixed ID directly into `.squad/config.json`.
+2. **Pick prefixed form.** `create_session` needs prefixed ALWAYS for third-party providers — bare short IDs like `moonshotai/kimi-k3` are rejected with "model provider not found". `task` accepts bare first-party but rejects bare third-party. Prefixed works everywhere — use it. When in doubt, use prefixed.
+3. **Validate:** throwaway spawn with chosen model. If it launches, the prefixed ID is good for the rest of this session. Re-run the gate only if a new provider appears or the session restarts.
+
+**Tiers (vendor-agnostic):**
+
+- Premium (architecture, deep analysis, complex planning): `moonshotai/kimi-k3`, `z-ai/glm-5.2`
+- Standard (code, refactoring, tests): `mai-code-1-flash-picker`, `openai/gpt-5.6-luna-pro`
+- Fast (docs, logs, triage, mechanical): `openai/gpt-5.6-luna`, `gemini-3.5-flash-lite`
+
+
+**On `model provider not found` / `Model not available`:** short ID given to a tool that needs prefixed. Re-resolve (step 1), use prefixed form, retry. If resolution fails, edit config to add the prefixed ID — that's a permanent fix, not a workaround.

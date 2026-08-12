@@ -19,7 +19,7 @@ Ralph always appears in `team.md`: `| Ralph | Work Monitor | — | 🔄 Monitor 
 | User says | Action |
 |-----------|--------|
 | "Ralph, go" / "Ralph, start monitoring" / "keep working" | Activate work-check loop |
-| "Ralph, status" / "What's on the board?" / "How's the backlog?" | Run one work-check cycle, report results, don't loop |
+| "Ralph, status" / "What's on the board?" / "How's the backlog?" | Run `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text --mode status`, report results, don't loop |
 | "Ralph, check every N minutes" | Set idle-watch polling interval |
 | "Ralph, idle" / "Take a break" / "Stop monitoring" | Fully deactivate (stop loop + idle-watch) |
 | "Ralph, scope: just issues" / "Ralph, skip CI" | Adjust what Ralph monitors this session |
@@ -30,21 +30,13 @@ These are intent signals, not exact strings — match meaning, not words.
 
 When Ralph is active, run this check cycle after every batch of agent work completes (or immediately on activation):
 
-**Step 1 — Scan for work** (run these in parallel):
+**Step 1 — Scan for work** (this helper is the canonical first command when Ralph is choosing the next ready issue):
 
 ```bash
-# Untriaged issues (labeled squad but no squad:{member} sub-label)
-gh issue list --label "squad" --state open --json number,title,labels,assignees --limit 20
-
-# Member-assigned issues (labeled squad:{member}, still open)
-gh issue list --state open --json number,title,labels,assignees --limit 20 | # filter for squad:* labels
-
-# Open PRs from squad members
-gh pr list --state open --json number,title,author,labels,isDraft,reviewDecision --limit 20
-
-# Draft PRs (agent work in progress)
-gh pr list --state open --draft --json number,title,author,labels,checks --limit 20
+python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text
 ```
+
+**MUST / NEVER rule:** Ralph MUST use `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text` when choosing the next ready issue in the active Ralph loop. For Ralph status or queue status requests, Ralph MUST use `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text --mode status`. Ralph MUST NEVER infer readiness or board state from raw `gh issue list` output or ad hoc label filtering. Use targeted `gh issue view`, `gh pr view`, or `gh pr list` only after the helper identifies the specific issue or PR that needs follow-up.
 
 **Step 2 — Categorize findings:**
 
@@ -61,8 +53,24 @@ gh pr list --state open --draft --json number,title,author,labels,checks --limit
 **Step 3 — Act on highest-priority item:**
 - Process one category at a time, highest priority first (untriaged > assigned > CI failures > review feedback > approved PRs)
 - Spawn agents as needed, collect results
+- In Copilot App mode, Ralph should keep issue implementation, adversarial review, and revision follow-ups in **sub-sessions** via `create_session` so each worker has a stable reply path
 - **⚡ CRITICAL: After results are collected, DO NOT stop. DO NOT wait for user input. IMMEDIATELY go back to Step 1 and scan again.** This is a loop — Ralph keeps cycling until the board is clear or the user says "idle". Each cycle is one "round".
 - If multiple items exist in the same category, process them in parallel (spawn multiple agents)
+
+### Ralph handoff discipline inside the loop
+
+Adversarial reviewer spawns MUST use the standard agent spawn template, including the reviewer charter and normal grounding context.
+
+When an implementation session reports that it believes work is complete:
+
+1. Treat that as **requesting independent adversarial review**, not as final completion.
+2. Spawn a **fresh reviewer sub-session** (not the same session, not inline review).
+3. Require the reviewer to produce exactly:
+   - `completeness_after_any_fixes.txt`
+   - `review_change_specifications.md`
+4. Ralph may read/report the completeness file.
+5. Ralph must **not** read, rewrite, or summarize `review_change_specifications.md`; it forwards the absolute file path directly to the requesting implementation session.
+6. Minimum one adversarial review pass is mandatory per issue. If fixes are requested, Ralph re-wakes the implementation session, then routes the revised work back through review again.
 
 **Step 4 — Periodic check-in** (every 3-5 rounds):
 

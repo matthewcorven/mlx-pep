@@ -62,16 +62,16 @@ Controlled by the HTML comment in team.md:
 
 | Setting | Behavior |
 |---------|----------|
-| `true` | Lead keeps the routed `squad:{member}` owner label, adds `squad:copilot`, and GitHub assigns the coding agent with that member's charter context |
+| `true` | Lead assigns routed issues to @copilot automatically via `gh issue edit --add-assignee @copilot` |
 | `false` | Lead presents recommendation; user confirms before assignment |
 
 ## Lead Triage Integration
 
 During triage, Lead evaluates each issue against @copilot's capability profile:
 
-1. **🟢 Match** — Keep the domain owner's `squad:{member}` label, add `squad:copilot`, and auto-assign @copilot (if enabled).
-2. **🟡 Match** — Same as above, plus note: "⚠️ May need review — @copilot is 🟡 for this type of work."
-3. **🔴 Match** — Skip @copilot; route to the appropriate squad member only.
+1. **🟢 Match** — Auto-assign (if enabled) or recommend assignment.
+2. **🟡 Match** — Assign with note: "⚠️ May need review — @copilot is 🟡 for this type of work."
+3. **🔴 Match** — Skip @copilot; route to appropriate spawned agent or human.
 
 ## Routing Details
 
@@ -84,11 +84,9 @@ Add to `routing.md`:
 ```
 
 Work that routes to @copilot:
-- Keeps the owning `squad:{member}` label on the issue so the member charter stays authoritative
-- Adds `squad:copilot` as the execution label
-- Assigns the GitHub coding agent with custom instructions that point it at the paired member charter
+- Creates/assigns the GitHub issue (if not already)
 - Does NOT spawn a sub-agent — @copilot works asynchronously
-- Coordinator reports: "🤖 Assigned #{number} to @copilot as {member} — will open a PR when ready."
+- Coordinator reports: "🤖 Assigned #{number} to @copilot — will open a PR when ready."
 - Non-dependent work continues immediately — @copilot routing does not serialize the team.
 
 ## Monitoring @copilot Work

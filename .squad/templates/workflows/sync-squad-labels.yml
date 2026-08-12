@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.squad/team.md'
+      - '.ai-team/team.md'
   workflow_dispatch:
 
 permissions:
@@ -21,9 +22,13 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const teamFile = '.squad/team.md';
+            let teamFile = '.squad/team.md';
             if (!fs.existsSync(teamFile)) {
-              core.info('No .squad/team.md found — skipping label sync');
+              teamFile = '.ai-team/team.md';
+            }
+
+            if (!fs.existsSync(teamFile)) {
+              core.info('No .squad/team.md or .ai-team/team.md found — skipping label sync');
               return;
             }
 
@@ -98,8 +103,6 @@ jobs:
               { name: 'priority:p2', color: 'FBCA04', description: 'Next sprint' }
             ];
 
-            function slugify(t) { return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
-
             // Ensure the base "squad" triage label exists
             const labels = [
               { name: 'squad', color: SQUAD_COLOR, description: 'Squad triage inbox — Lead will assign to a member' }
@@ -107,7 +110,7 @@ jobs:
 
             for (const member of members) {
               labels.push({
-                name: `squad:${slugify(member.name)}`,
+                name: `squad:${member.name.toLowerCase()}`,
                 color: MEMBER_COLOR,
                 description: `Assigned to ${member.name} (${member.role})`
               });
@@ -118,7 +121,7 @@ jobs:
               labels.push({
                 name: 'squad:copilot',
                 color: COPILOT_COLOR,
-                description: 'Execution label for @copilot — pair with the owning squad:{member} label'
+                description: 'Assigned to @copilot (Coding Agent) for autonomous work'
               });
             }
 

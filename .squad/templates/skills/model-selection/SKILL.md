@@ -1,11 +1,3 @@
----
-name: "model-selection"
-description: "Determines which LLM model to use for each agent spawn"
-domain: "orchestration"
-confidence: "medium"
-source: "extracted"
----
-
 # Model Selection
 
 > Determines which LLM model to use for each agent spawn.

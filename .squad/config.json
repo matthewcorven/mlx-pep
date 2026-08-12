@@ -1,3 +1,10 @@
 {
-  "version": 1
+  "version": 1,
+  "defaultModel": "openai/gpt-5.6-luna-pro",
+  "agentModelOverrides": {
+    "morpheus": "b311631e-d285-40e6-b0e3-2e813af887ed/moonshotai/kimi-k3",
+    "scribe": "openai/gpt-5.6-luna",
+    "ralph": "z-ai/glm-5.2"
+  },
+  "modelIdFormatNote": "Values here are SHORT IDs (human-readable) OR full prefixed IDs ({uuid}/provider/model). At spawn time, the coordinator resolves each to its full prefixed form via the HARD GATE in .squad/templates/model-selection-reference.md — run __discover__ at the TOP LEVEL of create_session (NOT inside kickoff) before the first spawn. If a spawn fails with 'model provider not found' or 'Model not available', you skipped the gate: run __discover__ at top-level, use the prefixed form, retry. PLACEMENT FOOTGUN: on create_session, model goes at the TOP LEVEL of the tool call (parallel to project_id, name), NOT inside kickoff — a model inside kickoff is silently ignored and the session inherits the platform default. See .squad/templates/model-selection-reference.md 'Passing the model to spawns' for both tool shapes."
 }

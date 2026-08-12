@@ -20,8 +20,8 @@
 When `create_session` is available, spawn commit-producing agents as **sub-sessions** instead of tasks. Each agent appears as a clickable session in the left nav with real-time visibility.
 
 **When to use sub-sessions vs task:**
-- **Sub-session** (`create_session`): Agent produces commits, needs worktree isolation, or benefits from persistent session visibility
-- **Task** (`task` tool): Pure analysis, coordination, read-only research, or quick one-shot work
+- **Sub-session** (`create_session`): Agent produces commits, needs worktree isolation, participates in Ralph's issue/review/revision loop, or benefits from persistent session visibility and a stable reply path
+- **Task** (`task` tool): Pure analysis, coordination, read-only research, or quick one-shot work whose output does not need to be handed back to another agent session
 
 **Sub-session parameters:**
 - **`name`**: `"{Name} {verb}ing {noun}"` — 40-char max, sentence case (e.g., "EECOM refactoring auth", "Flight reviewing arch")
@@ -29,12 +29,13 @@ When `create_session` is available, spawn commit-producing agents as **sub-sessi
 - **`notify_on_idle`**: `"once"` (coordinator gets notified when agent finishes)
 - **`kickoff.prompt`**: The full agent prompt (same as task prompt below)
 - **`kickoff.mode`**: `"autopilot"` (agents work autonomously)
-- **`kickoff.model`**: `"{resolved_model}"`
+- **`model` (top-level)**: `"{resolved_model}"` — **NOT inside `kickoff`**. For third-party models (e.g. `moonshotai/kimi-k3`), must be a full UUID-prefixed ID (e.g. `b311631e-.../moonshotai/kimi-k3`). First-party bare IDs (`claude-sonnet-4.6`, `z-ai/glm-5.2`) work at top level. Resolve via `.squad/templates/model-selection-reference.md` HARD GATE (run `__discover__` at top-level `model` param).
 
 **Constraints:**
 - **Max depth:** 1 — no sub-sub-sessions. If an agent needs to delegate, it uses `task` tool.
 - **Concurrency cap:** Maximum 4-5 simultaneous sub-sessions. Queue additional spawns.
 - **Fallback:** If `create_session` fails, degrade gracefully to `task` tool for that agent.
+- **Ralph loop:** In Copilot App mode, issue implementation, adversarial review, and revision follow-ups should stay in sub-sessions so Ralph can forward artifacts and re-wake the correct worker.
 
 **Sub-session template:**
 ```
@@ -42,10 +43,10 @@ create_session({
   name: "{Name} {verb}ing {noun}",
   coordinate_with_creator: true,
   notify_on_idle: "once",
+  model: "{resolved_model — resolved per config.json agentModelOverrides + model-selection-reference.md HARD GATE}",
   kickoff: {
     prompt: "{full agent prompt — see template below}",
     mode: "autopilot",
-    model: "{resolved_model}",
     reasoning_effort: "{resolved_effort}"
   }
 })
@@ -85,6 +86,8 @@ prompt: |
 
   YOUR CHARTER:
   {paste contents of .squad/agents/{name}/charter.md here}
+
+  Do not assume your squad files were preloaded by the runtime.
 
   TEAM ROOT: {team_root}
   CURRENT_DATETIME: <resolved CURRENT_DATETIME literal>

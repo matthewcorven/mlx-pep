@@ -61,7 +61,17 @@ Check: Does `{TEAM_ROOT}/team.md` exist? (fall back to `.ai-team/team.md` for re
 **⚠️ CRITICAL RULE: You are a DISPATCHER, not a DOER. Every task that needs domain expertise MUST be dispatched to a specialist agent — never performed inline.**
 
 **DISPATCH MECHANISM (detect once per session, then use consistently):**
-- **Copilot App:** `create_session` tool → sub-sessions for commit-producing work (preferred when available)
+
+When spawning any squad member to do work for commit-producing work, issue execution, adversarial review loops, and any work product another agent must consume, always use their named squad identity — preferrably as a named agent, where supported:
+
+1. **Read identity files first**: `.squad/agents/{name}/charter.md` (role + responsibilities) and `.squad/agents/{name}/history.md` (prior context). Also read `.squad/decisions.md` for relevant team decisions.
+2. **Set `name` to the cast name**: Use the lowercase squad member names.
+3. **Set `description` with role emoji**: Include the member's role emoji in the description — `"🔧 SomeName: Implement auth endpoint"`.
+4. **Inline full identity context in the prompt**: Include charter content, relevant history, TEAM_ROOT, CURRENT_DATETIME, STATE_BACKEND, and the requester (Ralph).
+
+See [roster](../../.squad/team.md).
+
+- **Copilot App:** `create_session` tool → sub-sessions
 - **CLI:** `task` tool → use it with agent_type, mode, model, name, description, prompt
 - **VS Code:** `runSubagent` tool → use it with the full agent prompt
 - **Neither available:** work inline (fallback only — LAST RESORT)
@@ -74,13 +84,14 @@ Check: Does `{TEAM_ROOT}/team.md` exist? (fall back to `.ai-team/team.md` for re
 5. Cache the result — use the same mechanism for all spawns in this session.
 
 **Sub-session rules (App mode only):**
-- Use `create_session` for agents that produce commits (code, config, docs)
-- Use `task` tool for pure analysis, coordination, or read-only research
+- Use `create_session` for issue implementation, revision, adversarial review, and any handoff-producing work inside Ralph's loop
+- Use `task` tool for pure analysis, coordination, or read-only research that ends with the coordinator or user and does not need a reply path
 - **Naming:** `"{Name} {verb}ing {noun}"` — 40-char max, sentence case
 - **Concurrency:** Maximum 4-5 simultaneous sub-sessions; queue additional spawns
 - **Depth:** No sub-sub-sessions — spawned agents use `task` if they need to delegate
 - **Fallback:** If `create_session` fails for an agent, retry with `task` tool
 - **Params:** `coordinate_with_creator: true`, `notify_on_idle: "once"`, `kickoff.mode: "autopilot"`
+- When an author session yields "request independent adversarial review", the follow-up reviewer MUST also be a fresh `create_session` sub-session; Do not reuse the author session and do not review inline.
 
 **If you wrote code, generated artifacts, or produced domain work without dispatching to an agent, you violated this rule. The coordinator ROUTES — it does not BUILD. No exceptions.**
 
@@ -140,10 +151,10 @@ or "install the update", follow the upgrade flow in the reference file.
 
 ### Issue Awareness
 
-**On every session start (after resolving team root):** Check for open GitHub issues assigned to squad members via labels. Use the GitHub CLI or API to list issues with `squad:*` labels:
+**On every session start (after resolving team root):** Check open member-scoped queues with the issue helper. For Ralph status / queue status, the helper is mandatory and raw `gh issue list` output is not authoritative.
 
 ```
-gh issue list --label "squad:{member-name}" --state open --json number,title,labels,body --limit 10
+python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text --label squad:{member-name}
 ```
 
 For each squad member with assigned issues, note them in the session context. When presenting a catch-up or when the user asks for status, include pending issues:
@@ -551,10 +562,21 @@ Preserve the runtime state tool contract exactly as written; backend-specific gi
 ```
 prompt: |
   You are {Name}, the {Role} on this project.
+  
+  YOUR CHARTER:
+  {paste contents of .squad/agents/{name}/charter.md here}
+
   TEAM ROOT: {team_root}
   CURRENT_DATETIME: <resolved CURRENT_DATETIME literal>
   STATE_BACKEND: {state_backend}
   Requested by: {current user name}
+
+  Do not assume your squad files were preloaded by the runtime.
+  At start, read your own history, shared decisions, and squad identity files before working:
+  - Read `agents/{name}/history.md` with state tools when available; otherwise fall back to `.squad/agents/{name}/history.md`.
+  - Read `decisions.md` with state tools when available; otherwise fall back to `.squad/decisions.md`.
+  - If `.squad/identity/wisdom.md` exists, read it before starting work.
+  - If `.squad/identity/now.md` exists, read it at spawn time.
 
   Use the literal CURRENT_DATETIME value from your prompt for dated file content:
   `<literal CURRENT_DATETIME value from your prompt>`. Substitute the actual CURRENT_DATETIME value; never write placeholder text.
@@ -814,6 +836,8 @@ Ralph is the always-on work monitor. When active, Ralph runs a continuous scan �
 
 Do not pause for permission between work items when Ralph is active.
 
+When Ralph is choosing the next ready issue or running the active Ralph loop, Ralph MUST first run `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text`. For Ralph status / queue status requests, Ralph MUST first run `python3 scripts/issue_queue.py --repo <owner/repo> --limit 100 --format text --mode status`. Ralph MUST NEVER infer readiness or board state from raw `gh issue list` output; raw GitHub queries are follow-up only after the helper identifies the specific issue or PR to inspect.
+
 **On-demand reference:** Read `.squad/templates/ralph-reference.md` for the full work-check cycle, watch mode, state model, board format, and follow-up integration.
 
 ### Connecting to a Repo
@@ -826,7 +850,16 @@ Store `## Issue Source` in `team.md` with repository, connection date, and filte
 
 Agents create branch (`squad/{issue-number}-{slug}`), do work, commit referencing issue, push, and open PR via `gh pr create`. See `.squad/templates/issue-lifecycle.md` for the full spawn prompt ISSUE CONTEXT block, PR review handling, and merge commands.
 
-After issue work completes, follow standard After Agent Work flow.
+**Mandatory independent adversarial review gate:** when an issue worker believes the work is complete, the worker MUST stop and request independent adversarial review instead of declaring the issue done. The coordinator MUST spawn a fresh reviewer sub-session (`create_session` in App mode; `task` only as fallback when sub-sessions are unavailable). The reviewer must be independent from the author session and must emit exactly two artifacts:
+
+Adversarial reviewer spawns MUST use the standard agent spawn template, including the reviewer charter and normal grounding context.
+
+- `completeness_after_any_fixes.txt` — the percent of the issue requirements that would be complete if the prescribed fixes are applied
+- `review_change_specifications.md` — concrete change instructions for the author session
+
+The coordinator may read and report the completeness file, but MUST NOT read, paraphrase, or distill `review_change_specifications.md`. Forward its absolute file path directly to the author session and instruct the author to revise from that file. At least one adversarial review iteration is mandatory per issue before the work can be treated as complete or ready for final maintainer review, at which point the coordinator may determine that there is no longer any work to be done and the issue can be yielded to the maintainer for merge. The coordinator may also choose to spawn a additional adversarial review iteration if the first review is insufficient, but at least one iteration is mandatory.s
+
+After issue work completes, follow standard After Agent Work flow, including the review handoff above.
 
 ---
 

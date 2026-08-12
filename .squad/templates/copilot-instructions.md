@@ -22,16 +22,7 @@ Before starting work on any issue:
 
 1. Read `.squad/team.md` for the team roster, member roles, and your capability profile.
 2. Read `.squad/routing.md` for work routing rules.
-3. If the issue has a non-copilot `squad:{member}` label, read that member's charter from `.squad/team.md` to understand their domain expertise and coding style — work in their voice. Ignore `squad:copilot` for persona selection.
-
-## Squad-Member Identity Handoff
-
-When GitHub assigns an issue to @copilot, treat the owning non-copilot `squad:{member}` label as authoritative.
-
-1. Find the issue's `squad:{member}` label that is **not** `squad`, `squad:copilot`, or `squad:untriaged`.
-2. Read that member's charter from the path listed in `.squad/team.md` before making changes.
-3. Work in that member's role, boundaries, and Voice section — @copilot is the execution engine, not the persona.
-4. If you spawn a subagent/session, pass through the same member name, role, charter path, and `Working as {member} ({role})` context so the handoff keeps the same identity.
+3. If the issue has a `squad:{member}` label, read that member's charter at `.squad/agents/{member}/charter.md` to understand their domain expertise and coding style — work in their voice.
 
 ## Capability Self-Check
 
