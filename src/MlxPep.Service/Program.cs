@@ -14,11 +14,10 @@ if (!string.IsNullOrEmpty(connectionString))
     {
         var blobServiceClient = new BlobServiceClient(connectionString);
         blobContainer = blobServiceClient.GetBlobContainerClient("profiles");
-        builder.Services.AddSingleton(blobContainer);
     }
     catch (Exception)
     {
-        // Log will happen after app is built
+        // Blob storage initialization failed
     }
 }
 
@@ -50,27 +49,27 @@ var profiles = app.MapGroup("/api/v1/profiles")
     .WithDescription("Community profile management endpoints");
 
 // GET /api/v1/profiles - List profiles with optional filtering
-profiles.MapGet("/", ListProfiles)
+profiles.MapGet("/", (string? modelHfId, string? tier, ILogger<Program> log) => ListProfiles(modelHfId, tier, blobContainer, log))
     .WithName("ListProfiles")
     .WithDescription("List all available profiles, optionally filtered by modelHfId or tier");
 
 // GET /api/v1/profiles/{id} - Get a specific profile
-profiles.MapGet("/{id}", GetProfile)
+profiles.MapGet("/{id}", (string id, ILogger<Program> log) => GetProfile(id, blobContainer, log))
     .WithName("GetProfile")
     .WithDescription("Get a specific profile by ID");
 
 // POST /api/v1/profiles - Publish a new profile
-profiles.MapPost("/", PublishProfile)
+profiles.MapPost("/", (Profile profile, ILogger<Program> log) => PublishProfile(profile, blobContainer, log))
     .WithName("PublishProfile")
     .WithDescription("Publish a new profile to Azure Blob Storage");
 
 // PUT /api/v1/profiles/{id} - Update an existing profile
-profiles.MapPut("/{id}", UpdateProfile)
+profiles.MapPut("/{id}", (string id, Profile profile, ILogger<Program> log) => UpdateProfile(id, profile, blobContainer, log))
     .WithName("UpdateProfile")
     .WithDescription("Update an existing profile");
 
 // DELETE /api/v1/profiles/{id} - Delete a profile
-profiles.MapDelete("/{id}", DeleteProfile)
+profiles.MapDelete("/{id}", (string id, ILogger<Program> log) => DeleteProfile(id, blobContainer, log))
     .WithName("DeleteProfile")
     .WithDescription("Delete a profile from storage");
 
