@@ -64,15 +64,11 @@ public class IPBlockingTests
     [InlineData("192.168.1.1", true)]
     public void IPBlocker_SupportsIPv4AndIPv6(string ip, bool shouldParse)
     {
-        // Arrange & Act: All valid IP addresses should parse
-        var canParse = IPAddress.TryParse(ip, out var parsed);
+        // Arrange & Act
+        var canParse = IPAddress.TryParse(ip, out _);
 
         // Assert
         Assert.Equal(shouldParse, canParse);
-        if (canParse)
-        {
-            Assert.NotNull(parsed);
-        }
     }
 
     [Fact]
@@ -94,7 +90,7 @@ public class CIDRBlockingTests
 {
     private static bool IsIPInCIDR(string ip, string cidr)
     {
-        // Simple CIDR validation
+        // Proper CIDR validation using bit operations
         var parts = cidr.Split('/');
         if (parts.Length != 2) return false;
 
@@ -106,11 +102,32 @@ public class CIDRBlockingTests
         if (!IPAddress.TryParse(ip, out var checkAddr))
             return false;
 
-        // For testing, use simple string comparison (real implementation uses bit operations)
-        var networkPrefix = parts[0].Substring(0, prefixLength / 8);
-        var checkPrefix = ip.Substring(0, prefixLength / 8);
+        // Both addresses must be same family
+        if (networkAddr.AddressFamily != checkAddr.AddressFamily)
+            return false;
 
-        return networkPrefix == checkPrefix;
+        // Convert to byte arrays for bit comparison
+        var networkBytes = networkAddr.GetAddressBytes();
+        var checkBytes = checkAddr.GetAddressBytes();
+        var bytesToCheck = prefixLength / 8;
+        var remainingBits = prefixLength % 8;
+
+        // Compare full bytes
+        for (int i = 0; i < bytesToCheck; i++)
+        {
+            if (networkBytes[i] != checkBytes[i])
+                return false;
+        }
+
+        // Compare remaining bits
+        if (remainingBits > 0)
+        {
+            var mask = (byte)(0xFF << (8 - remainingBits));
+            if ((networkBytes[bytesToCheck] & mask) != (checkBytes[bytesToCheck] & mask))
+                return false;
+        }
+
+        return true;
     }
 
     [Fact]
@@ -128,23 +145,17 @@ public class CIDRBlockingTests
     }
 
     [Fact]
-    public void CIDRBlocker_ValidatesCIDRConfiguration()
+    public void CIDRBlocker_AllowsIPsOutsideRange()
     {
         // Arrange
-        var blockedCIDRs = new[] { "192.168.1.0/24", "10.0.0.0/8" };
+        var blockedCIDRs = new[] { "192.168.1.0/24" };
+        var requestIP = "192.168.2.50";
 
-        // Act: Configuration should parse valid CIDR ranges
-        var validCIDRs = blockedCIDRs.Where(cidr =>
-        {
-            var parts = cidr.Split('/');
-            return parts.Length == 2 &&
-                   IPAddress.TryParse(parts[0], out _) &&
-                   int.TryParse(parts[1], out var prefix) &&
-                   prefix >= 0 && prefix <= 32;
-        }).ToList();
+        // Act
+        var isBlocked = blockedCIDRs.Any(cidr => IsIPInCIDR(requestIP, cidr));
 
-        // Assert: All CIDRs should be valid
-        Assert.Equal(blockedCIDRs.Length, validCIDRs.Count);
+        // Assert
+        Assert.False(isBlocked);
     }
 
     [Fact]
@@ -359,20 +370,15 @@ public class BlockingMiddlewareConfigurationTests
     public void BlockingMiddleware_LoadsConfigurationFromSettings()
     {
         // Arrange
-        var settings = new
-        {
-            IpBlocklist = new[] { "192.168.1.100", "10.0.0.50" },
-            CidrBlocklist = new[] { "192.168.0.0/16" },
-            HostnameBlocklist = new[] { "spam.example.com" }
-        };
+        var ipBlocklist = new[] { "192.168.1.100", "10.0.0.50" };
+        var cidrBlocklist = new[] { "192.168.0.0/16" };
+        var hostnameBlocklist = new[] { "spam.example.com" };
 
         // Act
-        var allBlocked = settings.IpBlocklist.Length + 
-                        settings.CidrBlocklist.Length + 
-                        settings.HostnameBlocklist.Length;
+        var totalBlocklists = ipBlocklist.Length + cidrBlocklist.Length + hostnameBlocklist.Length;
 
-        // Assert: Should have 2 IPs + 1 CIDR + 1 hostname = 4 total
-        Assert.Equal(4, allBlocked);
+        // Assert
+        Assert.Equal(4, totalBlocklists);  // 2 IP + 1 CIDR + 1 hostname = 4
     }
 
     [Fact]
