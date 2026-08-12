@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -21,9 +21,9 @@ jobs:
           cache-dependency-path: '**/Directory.Packages.props'
       - name: Restore
         run: dotnet restore
+      - name: Format check
+        run: dotnet format --verify-no-changes
       - name: Build
         run: dotnet build --no-restore
       - name: Test
         run: dotnet test --no-build --verbosity normal
-      - name: Format check
-        run: dotnet format --verify-no-changes
