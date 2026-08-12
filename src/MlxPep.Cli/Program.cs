@@ -1,283 +1,332 @@
+using System.Text.Json;
 using MlxPep.Core;
+using MlxPep.Core.Emitters;
 
-if (args.Length == 0)
+var cmdArgs = args.ToList();
+
+if (cmdArgs.Count == 0 || cmdArgs[0] != "apply")
 {
-    PrintHelp();
-    return 0;
+    Console.WriteLine("mlx-pep - ML Model Export Platform");
+    Console.WriteLine("\nUsage: mlx-pep apply --profile <path> --tier <tier> --harness <format> [--output <path>] [--dry-run] [--backup]");
+    Console.WriteLine("\nOptions:");
+    Console.WriteLine("  --profile, -p   Path to profile JSONL file");
+    Console.WriteLine("  --tier, -t      Profile tier (high, balanced, efficient) [default: balanced]");
+    Console.WriteLine("  --harness, -h   Target format: opencode, claude-code [default: opencode]");
+    Console.WriteLine("  --output, -o    Output file path");
+    Console.WriteLine("  --dry-run       Preview output without writing");
+    Console.WriteLine("  --backup        Create backup before overwriting [default: true]");
+    return;
 }
 
-var command = args[0];
+// Parse command line arguments
+string? profilePath = null;
+string tier = "balanced";
+string harness = "opencode";
+string? outputPath = null;
+bool dryRun = false;
+bool backup = true;
 
-if (command == "models")
+for (int i = 1; i < cmdArgs.Count; i++)
 {
-    if (args.Length < 2)
+    switch (cmdArgs[i])
     {
-        PrintModelsHelp();
-        return 0;
+        case "--profile" or "-p":
+            if (i + 1 < cmdArgs.Count) profilePath = cmdArgs[++i];
+            break;
+        case "--tier" or "-t":
+            if (i + 1 < cmdArgs.Count) tier = cmdArgs[++i];
+            break;
+        case "--harness" or "-h":
+            if (i + 1 < cmdArgs.Count) harness = cmdArgs[++i];
+            break;
+        case "--output" or "-o":
+            if (i + 1 < cmdArgs.Count) outputPath = cmdArgs[++i];
+            break;
+        case "--dry-run":
+            dryRun = true;
+            break;
+        case "--backup":
+            backup = true;
+            break;
     }
-    
-    var subcommand = args[1];
-    
-    if (subcommand == "list")
+}
+
+try
+{
+    // Validate inputs
+    if (string.IsNullOrEmpty(profilePath))
     {
-        await HandleModelsList(args);
+        Console.Error.WriteLine("Error: --profile is required");
+        Environment.Exit(1);
     }
-    else if (subcommand == "get")
+
+    var profileFile = new FileInfo(profilePath);
+    if (!profileFile.Exists)
     {
-        await HandleModelsGet(args);
+        Console.Error.WriteLine($"Error: Profile file not found: {profileFile.FullName}");
+        Environment.Exit(1);
+    }
+
+    if (!IsValidTier(tier))
+    {
+        Console.Error.WriteLine($"Error: Invalid tier '{tier}'. Must be high, balanced, or efficient.");
+        Environment.Exit(1);
+    }
+
+    if (!IsValidHarness(harness))
+    {
+        Console.Error.WriteLine($"Error: Invalid harness format '{harness}'. Must be opencode or claude-code.");
+        Environment.Exit(1);
+    }
+
+    // Parse profile from JSONL
+    var profile = FindAndParseProfile(profileFile, tier);
+    if (profile == null)
+    {
+        Console.Error.WriteLine($"Error: Could not parse profile with tier '{tier}' from {profileFile.FullName}");
+        Environment.Exit(1);
+    }
+
+    // Select emitter
+    IHarnessEmitter emitter = harness.Equals("claude-code", StringComparison.OrdinalIgnoreCase)
+        ? new ClaudeCodeEmitter()
+        : new OpenCodeEmitter();
+
+    // Validate profile
+    var errors = emitter.Validate(profile);
+    if (errors.Count > 0)
+    {
+        Console.Error.WriteLine("Error: Profile validation failed:");
+        foreach (var error in errors)
+        {
+            Console.Error.WriteLine($"  - {error}");
+        }
+        Environment.Exit(1);
+    }
+
+    // Emit to format
+    var emittedJson = await emitter.EmitAsync(profile);
+
+    // Determine output path
+    FileInfo finalOutputPath;
+    if (!string.IsNullOrEmpty(outputPath))
+    {
+        finalOutputPath = new FileInfo(outputPath);
     }
     else
     {
-        Console.Error.WriteLine($"Unknown subcommand: {subcommand}");
-        PrintModelsHelp();
-        return 1;
+        var fileName = emitter.GetTargetFileName();
+        var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        finalOutputPath = harness.Equals("claude-code", StringComparison.OrdinalIgnoreCase)
+            ? new FileInfo(Path.Combine(homeDir, ".claude", fileName))
+            : new FileInfo(Path.Combine(homeDir, ".config", "opencode", fileName));
     }
-}
-else if (command == "--help" || command == "-h" || command == "help")
-{
-    PrintHelp();
-}
-else
-{
-    Console.Error.WriteLine($"Unknown command: {command}");
-    PrintHelp();
-    return 1;
-}
 
-return 0;
-
-void PrintHelp()
-{
-    Console.WriteLine("MLX-PEP: Apple Silicon model and profile orchestration");
-    Console.WriteLine();
-    Console.WriteLine("Usage:");
-    Console.WriteLine("  mlx-pep <command> [options]");
-    Console.WriteLine();
-    Console.WriteLine("Commands:");
-    Console.WriteLine("  models list       List available models in the Hugging Face cache");
-    Console.WriteLine("  models get        Download a model from Hugging Face");
-    Console.WriteLine("  help, --help, -h  Show this help message");
-}
-
-void PrintModelsHelp()
-{
-    Console.WriteLine("Models command");
-    Console.WriteLine();
-    Console.WriteLine("Usage:");
-    Console.WriteLine("  mlx-pep models list [--json]");
-    Console.WriteLine("  mlx-pep models get <repo-id> [--revision <rev>] [--json]");
-    Console.WriteLine();
-    Console.WriteLine("Options:");
-    Console.WriteLine("  --json, -j              Output as JSON");
-    Console.WriteLine("  --revision, -r <rev>    Model revision (default: main)");
-}
-
-async Task HandleModelsList(string[] cmdArgs)
-{
-    var json = cmdArgs.Contains("--json") || cmdArgs.Contains("-j");
-    
-    var reader = new HFCacheReader();
-    var models = await reader.ListModelsAsync();
-    
-    if (json)
+    // Handle dry-run
+    if (dryRun)
     {
-        var jsonModels = models.Select(m => new
-        {
-            m.RepoId,
-            m.Revision,
-            SizeBytes = m.SizeBytes,
-            Size = m.GetSize(),
-            LastModified = m.LastModified.ToString("O")
-        });
-        
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(jsonModels, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-    }
-    else
-    {
-        if (!models.Any())
-        {
-            Console.WriteLine("No models found in cache.");
-            return;
-        }
-        
-        Console.WriteLine($"{"Repo ID",-40} {"Revision",-20} {"Size",-15} {"Last Modified"}");
-        Console.WriteLine(new string('-', 100));
-        
-        foreach (var model in models.OrderBy(m => m.RepoId))
-        {
-            var lastMod = model.LastModified.ToString("yyyy-MM-dd HH:mm");
-            Console.WriteLine($"{model.RepoId,-40} {model.Revision,-20} {model.GetSize(),-15} {lastMod}");
-        }
-    }
-}
-
-async Task HandleModelsGet(string[] cmdArgs)
-{
-    if (cmdArgs.Length < 3 || cmdArgs[2] == "--help" || cmdArgs[2] == "-h" || cmdArgs[2] == "help")
-    {
-        PrintModelsHelp();
-        if (cmdArgs.Length < 3 || (cmdArgs[2] != "--help" && cmdArgs[2] != "-h" && cmdArgs[2] != "help"))
-        {
-            Console.Error.WriteLine("Error: repo-id is required");
-            Environment.Exit(1);
-        }
+        Console.WriteLine("=== DRY RUN: Preview output ===\n");
+        Console.WriteLine(emittedJson);
+        Console.WriteLine("\n=== Would be written to: ===");
+        Console.WriteLine(finalOutputPath.FullName);
         return;
     }
-    
-    var repoId = cmdArgs[2];
-    var json = cmdArgs.Contains("--json") || cmdArgs.Contains("-j");
-    
-    var revisionIdx = Array.IndexOf(cmdArgs, "--revision");
-    if (revisionIdx < 0)
-        revisionIdx = Array.IndexOf(cmdArgs, "-r");
-    
-    var revision = "main";
-    if (revisionIdx >= 0 && revisionIdx + 1 < cmdArgs.Length)
-        revision = cmdArgs[revisionIdx + 1];
-    
-    // Check if hf command is available
-    if (!await IsHuggingFaceCliAvailable())
+
+    // Create backup if file exists
+    if (finalOutputPath.Exists && backup)
     {
-        var message = "Hugging Face CLI (hf) not found. Install it with: pip install huggingface-hub";
-        if (json)
-        {
-            var errorJson = new { error = message };
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(errorJson));
-        }
-        else
-        {
-            Console.Error.WriteLine(message);
-        }
-        Environment.Exit(1);
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        var backupPath = $"{finalOutputPath.FullName}.backup.{timestamp}";
+        File.Copy(finalOutputPath.FullName, backupPath, overwrite: true);
+        Console.WriteLine($"✓ Created backup: {backupPath}");
     }
-    
-    // Run hf download
-    var result = await RunHuggingFaceDownload(repoId, revision);
-    
-    if (result.Success)
+
+    // Write output
+    finalOutputPath.Directory?.Create();
+    File.WriteAllText(finalOutputPath.FullName, emittedJson);
+    Console.WriteLine($"✓ Successfully wrote {harness} config to: {finalOutputPath.FullName}");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
+    Environment.Exit(1);
+}
+
+// ===== Helper functions =====
+
+bool IsValidTier(string t) =>
+    t.Equals("high", StringComparison.OrdinalIgnoreCase) ||
+    t.Equals("balanced", StringComparison.OrdinalIgnoreCase) ||
+    t.Equals("efficient", StringComparison.OrdinalIgnoreCase);
+
+bool IsValidHarness(string h) =>
+    h.Equals("opencode", StringComparison.OrdinalIgnoreCase) ||
+    h.Equals("claude-code", StringComparison.OrdinalIgnoreCase);
+
+Profile? FindAndParseProfile(FileInfo file, string targetTier)
+{
+    try
     {
-        // Verify the model was downloaded
-        var reader = new HFCacheReader();
-        var model = await reader.GetModelAsync(repoId);
-        
-        if (model != null)
+        var lines = File.ReadAllLines(file.FullName);
+        foreach (var line in lines)
         {
-            if (json)
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            var json = JsonDocument.Parse(line);
+            var root = json.RootElement;
+
+            if (root.TryGetProperty("tier", out var tierElement))
             {
-                var jsonModel = new
+                var tierValue = tierElement.GetString() ?? "";
+                if (tierValue.Equals(targetTier, StringComparison.OrdinalIgnoreCase))
                 {
-                    success = true,
-                    message = $"Successfully downloaded {repoId}@{revision}",
-                    model = new
-                    {
-                        model.RepoId,
-                        model.Revision,
-                        SizeBytes = model.SizeBytes,
-                        Size = model.GetSize(),
-                        LastModified = model.LastModified.ToString("O")
-                    }
-                };
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(jsonModel, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-            }
-            else
-            {
-                Console.WriteLine($"✓ Successfully downloaded {repoId}@{revision}");
-                Console.WriteLine($"  Size: {model.GetSize()}");
-                Console.WriteLine($"  Location: ~/.cache/huggingface/hub");
+                    return ParseProfileFromJson(root);
+                }
             }
         }
-    }
-    else
-    {
-        if (json)
-        {
-            var errorJson = new { error = result.Error };
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(errorJson));
-        }
-        else
-        {
-            Console.Error.WriteLine($"✗ Failed to download model: {result.Error}");
-        }
-        Environment.Exit(1);
-    }
-}
 
-async Task<bool> IsHuggingFaceCliAvailable()
-{
-    var tcs = new TaskCompletionSource<bool>();
-    
-    var process = new System.Diagnostics.Process
-    {
-        StartInfo = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "hf",
-            Arguments = "--version",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        }
-    };
-    
-    process.EnableRaisingEvents = true;
-    process.Exited += (sender, e) =>
-    {
-        tcs.TrySetResult(process.ExitCode == 0);
-        process.Dispose();
-    };
-    
-    try
-    {
-        process.Start();
-        await Task.WhenAny(tcs.Task, Task.Delay(2000));
-        return tcs.Task.IsCompleted && tcs.Task.Result;
-    }
-    catch
-    {
-        return false;
-    }
-}
-
-async Task<(bool Success, string Error)> RunHuggingFaceDownload(string repoId, string revision)
-{
-    var tcs = new TaskCompletionSource<(bool, string)>();
-    
-    var process = new System.Diagnostics.Process
-    {
-        StartInfo = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "hf",
-            Arguments = $"download {repoId} --revision {revision}",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        }
-    };
-    
-    var errorOutput = "";
-    process.ErrorDataReceived += (sender, e) =>
-    {
-        if (!string.IsNullOrEmpty(e.Data))
-            errorOutput += e.Data + Environment.NewLine;
-    };
-    
-    process.EnableRaisingEvents = true;
-    process.Exited += (sender, e) =>
-    {
-        tcs.TrySetResult((process.ExitCode == 0, errorOutput));
-        process.Dispose();
-    };
-    
-    try
-    {
-        process.Start();
-        process.BeginErrorReadLine();
-        await tcs.Task;
-        return tcs.Task.Result;
+        return null;
     }
     catch (Exception ex)
     {
-        return (false, ex.Message);
+        Console.Error.WriteLine($"Debug: Profile parsing error: {ex.Message}");
+        return null;
     }
+}
+
+Profile ParseProfileFromJson(JsonElement root)
+{
+    var schemaVersion = root.TryGetProperty("schemaVersion", out var sv) ? sv.GetInt32() : 1;
+    var id = root.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? "" : "";
+    var modelHfId = root.TryGetProperty("modelHfId", out var mhf) ? mhf.GetString() ?? "" : "";
+    var tier = root.TryGetProperty("tier", out var t) ? t.GetString() ?? "balanced" : "balanced";
+    var engine = root.TryGetProperty("engine", out var e) ? e.GetString() ?? "" : "";
+    
+    var system = JsonElementToDictionary(root, "system");
+    var omlx = JsonElementToDictionary(root, "omlx");
+    var harness = JsonElementToDictionary(root, "harness");
+    
+    var provenance = ParseProvenance(root);
+    var hardware = ParseHardware(root);
+    var sampler = ParseSampler(root);
+    
+    return new Profile(
+        SchemaVersion: schemaVersion,
+        Id: id,
+        ModelHfId: modelHfId,
+        Tier: tier,
+        Engine: engine,
+        System: system,
+        OMLXSettings: omlx,
+        Harness: harness,
+        Provenance: provenance,
+        Hardware: hardware,
+        Sampler: sampler
+    );
+}
+
+Dictionary<string, object> JsonElementToDictionary(JsonElement root, string property)
+{
+    var dict = new Dictionary<string, object>();
+    
+    if (!root.TryGetProperty(property, out var element))
+        return dict;
+        
+    if (element.ValueKind != JsonValueKind.Object)
+        return dict;
+
+    foreach (var prop in element.EnumerateObject())
+    {
+        dict[prop.Name] = JsonElementToObject(prop.Value);
+    }
+    
+    return dict;
+}
+
+object JsonElementToObject(JsonElement element)
+{
+    return element.ValueKind switch
+    {
+        JsonValueKind.String => element.GetString() ?? "",
+        JsonValueKind.Number => element.TryGetInt32(out var i) ? i : element.GetDouble(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Array => element.EnumerateArray().Select(JsonElementToObject).ToList(),
+        JsonValueKind.Object => JsonElementToDictNested(element),
+        _ => ""
+    };
+}
+
+Dictionary<string, object> JsonElementToDictNested(JsonElement element)
+{
+    var dict = new Dictionary<string, object>();
+    foreach (var prop in element.EnumerateObject())
+    {
+        dict[prop.Name] = JsonElementToObject(prop.Value);
+    }
+    return dict;
+}
+
+ProfileProvenance ParseProvenance(JsonElement root)
+{
+    var author = "";
+    var createdAt = "";
+    var source = "";
+    
+    if (root.TryGetProperty("provenance", out var prov))
+    {
+        if (prov.TryGetProperty("author", out var a))
+            author = a.GetString() ?? "";
+        if (prov.TryGetProperty("createdAt", out var c))
+            createdAt = c.GetString() ?? "";
+        if (prov.TryGetProperty("source", out var s))
+            source = s.GetString() ?? "";
+    }
+    
+    return new ProfileProvenance(author, createdAt, source);
+}
+
+HardwareFingerprint ParseHardware(JsonElement root)
+{
+    var chip = "Unknown";
+    var memoryGb = 0;
+    var modelIdentifier = "Unknown";
+    
+    if (root.TryGetProperty("hardware", out var hw))
+    {
+        if (hw.TryGetProperty("chip", out var c))
+            chip = c.GetString() ?? "Unknown";
+        if (hw.TryGetProperty("memoryGb", out var m))
+            memoryGb = m.GetInt32();
+        if (hw.TryGetProperty("modelIdentifier", out var mi))
+            modelIdentifier = mi.GetString() ?? "Unknown";
+    }
+    
+    return new HardwareFingerprint(chip, memoryGb, modelIdentifier);
+}
+
+SamplerSettings? ParseSampler(JsonElement root)
+{
+    if (!root.TryGetProperty("sampler", out var samplerEl))
+        return null;
+
+    var type = "default";
+    Dictionary<string, object>? parameters = null;
+    
+    if (samplerEl.TryGetProperty("type", out var t))
+        type = t.GetString() ?? "default";
+    
+    if (samplerEl.TryGetProperty("parameters", out var p) && p.ValueKind == JsonValueKind.Object)
+    {
+        parameters = new Dictionary<string, object>();
+        foreach (var prop in p.EnumerateObject())
+        {
+            parameters[prop.Name] = JsonElementToObject(prop.Value);
+        }
+        if (parameters.Count == 0)
+            parameters = null;
+    }
+    
+    return new SamplerSettings(type, parameters);
 }
