@@ -206,9 +206,9 @@ public class RuntimeEngineTests
         // Act
         var serialized = System.Text.Json.JsonSerializer.Serialize(profile);
 
-        // Assert
+        // Assert: Verify engine and model ID appear in serialized profile
         Assert.Contains(engine, serialized);
-        Assert.Contains(modelId, serialized);  // Model ID with "/" stored as-is in JSON
+        Assert.Contains(modelId, serialized);
     }
 
     [Fact]

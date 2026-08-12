@@ -46,16 +46,23 @@ public class OpenCodeEmitter : IHarnessEmitter
 
     private JsonObject BuildOpenCodeConfig(Profile profile)
     {
+        var metadata = new JsonObject
+        {
+            ["generatedFrom"] = profile.Id,
+            ["tier"] = profile.Tier,
+            ["generatedAt"] = DateTime.UtcNow.ToString("O")
+        };
+
+        if (profile.Hardware != null)
+        {
+            metadata["memoryGb"] = profile.Hardware.MemoryGb;
+        }
+
         var config = new JsonObject
         {
             ["$schema"] = "https://opencode.ai/config.json",
             ["model"] = GetModelForTier(profile.Tier),
-            ["metadata"] = new JsonObject
-            {
-                ["generatedFrom"] = profile.Id,
-                ["tier"] = profile.Tier,
-                ["generatedAt"] = profile.Provenance?.CreatedAt ?? DateTime.UtcNow.ToString("O")
-            }
+            ["metadata"] = metadata
         };
 
         // Extract vscode settings
@@ -86,12 +93,6 @@ public class OpenCodeEmitter : IHarnessEmitter
 
             if (samplerConfig.Count > 0)
                 config["sampler"] = samplerConfig;
-        }
-
-        // Include hardware memory if available
-        if (profile.Hardware?.MemoryGb > 0)
-        {
-            config["hardware"] = new JsonObject { ["memory"] = profile.Hardware.MemoryGb };
         }
 
         return config;
