@@ -136,7 +136,7 @@ profiles.MapDelete("/{id}", (string id, ILogger<Program> log) => DeleteProfile(i
     .WithName("DeleteProfile")
     .WithDescription("Delete a profile from storage");
 
-app.Run("http://localhost:5000");
+app.Run();
 
 // Profile CRUD Handlers
 
