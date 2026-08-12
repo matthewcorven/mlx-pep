@@ -203,4 +203,22 @@ public class ProfileReader
     {
         return profiles.Where(p => p.Community != null).ToList();
     }
+
+    /// <summary>
+    /// Filters profiles by engine.
+    /// </summary>
+    public List<Profile> FilterByEngine(List<Profile> profiles, string engine)
+    {
+        return profiles.Where(p => 
+            p.Engine.Equals(engine, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    /// <summary>
+    /// Filters profiles by multiple engines (OR operation).
+    /// </summary>
+    public List<Profile> FilterByEngines(List<Profile> profiles, params string[] engines)
+    {
+        var engineSet = new HashSet<string>(engines, StringComparer.OrdinalIgnoreCase);
+        return profiles.Where(p => engineSet.Contains(p.Engine)).ToList();
+    }
 }

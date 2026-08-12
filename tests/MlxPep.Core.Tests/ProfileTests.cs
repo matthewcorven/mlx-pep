@@ -387,6 +387,221 @@ public class ProfileTests
         Assert.Equal(2, publishable.Count);
         Assert.All(publishable, p => Assert.NotNull(p.Community));
     }
+
+    [Fact]
+    public void ProfileValidator_ValidateForLocalUse_ValidProfile_Succeeds()
+    {
+        // Arrange
+        var validator = new ProfileValidator();
+        var profile = CreateTestProfile(community: null);
+
+        // Act
+        var result = validator.ValidateForLocalUse(profile);
+
+        // Assert
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
+    }
+
+    [Fact]
+    public void ProfileValidator_ValidateForLocalUse_MissingEngine_Fails()
+    {
+        // Arrange
+        var validator = new ProfileValidator();
+        var profile = new Profile(
+            SchemaVersion: 1,
+            Id: "test-profile-001",
+            ModelHfId: "meta-llama/Llama-2-7b",
+            Tier: "experimental",
+            Engine: "",  // Empty engine
+            System: new Dictionary<string, object> { { "os", "macOS" } },
+            OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
+            Harness: new Dictionary<string, object> { { "backend", "mlx" } },
+            Provenance: new ProfileProvenance("test-author", DateTime.UtcNow.ToIso8601String(), "community"),
+            Hardware: new HardwareFingerprint("Apple M2", 16, "MacBookPro18,2"),
+            Sampler: null,
+            Community: null
+        );
+
+        // Act
+        var result = validator.ValidateForLocalUse(profile);
+
+        // Assert
+        Assert.False(result.IsValid);
+        Assert.Contains("Engine is required", string.Join("; ", result.Errors));
+    }
+
+    [Fact]
+    public void ProfileValidator_ValidateForLocalUse_UnsupportedEngine_Fails()
+    {
+        // Arrange
+        var validator = new ProfileValidator();
+        var profile = new Profile(
+            SchemaVersion: 1,
+            Id: "test-profile-001",
+            ModelHfId: "meta-llama/Llama-2-7b",
+            Tier: "experimental",
+            Engine: "unsupported-engine",
+            System: new Dictionary<string, object> { { "os", "macOS" } },
+            OMLXSettings: new Dictionary<string, object> { { "compute_units", "ALL" } },
+            Harness: new Dictionary<string, object> { { "backend", "mlx" } },
+            Provenance: new ProfileProvenance("test-author", DateTime.UtcNow.ToIso8601String(), "community"),
+            Hardware: new HardwareFingerprint("Apple M2", 16, "MacBookPro18,2"),
+            Sampler: null,
+            Community: null
+        );
+
+        // Act
+        var result = validator.ValidateForLocalUse(profile);
+
+        // Assert
+        Assert.False(result.IsValid);
+        Assert.Contains("Unsupported engine", string.Join("; ", result.Errors));
+    }
+
+    [Fact]
+    public void RuntimeEngineRegistry_GetEngine_ReturnsCorrectEngine()
+    {
+        // Arrange
+        var registry = new RuntimeEngineRegistry();
+
+        // Act & Assert
+        Assert.NotNull(registry.GetEngine("omlx"));
+        Assert.NotNull(registry.GetEngine("mlx-lm"));
+        Assert.NotNull(registry.GetEngine("llama.cpp"));
+        Assert.NotNull(registry.GetEngine("vllm"));
+        Assert.Null(registry.GetEngine("unknown"));
+    }
+
+    [Fact]
+    public void RuntimeEngineRegistry_IsSupported_ChecksEngineAvailability()
+    {
+        // Arrange
+        var registry = new RuntimeEngineRegistry();
+
+        // Act & Assert
+        Assert.True(registry.IsSupported("omlx"));
+        Assert.True(registry.IsSupported("mlx-lm"));
+        Assert.True(registry.IsSupported("llama.cpp"));
+        Assert.True(registry.IsSupported("vllm"));
+        Assert.False(registry.IsSupported("unsupported"));
+    }
+
+    [Fact]
+    public void OMLXEngine_ValidateSettings_RequiresOMLXSettings()
+    {
+        // Arrange
+        var engine = new OMLXEngine();
+        var profileWithoutSettings = new Profile(
+            SchemaVersion: 1,
+            Id: "test",
+            ModelHfId: "model",
+            Tier: "exp",
+            Engine: "omlx",
+            System: new Dictionary<string, object>(),
+            OMLXSettings: new Dictionary<string, object>(),  // Empty
+            Harness: new Dictionary<string, object>(),
+            Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "source"),
+            Hardware: new HardwareFingerprint("chip", 16, "model")
+        );
+
+        // Act
+        var result = engine.ValidateSettings(profileWithoutSettings);
+
+        // Assert - empty dict should fail
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void ProfileReader_FilterByEngine_ReturnsCorrectProfiles()
+    {
+        // Arrange
+        var reader = new ProfileReader();
+        var profiles = new List<Profile>
+        {
+            CreateTestProfile(),  // Engine: "mlx"
+            new Profile(
+                SchemaVersion: 1,
+                Id: "llama-cpp-profile",
+                ModelHfId: "meta-llama/Llama-2-13b",
+                Tier: "production",
+                Engine: "llama.cpp",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("Intel", 32, "standard")
+            ),
+            new Profile(
+                SchemaVersion: 1,
+                Id: "vllm-profile",
+                ModelHfId: "meta-llama/Llama-2-70b",
+                Tier: "production",
+                Engine: "vllm",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("GPU", 80, "gpu-cluster")
+            ),
+        };
+
+        // Act
+        var mlxProfiles = reader.FilterByEngine(profiles, "mlx");
+        var llamaCppProfiles = reader.FilterByEngine(profiles, "llama.cpp");
+        var vllmProfiles = reader.FilterByEngine(profiles, "vllm");
+
+        // Assert
+        Assert.Single(mlxProfiles);
+        Assert.Single(llamaCppProfiles);
+        Assert.Single(vllmProfiles);
+        Assert.Equal("test-profile-001", mlxProfiles[0].Id);
+        Assert.Equal("llama-cpp-profile", llamaCppProfiles[0].Id);
+        Assert.Equal("vllm-profile", vllmProfiles[0].Id);
+    }
+
+    [Fact]
+    public void ProfileReader_FilterByEngines_ReturnsMultipleEngines()
+    {
+        // Arrange
+        var reader = new ProfileReader();
+        var profiles = new List<Profile>
+        {
+            CreateTestProfile(),  // Engine: "mlx"
+            new Profile(
+                SchemaVersion: 1,
+                Id: "mlx-lm-profile",
+                ModelHfId: "mlx-community/Llama-2-7b-chat-4bit",
+                Tier: "experimental",
+                Engine: "mlx-lm",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("Apple M2", 16, "MacBookAir")
+            ),
+            new Profile(
+                SchemaVersion: 1,
+                Id: "vllm-profile",
+                ModelHfId: "meta-llama/Llama-2-70b",
+                Tier: "production",
+                Engine: "vllm",
+                System: new Dictionary<string, object>(),
+                OMLXSettings: new Dictionary<string, object>(),
+                Harness: new Dictionary<string, object>(),
+                Provenance: new ProfileProvenance("author", DateTime.UtcNow.ToIso8601String(), "community"),
+                Hardware: new HardwareFingerprint("GPU", 80, "gpu-cluster")
+            ),
+        };
+
+        // Act
+        var mlxVariants = reader.FilterByEngines(profiles, "mlx", "mlx-lm");
+
+        // Assert
+        Assert.Equal(2, mlxVariants.Count);
+        Assert.Contains(mlxVariants, p => p.Engine == "mlx");
+        Assert.Contains(mlxVariants, p => p.Engine == "mlx-lm");
+    }
 }
 
 /// <summary>

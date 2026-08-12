@@ -18,6 +18,13 @@ public class ProfileValidator
         "speed-optimized", "accuracy-optimized"
     };
 
+    private readonly RuntimeEngineRegistry _engineRegistry;
+
+    public ProfileValidator(RuntimeEngineRegistry? engineRegistry = null)
+    {
+        _engineRegistry = engineRegistry ?? new RuntimeEngineRegistry();
+    }
+
     /// <summary>
     /// Validates a profile for local use only.
     /// </summary>
@@ -30,6 +37,11 @@ public class ProfileValidator
 
         if (string.IsNullOrWhiteSpace(profile.ModelHfId))
             errors.Add("Model HuggingFace ID is required.");
+
+        if (string.IsNullOrWhiteSpace(profile.Engine))
+            errors.Add("Engine is required.");
+        else if (!_engineRegistry.IsSupported(profile.Engine))
+            errors.Add($"Unsupported engine '{profile.Engine}'. Supported engines: {string.Join(", ", _engineRegistry.GetEngineIds())}");
 
         return errors.Any()
             ? new ValidationResult(false, errors)
@@ -86,6 +98,14 @@ public class ProfileValidator
         return errors.Any()
             ? new ValidationResult(false, errors)
             : new ValidationResult(true, new List<string>());
+    }
+
+    /// <summary>
+    /// Validates engine-specific settings using the appropriate runtime engine handler.
+    /// </summary>
+    public ValidationResult ValidateEngineSettings(Profile profile)
+    {
+        return _engineRegistry.ValidateProfileForEngine(profile);
     }
 
     private static bool IsValidDedupKey(string key)
