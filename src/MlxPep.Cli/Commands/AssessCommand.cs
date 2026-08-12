@@ -21,7 +21,7 @@ public class AssessCommand
         CommandContext? context = null)
     {
         context ??= new CommandContext();
-        
+
         try
         {
             // Create test profiles for the model
@@ -85,7 +85,7 @@ public class AssessCommand
                     Console.WriteLine($"Generated {profiles.Count} profiles");
                 }
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)
