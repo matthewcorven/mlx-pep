@@ -1,46 +1,162 @@
 namespace MlxPep.Cli.Commands;
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using MlxPep.Core;
+
 /// <summary>
 /// Handler for `mlx-pep apply` command.
-/// Applies a profile to the local system or harness.
+/// Applies a profile harness block to local system configuration.
+/// Issue #16: harness apply profile to Copilot CLI + VS Code/Insiders
 /// </summary>
 public class ApplyCommand
 {
     public async Task<CommandResult> ExecuteAsync(
-        string profile,
+        string profilePath,
         string? harness = null,
         string? output = null,
         bool dryRun = false,
         bool backup = true,
+        bool noConfirm = false,
+        bool insiders = false,
         CommandContext? context = null)
     {
         context ??= new CommandContext();
-
+        
         try
         {
-            if (context.JsonOutput)
+            // Validate harness parameter
+            if (string.IsNullOrEmpty(harness) || (harness != "vscode" && harness != "copilot-cli"))
             {
-                var result = new
+                var err = "Error: --harness must be 'vscode' or 'copilot-cli'";
+                if (context.JsonOutput)
                 {
-                    command = "apply",
-                    status = "ok",
-                    profile = profile,
-                    harness = harness ?? "opencode",
-                    dryRun = dryRun
-                };
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-            }
-            else
-            {
-                Console.WriteLine($"Applying profile: {profile}");
-                Console.WriteLine($"Target harness: {harness ?? "opencode"}");
+                    return CommandResult.Failure(err, 1);
+                }
+                Console.Error.WriteLine(err);
+                return CommandResult.Failure(err, 1);
             }
 
-            return CommandResult.Success();
+            // Load and parse profile
+            var profileReader = new ProfileReader();
+            var profiles = await profileReader.ReadProfileSetAsync(profilePath);
+            
+            if (profiles.Count == 0)
+            {
+                var err = $"Error: No profiles found in {profilePath}";
+                if (context.JsonOutput)
+                {
+                    return CommandResult.Failure(err, 1);
+                }
+                Console.Error.WriteLine(err);
+                return CommandResult.Failure(err, 1);
+            }
+
+            var profile = profiles[0]; // Use the first profile
+
+            // Select applier based on harness type
+            IHarnessApplier applier = harness switch
+            {
+                "vscode" => new VscodeHarnessApplier(),
+                "copilot-cli" => new CopilotCliHarnessApplier(),
+                _ => throw new InvalidOperationException($"Unknown harness: {harness}")
+            };
+
+            // Apply the profile
+            var result = await applier.ApplyAsync(profile, isDryRun: dryRun, requestedInsiders: insiders);
+
+            // Print dry-run output
+            if (dryRun || result.Changes.Any(c => c.Status != "unchanged"))
+            {
+                PrintDryRunOutput(result, context.JsonOutput);
+            }
+
+            // If not dry-run and apply succeeded, print success message
+            if (!dryRun && result.Success)
+            {
+                if (!context.JsonOutput)
+                {
+                    Console.WriteLine($"✅ Successfully applied profile '{profile.Id}' to {harness}");
+                    if (!string.IsNullOrEmpty(result.BackupLocation))
+                    {
+                        Console.WriteLine($"📦 Backup created at: {result.BackupLocation}");
+                    }
+                }
+            }
+
+            // Output JSON if requested
+            if (context.JsonOutput)
+            {
+                var jsonResult = new
+                {
+                    command = "apply",
+                    status = result.Success ? "ok" : "error",
+                    profileId = profile.Id,
+                    harness = harness,
+                    isDryRun = dryRun,
+                    error = result.Error,
+                    backupLocation = result.BackupLocation,
+                    changes = result.Changes.Select(c => new
+                    {
+                        path = c.FilePath,
+                        status = c.Status
+                    })
+                };
+                Console.WriteLine(JsonSerializer.Serialize(jsonResult, new JsonSerializerOptions { WriteIndented = true }));
+            }
+
+            return result.Success 
+                ? CommandResult.Success()
+                : CommandResult.Failure(result.Error ?? "Apply failed", 1);
         }
         catch (Exception ex)
         {
-            return CommandResult.Failure($"Failed to apply profile: {ex.Message}");
+            var err = $"Apply command failed: {ex.Message}";
+            if (context.JsonOutput)
+            {
+                var json = new { error = err, exit_code = 1 };
+                Console.WriteLine(JsonSerializer.Serialize(json));
+            }
+            else
+            {
+                Console.Error.WriteLine(err);
+            }
+            return CommandResult.Failure(err, 1);
         }
+    }
+
+    private static void PrintDryRunOutput(HarnessApplyResult result, bool jsonOutput)
+    {
+        if (jsonOutput)
+            return; // JSON output already handled
+
+        Console.WriteLine();
+        Console.WriteLine("=== DRY-RUN: Harness Apply ===");
+        Console.WriteLine($"Profile: {result.ProfileId}");
+        Console.WriteLine($"Harness: {result.Harness}");
+        Console.WriteLine();
+
+        foreach (var change in result.Changes)
+        {
+            if (!string.IsNullOrEmpty(change.DiffOutput))
+            {
+                Console.WriteLine(change.DiffOutput);
+            }
+        }
+
+        if (result.IsDryRun)
+        {
+            Console.WriteLine("--- No actual changes written (--dry-run) ---");
+        }
+        else
+        {
+            Console.WriteLine($"--- Changes {(result.Success ? "applied" : "failed")} ---");
+        }
+
+        Console.WriteLine();
     }
 }
