@@ -1,10 +1,10 @@
 namespace MlxPep.Service.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for rate limiting on the community profile service.
@@ -102,8 +102,8 @@ public class FixedWindowRateLimitTests
         const int limitPerClient = 50;
 
         // Act: Simulate requests from multiple clients
-        var requests = new[] 
-        { 
+        var requests = new[]
+        {
             ("client-1", 30),
             ("client-2", 20),
             ("client-3", 50),

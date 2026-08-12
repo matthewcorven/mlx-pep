@@ -28,11 +28,11 @@ static bool ValidateAuthToken(string? authHeader)
 async Task AuthenticationMiddleware(HttpContext context, RequestDelegate next)
 {
     var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-    
+
     if (IsWriteOperation(context))
     {
         logger.LogDebug("Write operation {Method} {Path} - checking authentication", context.Request.Method, context.Request.Path);
-        
+
         var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
         if (!ValidateAuthToken(authHeader))
         {
@@ -41,10 +41,10 @@ async Task AuthenticationMiddleware(HttpContext context, RequestDelegate next)
             await context.Response.WriteAsJsonAsync(new { message = "Unauthorized: valid token required for write operations" });
             return;
         }
-        
+
         logger.LogDebug("Write operation {Method} {Path} - authorization successful", context.Request.Method, context.Request.Path);
     }
-    
+
     await next(context);
 }
 

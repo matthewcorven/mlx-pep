@@ -1,10 +1,10 @@
 namespace MlxPep.Service.Tests;
 
-using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Xunit;
 
 /// <summary>
 /// Comprehensive tests for IP/CIDR/hostname blocking middleware.
@@ -151,8 +151,8 @@ public class CIDRBlockingTests
     public void CIDRBlocker_ValidateCIDRFormat()
     {
         // Arrange
-        var validCIDRs = new[] 
-        { 
+        var validCIDRs = new[]
+        {
             "192.168.1.0/24",
             "10.0.0.0/8",
             "172.16.0.0/12"
@@ -172,8 +172,8 @@ public class CIDRBlockingTests
     public void CIDRBlocker_RejectInvalidCIDRFormat()
     {
         // Arrange
-        var invalidCIDRs = new[] 
-        { 
+        var invalidCIDRs = new[]
+        {
             "192.168.1.0",      // Missing prefix
             "192.168.1.0/",     // Missing prefix length
             "192.168.1.0/33",   // Invalid prefix length
@@ -197,8 +197,8 @@ public class CIDRBlockingTests
     public void CIDRBlocker_SupportsMultipleCIDRRanges()
     {
         // Arrange
-        var blockedCIDRs = new[] 
-        { 
+        var blockedCIDRs = new[]
+        {
             "192.168.1.0/24",
             "10.0.0.0/8",
             "172.16.0.0/12"
@@ -280,8 +280,8 @@ public class HostnameBlockingTests
     public void HostnameBlocker_ValidatesHostnameFormat()
     {
         // Arrange
-        var validHostnames = new[] 
-        { 
+        var validHostnames = new[]
+        {
             "example.com",
             "sub.example.com",
             "my-domain.co.uk"
@@ -298,8 +298,8 @@ public class HostnameBlockingTests
     public void HostnameBlocker_RejectsInvalidHostnames()
     {
         // Arrange
-        var invalidHostnames = new[] 
-        { 
+        var invalidHostnames = new[]
+        {
             "-invalid.com",     // Starts with dash
             "invalid-.com",     // Ends with dash
             "invalid..com",     // Double dot
@@ -367,8 +367,8 @@ public class BlockingMiddlewareConfigurationTests
         };
 
         // Act
-        var allBlocked = settings.IpBlocklist.Length + 
-                        settings.CidrBlocklist.Length + 
+        var allBlocked = settings.IpBlocklist.Length +
+                        settings.CidrBlocklist.Length +
                         settings.HostnameBlocklist.Length;
 
         // Assert: Should have 2 IPs + 1 CIDR + 1 hostname = 4 total
@@ -502,7 +502,7 @@ public class BlockingPriorityTests
         // Act: Check all mechanisms
         if (blockedIPs.Contains(requestIP))
             blocked = true;
-        
+
         if (blockedHosts.Any(h => h.Equals(requestHost, StringComparison.OrdinalIgnoreCase)))
             blocked = true;
 
