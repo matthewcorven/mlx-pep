@@ -6,7 +6,7 @@ namespace MlxPep.Cli.Commands;
 public class CommandContext
 {
     public bool JsonOutput { get; set; }
-    
+
     public CommandContext(bool jsonOutput = false)
     {
         JsonOutput = jsonOutput;

@@ -16,7 +16,7 @@ public class HFCacheReader : IHFCacheReader
         _cacheDir = cacheDir
             ?? Environment.GetEnvironmentVariable("HF_HUB_CACHE")
             ?? Path.Combine(
-                Environment.GetEnvironmentVariable("HF_HOME") 
+                Environment.GetEnvironmentVariable("HF_HOME")
                     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "huggingface"),
                 "hub");
     }

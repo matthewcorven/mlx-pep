@@ -15,7 +15,7 @@ public class ApplyCommand
         CommandContext? context = null)
     {
         context ??= new CommandContext();
-        
+
         try
         {
             if (context.JsonOutput)
@@ -35,7 +35,7 @@ public class ApplyCommand
                 Console.WriteLine($"Applying profile: {profile}");
                 Console.WriteLine($"Target harness: {harness ?? "opencode"}");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)

@@ -8,7 +8,7 @@ public record Model(
 )
 {
     public string GetSize() => FormatBytes(SizeBytes);
-    
+
     private static string FormatBytes(long bytes)
     {
         string[] sizes = { "B", "KB", "MB", "GB" };

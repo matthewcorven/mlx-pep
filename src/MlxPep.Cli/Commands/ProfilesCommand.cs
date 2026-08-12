@@ -24,7 +24,7 @@ public class ProfilesListCommand
             {
                 Console.WriteLine("Community profiles:");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)
@@ -55,7 +55,7 @@ public class ProfilesSearchCommand
             {
                 Console.WriteLine($"Searching profiles for: {query}");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)
@@ -85,7 +85,7 @@ public class ProfilesPullCommand
             {
                 Console.WriteLine($"Pulling profile: {profileId}");
             }
-            
+
             return CommandResult.Success();
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Azure.Storage.Blobs;
 using MlxPep.Core;
-using System.Text.Json;
 
 // Middleware to check authentication for write operations
 static bool IsWriteOperation(HttpContext context)
@@ -133,7 +133,7 @@ static async Task<IResult> ListProfiles(
     ILogger<Program> logger)
 {
     logger.LogDebug("ListProfiles called with filters: modelHfId={ModelHfId}, tier={Tier}", modelHfId, tier);
-    
+
     if (blobContainer == null)
     {
         logger.LogWarning("Azure Blob Storage not available for listing profiles");
@@ -150,7 +150,7 @@ static async Task<IResult> ListProfiles(
                 var blobClient = blobContainer.GetBlobClient(blobItem.Name);
                 var download = await blobClient.DownloadAsync();
                 var profile = await JsonSerializer.DeserializeAsync<Profile>(download.Value.Content);
-                
+
                 if (profile != null)
                 {
                     // Apply filters if specified
@@ -158,7 +158,7 @@ static async Task<IResult> ListProfiles(
                         continue;
                     if (!string.IsNullOrEmpty(tier) && profile.Tier != tier)
                         continue;
-                    
+
                     profiles.Add(profile);
                 }
             }
@@ -167,7 +167,7 @@ static async Task<IResult> ListProfiles(
                 logger.LogDebug("Error reading profile blob {BlobName}: {Exception}", blobItem.Name, ex.Message);
             }
         }
-        
+
         logger.LogDebug("ListProfiles returned {Count} profiles", profiles.Count);
         return Results.Ok(new { profiles });
     }
@@ -184,7 +184,7 @@ static async Task<IResult> GetProfile(
     ILogger<Program> logger)
 {
     logger.LogDebug("GetProfile called for profile {ProfileId}", id);
-    
+
     if (blobContainer == null)
     {
         logger.LogWarning("Azure Blob Storage not available for getting profile {ProfileId}", id);
@@ -196,13 +196,13 @@ static async Task<IResult> GetProfile(
         var blobClient = blobContainer.GetBlobClient($"{id}.json");
         var download = await blobClient.DownloadAsync();
         var profile = await JsonSerializer.DeserializeAsync<Profile>(download.Value.Content);
-        
+
         if (profile == null)
         {
             logger.LogDebug("Profile {ProfileId} not found or invalid JSON", id);
             return Results.NotFound(new { message = $"Profile {id} not found" });
         }
-        
+
         logger.LogDebug("Profile {ProfileId} retrieved successfully", id);
         return Results.Ok(profile);
     }
@@ -224,7 +224,7 @@ static async Task<IResult> PublishProfile(
     ILogger<Program> logger)
 {
     logger.LogDebug("PublishProfile called for profile {ProfileId}", profile.Id);
-    
+
     if (blobContainer == null)
     {
         logger.LogWarning("Azure Blob Storage not available for publishing profile");
@@ -239,7 +239,7 @@ static async Task<IResult> PublishProfile(
             logger.LogWarning("PublishProfile: Invalid profile - missing required fields");
             return Results.BadRequest(new { message = "Profile must have id and modelHfId" });
         }
-        
+
         var blobClient = blobContainer.GetBlobClient($"{profile.Id}.json");
         var json = JsonSerializer.Serialize(profile);
         var stream = new MemoryStream();
@@ -247,7 +247,7 @@ static async Task<IResult> PublishProfile(
         await writer.WriteAsync(json);
         await writer.FlushAsync();
         stream.Position = 0;
-        
+
         await blobClient.UploadAsync(stream, overwrite: true);
         logger.LogDebug("Profile {ProfileId} published to blob storage", profile.Id);
         return Results.Created($"/api/v1/profiles/{profile.Id}", profile);
@@ -266,7 +266,7 @@ static async Task<IResult> UpdateProfile(
     ILogger<Program> logger)
 {
     logger.LogDebug("UpdateProfile called for profile {ProfileId}", id);
-    
+
     if (blobContainer == null)
     {
         logger.LogWarning("Azure Blob Storage not available for updating profile");
@@ -283,7 +283,7 @@ static async Task<IResult> UpdateProfile(
             logger.LogDebug("Profile {ProfileId} not found for update", id);
             return Results.NotFound(new { message = $"Profile {id} not found" });
         }
-        
+
         // Update the profile with the provided ID
         var updatedProfile = profile with { Id = id };
         var json = JsonSerializer.Serialize(updatedProfile);
@@ -292,7 +292,7 @@ static async Task<IResult> UpdateProfile(
         await writer.WriteAsync(json);
         await writer.FlushAsync();
         stream.Position = 0;
-        
+
         await blobClient.UploadAsync(stream, overwrite: true);
         logger.LogDebug("Profile {ProfileId} updated in blob storage", id);
         return Results.Ok(updatedProfile);
@@ -310,7 +310,7 @@ static async Task<IResult> DeleteProfile(
     ILogger<Program> logger)
 {
     logger.LogDebug("DeleteProfile called for profile {ProfileId}", id);
-    
+
     if (blobContainer == null)
     {
         logger.LogWarning("Azure Blob Storage not available for deleting profile");
@@ -321,13 +321,13 @@ static async Task<IResult> DeleteProfile(
     {
         var blobClient = blobContainer.GetBlobClient($"{id}.json");
         var deleted = await blobClient.DeleteIfExistsAsync();
-        
+
         if (!deleted.Value)
         {
             logger.LogDebug("Profile {ProfileId} not found for deletion", id);
             return Results.NotFound(new { message = $"Profile {id} not found" });
         }
-        
+
         logger.LogDebug("Profile {ProfileId} deleted from blob storage", id);
         return Results.NoContent();
     }

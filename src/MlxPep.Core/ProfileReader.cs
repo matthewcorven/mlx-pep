@@ -89,7 +89,7 @@ public class ProfileReader
         foreach (var profile in profiles)
         {
             var key = profile.Community?.DedupKey;
-            
+
             if (string.IsNullOrEmpty(key))
                 continue;
 
@@ -154,7 +154,7 @@ public class ProfileReader
             if (community == null)
                 return false;
 
-            if (!string.IsNullOrEmpty(community.Description) && 
+            if (!string.IsNullOrEmpty(community.Description) &&
                 community.Description.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase))
                 return true;
 
@@ -187,7 +187,7 @@ public class ProfileReader
                 return false;
 
             // Check hardware family if specified
-            if (!string.IsNullOrEmpty(hardwareFamily) && 
+            if (!string.IsNullOrEmpty(hardwareFamily) &&
                 !string.IsNullOrEmpty(community.HardwareFamily) &&
                 !community.HardwareFamily.Equals(hardwareFamily, StringComparison.OrdinalIgnoreCase))
                 return false;

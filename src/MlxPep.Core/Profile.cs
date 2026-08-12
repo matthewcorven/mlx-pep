@@ -12,38 +12,38 @@ using System.Text.Json.Serialization;
 public record Profile(
     [property: JsonPropertyName("schemaVersion")]
     int SchemaVersion,
-    
+
     [property: JsonPropertyName("id")]
     string Id,
-    
+
     [property: JsonPropertyName("modelHfId")]
     string ModelHfId,
-    
+
     [property: JsonPropertyName("tier")]
     string Tier,
-    
+
     [property: JsonPropertyName("engine")]
     string Engine,
-    
+
     [property: JsonPropertyName("system")]
     Dictionary<string, object> System,
-    
+
     [property: JsonPropertyName("omlx")]
     Dictionary<string, object> OMLXSettings,
-    
+
     [property: JsonPropertyName("harness")]
     Dictionary<string, object> Harness,
-    
+
     [property: JsonPropertyName("provenance")]
     ProfileProvenance Provenance,
-    
+
     [property: JsonPropertyName("hardware")]
     HardwareFingerprint Hardware,
-    
+
     [property: JsonPropertyName("sampler")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     SamplerSettings? Sampler = null,
-    
+
     [property: JsonPropertyName("community")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     CommunityMetadata? Community = null);
@@ -54,10 +54,10 @@ public record Profile(
 public record ProfileProvenance(
     [property: JsonPropertyName("author")]
     string Author,
-    
+
     [property: JsonPropertyName("createdAt")]
     string CreatedAt,
-    
+
     [property: JsonPropertyName("source")]
     string Source);
 
@@ -67,10 +67,10 @@ public record ProfileProvenance(
 public record HardwareFingerprint(
     [property: JsonPropertyName("chip")]
     string Chip,
-    
+
     [property: JsonPropertyName("memoryGb")]
     int MemoryGb,
-    
+
     [property: JsonPropertyName("modelIdentifier")]
     string ModelIdentifier);
 
@@ -80,7 +80,7 @@ public record HardwareFingerprint(
 public record SamplerSettings(
     [property: JsonPropertyName("type")]
     string Type,
-    
+
     [property: JsonPropertyName("parameters")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     Dictionary<string, object>? Parameters = null);
@@ -93,27 +93,27 @@ public record CommunityMetadata(
     [property: JsonPropertyName("tags")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     List<string>? Tags = null,
-    
+
     [property: JsonPropertyName("keywords")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     List<string>? Keywords = null,
-    
+
     [property: JsonPropertyName("description")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? Description = null,
-    
+
     [property: JsonPropertyName("minMemoryGb")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     int? MinMemoryGb = null,
-    
+
     [property: JsonPropertyName("maxMemoryGb")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     int? MaxMemoryGb = null,
-    
+
     [property: JsonPropertyName("hardwareFamily")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? HardwareFamily = null,
-    
+
     [property: JsonPropertyName("dedupKey")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     string? DedupKey = null);
