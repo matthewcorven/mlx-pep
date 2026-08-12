@@ -19,4 +19,4 @@ jobs:
 
       - name: Build and test
         run: |
-          dotnet test StreamingDigest.slnx --logger "console;verbosity=minimal"
+          dotnet test mlx-pep.slnx --logger "console;verbosity=minimal"
