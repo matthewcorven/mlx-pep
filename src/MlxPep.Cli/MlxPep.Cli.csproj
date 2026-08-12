@@ -7,4 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MlxPep.Core\MlxPep.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
 </Project>
