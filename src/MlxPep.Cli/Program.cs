@@ -10,7 +10,7 @@ var command = args[0];
 
 if (command == "models")
 {
-    if (args.Length < 2)
+    if (args.Length < 2 || IsHelpFlag(args[1]))
     {
         PrintModelsHelp();
         return 0;
@@ -20,10 +20,20 @@ if (command == "models")
     
     if (subcommand == "list")
     {
+        if (args.Contains("--help") || args.Contains("-h"))
+        {
+            PrintModelsListHelp();
+            return 0;
+        }
         await HandleModelsList(args);
     }
     else if (subcommand == "get")
     {
+        if (args.Contains("--help") || args.Contains("-h"))
+        {
+            PrintModelsGetHelp();
+            return 0;
+        }
         await HandleModelsGet(args);
     }
     else
