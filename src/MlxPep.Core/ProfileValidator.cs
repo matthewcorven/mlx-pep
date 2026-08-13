@@ -2,6 +2,7 @@ namespace MlxPep.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 /// <summary>
@@ -55,71 +56,172 @@ public class ProfileValidator
         var errors = new List<string>();
         var warnings = new List<string>();
 
+        Debug.WriteLine($"[ProfileValidator] Beginning validation for profile: {profile?.Id ?? "<null>"}");
+
         // Required fields
         if (profile.SchemaVersion != 1)
+        {
+            Debug.WriteLine($"[ProfileValidator] schemaVersion check failed: expected 1, got {profile.SchemaVersion}");
             errors.Add($"schemaVersion must be 1, got {profile.SchemaVersion}");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] schemaVersion check passed: {profile.SchemaVersion}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.Id))
+        {
+            Debug.WriteLine($"[ProfileValidator] id check failed: id is required and empty");
             errors.Add("id is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] id check passed: {profile.Id}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.ModelHfId))
+        {
+            Debug.WriteLine($"[ProfileValidator] modelHfId check failed: modelHfId is required and empty");
             errors.Add("modelHfId is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] modelHfId check passed: {profile.ModelHfId}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.Tier))
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check failed: tier is required and empty");
             errors.Add("tier is required");
+        }
         else if (!IsValidTier(profile.Tier))
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check failed: '{profile.Tier}' is not valid (must be 'high', 'balanced', or 'efficient')");
             errors.Add($"tier must be 'high', 'balanced', or 'efficient', got '{profile.Tier}'");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check passed: {profile.Tier}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.Engine))
+        {
+            Debug.WriteLine($"[ProfileValidator] engine check failed: engine is required and empty");
             errors.Add("engine is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] engine check passed: {profile.Engine}");
+        }
 
         // Validate required nested objects
         if (profile.Provenance == null)
+        {
+            Debug.WriteLine($"[ProfileValidator] provenance check failed: provenance is null");
             errors.Add("provenance is required");
+        }
         else
         {
+            Debug.WriteLine($"[ProfileValidator] provenance check passed: object present");
             if (string.IsNullOrWhiteSpace(profile.Provenance.Author))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.author check failed: empty");
                 errors.Add("provenance.author is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.author check passed: {profile.Provenance.Author}");
+            }
+
             if (string.IsNullOrWhiteSpace(profile.Provenance.CreatedAt))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.createdAt check failed: empty");
                 errors.Add("provenance.createdAt is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.createdAt check passed: {profile.Provenance.CreatedAt}");
+            }
+
             if (string.IsNullOrWhiteSpace(profile.Provenance.Source))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.source check failed: empty");
                 errors.Add("provenance.source is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.source check passed: {profile.Provenance.Source}");
+            }
         }
 
         if (profile.Hardware == null)
+        {
+            Debug.WriteLine($"[ProfileValidator] hardware check failed: hardware is null");
             errors.Add("hardware is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] hardware check passed: object present");
+        }
 
         // Validate unknown keys with warnings (forward compatibility)
         if (profile.System != null)
         {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.System.Count} system keys");
             foreach (var key in profile.System.Keys)
             {
                 if (!KnownSystemKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown system key found: '{key}'");
                     warnings.Add($"Unknown key in system: '{key}' (may be from a newer version)");
+                }
             }
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] system is null, skipping unknown key check");
         }
 
         if (profile.OMLXSettings != null)
         {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.OMLXSettings.Count} OMLX keys");
             foreach (var key in profile.OMLXSettings.Keys)
             {
                 if (!KnownOMLXKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown OMLX key found: '{key}'");
                     warnings.Add($"Unknown key in omlx: '{key}' (may be from a newer version)");
+                }
             }
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] omlxSettings is null, skipping unknown key check");
         }
 
         if (profile.Harness != null)
         {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.Harness.Count} harness keys");
             foreach (var key in profile.Harness.Keys)
             {
                 if (!KnownHarnessKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown harness key found: '{key}'");
                     warnings.Add($"Unknown key in harness: '{key}' (may be from a newer version)");
+                }
             }
         }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] harness is null, skipping unknown key check");
+        }
 
-        return errors.Any()
+        var result = errors.Any()
             ? new ValidationResult(false, errors, warnings)
             : new ValidationResult(true, new List<string>(), warnings);
+
+        Debug.WriteLine($"[ProfileValidator] Validation complete for profile {profile.Id}: Valid={result.IsValid}, Errors={result.Errors.Count}, Warnings={result.Warnings.Count}");
+        return result;
     }
 
     /// <summary>
@@ -130,32 +232,61 @@ public class ProfileValidator
         var errors = new List<string>();
         var warnings = new List<string>();
 
+        Debug.WriteLine($"[ProfileValidator] Beginning profile set validation: {profiles.Count} profiles");
+
         if (!profiles.Any())
+        {
+            Debug.WriteLine($"[ProfileValidator] Profile set is empty, validation passed");
             return new ValidationResult(true, new List<string>(), new List<string>());
+        }
 
         // Check for tier uniqueness
+        Debug.WriteLine($"[ProfileValidator] Checking tier uniqueness across {profiles.Count} profiles");
         var tierCounts = profiles
             .GroupBy(p => p.Tier, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.Count());
 
         foreach (var (tier, count) in tierCounts)
         {
+            Debug.WriteLine($"[ProfileValidator] Tier '{tier}' appears {count} time(s)");
             if (count > 1)
+            {
+                Debug.WriteLine($"[ProfileValidator] Tier uniqueness check failed: '{tier}' appears {count} times (expected exactly 1)");
                 errors.Add($"Tier '{tier}' appears {count} times in the profile set. Each tier must appear exactly once.");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] Tier '{tier}' uniqueness check passed");
+            }
         }
 
         // Validate each profile
+        Debug.WriteLine($"[ProfileValidator] Validating individual profiles in set");
         foreach (var profile in profiles)
         {
             var result = ValidateForLocalUse(profile);
             if (!result.IsValid)
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' validation failed with {result.Errors.Count} errors");
                 errors.AddRange(result.Errors.Select(e => $"Profile '{profile.Id}': {e}"));
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' validation passed");
+            }
+            if (result.Warnings.Any())
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' has {result.Warnings.Count} warnings");
+            }
             warnings.AddRange(result.Warnings);
         }
 
-        return errors.Any()
-            ? new ValidationResult(false, errors, warnings)
-            : new ValidationResult(true, new List<string>(), warnings);
+        var setValid = !errors.Any();
+        Debug.WriteLine($"[ProfileValidator] Profile set validation complete: Valid={setValid}, TotalErrors={errors.Count}, TotalWarnings={warnings.Count}");
+
+        return setValid
+            ? new ValidationResult(true, new List<string>(), warnings)
+            : new ValidationResult(false, errors, warnings);
     }
 
     private static bool IsValidTier(string tier) => tier switch
