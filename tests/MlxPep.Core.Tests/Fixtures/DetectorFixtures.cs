@@ -100,7 +100,7 @@ Storage:
     /// <summary>
     /// Expected values when parsing SystemProfilerHardwareOutput.
     /// </summary>
-    public static readonly (string ModelName, string ModelIdentifier, string Chip, int MemoryGb, 
+    public static readonly (string ModelName, string ModelIdentifier, string Chip, int MemoryGb,
         double? StorageFreeGb, int? StorageCapacityTb, int WiredLimitMb) ExpectedHardwareInfo =
         ("MacBook Pro", "MacBookPro18,1", "Apple M3 Pro", 18, 245.3, 0, 6144);  // 512 GB ≈ 0 TB when truncated to int
 
@@ -108,7 +108,7 @@ Storage:
     /// Expected values when parsing OmlxServerLog.
     /// Note: Shows latest values in log (reverse-scan finds these last).
     /// </summary>
-    public static readonly (string GuardTier, double? CeilingGb, double? MetalCapGb, int? WiredLimitMb) 
+    public static readonly (string GuardTier, double? CeilingGb, double? MetalCapGb, int? WiredLimitMb)
         ExpectedOmlxLogValues = ("high", 6.0, 2.5, 4096);  // Latest values in log
 }
 

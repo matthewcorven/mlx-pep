@@ -2,8 +2,8 @@ namespace MlxPep.Core.Tests;
 
 using System;
 using System.Text.Json;
-using Xunit;
 using MlxPep.Core.Detectors;
+using Xunit;
 
 /// <summary>
 /// Integration tests for detection system.

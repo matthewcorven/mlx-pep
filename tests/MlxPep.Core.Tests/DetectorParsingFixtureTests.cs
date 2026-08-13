@@ -3,9 +3,9 @@ namespace MlxPep.Core.Tests;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Xunit;
 using MlxPep.Core.Detectors;
 using MlxPep.Core.Tests.Fixtures;
+using Xunit;
 
 /// <summary>
 /// Unit tests for detector parsing logic using fixtures.
@@ -18,22 +18,22 @@ public class DetectorParsingFixtureTests
     {
         // Arrange
         var detector = new SystemDetector();
-        
+
         // We need to test the internal parsing logic. Since the methods are private,
         // we'll use reflection to access them.
         var type = typeof(SystemDetector);
-        var extractMatchMethod = type.GetMethod("ExtractMatch", 
+        var extractMatchMethod = type.GetMethod("ExtractMatch",
             BindingFlags.NonPublic | BindingFlags.Static,
             null,
             new[] { typeof(string), typeof(string), typeof(string) },
             null);
-        
+
         // Act - Parse fixture values using the private parsing method
-        var modelName = (string)extractMatchMethod!.Invoke(null, 
+        var modelName = (string)extractMatchMethod!.Invoke(null,
             new object[] { DetectorFixtures.SystemProfilerHardwareOutput, @"Model Name:\s+(.+)", "Unknown" })!;
-        var modelId = (string)extractMatchMethod!.Invoke(null, 
+        var modelId = (string)extractMatchMethod!.Invoke(null,
             new object[] { DetectorFixtures.SystemProfilerHardwareOutput, @"Model Identifier:\s+(.+)", "Unknown" })!;
-        var chip = (string)extractMatchMethod!.Invoke(null, 
+        var chip = (string)extractMatchMethod!.Invoke(null,
             new object[] { DetectorFixtures.SystemProfilerHardwareOutput, @"Chip:\s+(.+)", "Unknown" })!;
 
         // Assert
@@ -111,7 +111,7 @@ public class DetectorParsingFixtureTests
         var type = typeof(OmlxDetector);
         var parseLogMethod = type.GetMethod("ParseOmlxLog",
             BindingFlags.NonPublic | BindingFlags.Static);
-        
+
         if (parseLogMethod == null)
         {
             // Method doesn't exist as static, skip this test
@@ -123,7 +123,7 @@ public class DetectorParsingFixtureTests
         // by calling Detect() which should return non-null
         var detector = new OmlxDetector();
         var result = detector.Detect();
-        
+
         Assert.NotNull(result);
         Assert.NotNull(result.CurrentMemoryGuardTier);
     }
@@ -150,12 +150,12 @@ public class DetectorParsingFixtureTests
         // Assert - verify that latest values appear later in log (for reverse scan)
         var highTierIndex = log.LastIndexOf("Memory guard tier: high");
         var balancedTierIndex = log.LastIndexOf("Memory guard tier: balanced");
-        
+
         Assert.True(highTierIndex > balancedTierIndex, "Latest guard tier should appear later in log");
-        
+
         var ceiling6Index = log.LastIndexOf("ceiling=6.0GB");
         var ceiling8Index = log.LastIndexOf("ceiling=8.0GB");
-        
+
         Assert.True(ceiling6Index > ceiling8Index, "Latest ceiling should appear later in log");
     }
 
@@ -163,7 +163,7 @@ public class DetectorParsingFixtureTests
     public void SystemHardwareInfo_CanBeCreatedFromFixtureValues()
     {
         // Arrange
-        var (modelName, modelId, chip, memoryGb, storageFreeGb, storageCapacityTb, wiredLimitMb) 
+        var (modelName, modelId, chip, memoryGb, storageFreeGb, storageCapacityTb, wiredLimitMb)
             = DetectorFixtures.ExpectedHardwareInfo;
 
         // Act

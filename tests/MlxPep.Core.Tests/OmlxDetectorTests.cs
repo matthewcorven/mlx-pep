@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Xunit;
 using MlxPep.Core.Detectors;
+using Xunit;
 
 /// <summary>
 /// Unit tests for OmlxDetector.
@@ -92,7 +92,7 @@ public class OmlxDetectorTests
         for (int i = 0; i < 3; i++)
         {
             var result = detector.Detect();
-            
+
             // Assert
             Assert.NotNull(result);
             Assert.NotNull(result.CurrentMemoryGuardTier);
@@ -104,10 +104,10 @@ public class OmlxDetectorTests
     {
         // Arrange
         var detector = new OmlxDetector();
-        
+
         // Act
         var result = detector.Detect();
-        
+
         // Assert
         // Verify all required fields are present
         Assert.NotNull(result.ConfigPath);

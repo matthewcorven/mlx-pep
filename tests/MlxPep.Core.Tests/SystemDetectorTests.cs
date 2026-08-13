@@ -2,8 +2,8 @@ namespace MlxPep.Core.Tests;
 
 using System;
 using System.Collections.Generic;
-using Xunit;
 using MlxPep.Core.Detectors;
+using Xunit;
 
 /// <summary>
 /// Unit tests for SystemDetector.
@@ -78,7 +78,7 @@ public class SystemDetectorTests
         // Storage values may be null depending on system state
         if (result.StorageCapacityTb.HasValue)
             Assert.True(result.StorageCapacityTb > 0);
-        
+
         if (result.StorageFreeGb.HasValue)
             Assert.True(result.StorageFreeGb >= 0);
     }
@@ -109,7 +109,7 @@ public class SystemDetectorTests
         for (int i = 0; i < 3; i++)
         {
             var result = detector.Detect();
-            
+
             // Assert
             Assert.NotNull(result);
         }
@@ -123,10 +123,10 @@ public class SystemDetectorTests
     {
         // Arrange
         var detector = new SystemDetector();
-        
+
         // Act
         var result = detector.Detect();
-        
+
         // Assert
         // Verify all required fields are present
         Assert.NotNull(result.ModelName);
