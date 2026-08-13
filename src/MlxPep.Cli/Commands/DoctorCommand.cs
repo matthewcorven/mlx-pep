@@ -1,3 +1,6 @@
+using System.Text.Json;
+using MlxPep.Core.Diagnostics;
+
 namespace MlxPep.Cli.Commands;
 
 /// <summary>
@@ -6,40 +9,26 @@ namespace MlxPep.Cli.Commands;
 /// </summary>
 public class DoctorCommand
 {
+    private readonly DependencyDetectionService _detector;
+
+    public DoctorCommand(DependencyDetectionService? detector = null)
+    {
+        _detector = detector ?? new DependencyDetectionService();
+    }
+
     public async Task<CommandResult> ExecuteAsync(CommandContext context)
     {
         try
         {
+            var report = await _detector.DetectAsync();
+
             if (context.JsonOutput)
             {
-                var result = new
-                {
-                    command = "doctor",
-                    status = "ok",
-                    dependencies = new
-                    {
-                        dotnet = DetectDotnet(),
-                        hfCli = DetectHfCli(),
-                        python3 = DetectPython3(),
-                        omlx = DetectOmlx(),
-                        vsCode = DetectVsCode(),
-                        vsCodeInsiders = DetectVsCodeInsiders(),
-                        copilotCli = DetectCopilotCli()
-                    }
-                };
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                OutputJson(report);
             }
             else
             {
-                Console.WriteLine("mlx-pep doctor - Dependency Check");
-                Console.WriteLine();
-                Console.WriteLine("✓ dotnet: " + GetStatusString(DetectDotnet()));
-                Console.WriteLine("✓ hf CLI: " + GetStatusString(DetectHfCli()));
-                Console.WriteLine("✓ python3: " + GetStatusString(DetectPython3()));
-                Console.WriteLine("✓ oMLX: " + GetStatusString(DetectOmlx()));
-                Console.WriteLine("✓ VS Code: " + GetStatusString(DetectVsCode()));
-                Console.WriteLine("✓ VS Code Insiders: " + GetStatusString(DetectVsCodeInsiders()));
-                Console.WriteLine("✓ Copilot CLI: " + GetStatusString(DetectCopilotCli()));
+                OutputTable(report);
             }
 
             return CommandResult.Success();
@@ -50,58 +39,57 @@ public class DoctorCommand
         }
     }
 
-    private DependencyStatus DetectDotnet()
+    private void OutputJson(DependencyReport report)
     {
-        // TODO: Implement dotnet detection
-        return new DependencyStatus { Installed = true, Version = "10.0.0" };
+        var output = new
+        {
+            status = report.Status.ToString(),
+            generatedAt = report.GeneratedAt,
+            tools = report.Tools.Select(t => new
+            {
+                name = t.ToolName,
+                installed = t.Installed,
+                version = t.Version,
+                scope = t.Scope,
+                detectionMethod = t.DetectionMethod,
+                installGuidance = t.InstallGuidance,
+                message = t.Message,
+                detectedAt = t.DetectedAt
+            })
+        };
+
+        var json = JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true });
+        Console.WriteLine(json);
     }
 
-    private DependencyStatus DetectHfCli()
+    private void OutputTable(DependencyReport report)
     {
-        // TODO: Implement hf CLI detection
-        return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
-    }
+        Console.WriteLine("mlx-pep doctor - Dependency Check");
+        Console.WriteLine("==================================");
+        Console.WriteLine();
 
-    private DependencyStatus DetectPython3()
-    {
-        // TODO: Implement python3 detection
-        return new DependencyStatus { Installed = true, Version = "3.11.0" };
-    }
+        foreach (var tool in report.Tools)
+        {
+            var statusIcon = tool.Installed ? "✓" : "✗";
+            var statusText = tool.Installed 
+                ? $"Installed (v{tool.Version})" 
+                : "Not installed";
+            
+            Console.WriteLine($"{statusIcon} {tool.ToolName,-20} {statusText}");
+            
+            if (!string.IsNullOrEmpty(tool.InstallGuidance) && !tool.Installed)
+            {
+                Console.WriteLine($"  → {tool.InstallGuidance}");
+            }
+        }
 
-    private DependencyStatus DetectOmlx()
-    {
-        // TODO: Implement oMLX detection
-        return new DependencyStatus { Installed = false, Message = "Not installed" };
-    }
-
-    private DependencyStatus DetectVsCode()
-    {
-        // TODO: Implement VS Code detection
-        return new DependencyStatus { Installed = true, Version = "1.92.0" };
-    }
-
-    private DependencyStatus DetectVsCodeInsiders()
-    {
-        // TODO: Implement VS Code Insiders detection
-        return new DependencyStatus { Installed = false, Message = "Not installed" };
-    }
-
-    private DependencyStatus DetectCopilotCli()
-    {
-        // TODO: Implement Copilot CLI detection
-        return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
-    }
-
-    private string GetStatusString(DependencyStatus status)
-    {
-        if (status.Installed)
-            return $"Installed (v{status.Version})";
-        return $"Not installed ({status.Message})";
+        Console.WriteLine();
+        Console.WriteLine($"Overall status: {report.Status}");
     }
 }
 
 /// <summary>
-/// Status of a single dependency.
+/// Status of a single dependency (deprecated - use DependencyReport instead).
 /// </summary>
 public class DependencyStatus
 {
