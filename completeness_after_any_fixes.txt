@@ -1,57 +1,106 @@
-COMPLETENESS: 40%
+# RAI Completeness Assessment — PR #65
 
-RATIONALE:
-The doctor command implementation detects all 7 required dependencies and provides both table and JSON output modes. Core functionality works correctly on this system. However, critical defects in JSON output formatting and error handling prevent this from being production-ready.
+## Current Status: 45% RAI-Complete
 
-BLOCKING ISSUES (Must Fix Before Merge):
-1. CRITICAL - Double JSON output bug in HandleDoctor causing invalid JSON
-   - Issue: CliBuilder.HandleDoctor outputs the doctor JSON, then appends additional {"message":null,"exit_code":0} JSON
-   - Impact: Consumers expecting valid JSON will fail. Cannot parse output reliably.
-   - Estimated effort: 15 minutes
+### Rationale
+The dependency detection service implements sound architecture with probe abstraction, timeout handling, and graceful error paths. However, critical command injection vulnerabilities and data minimization gaps prevent approval.
 
-2. CRITICAL - Version extraction bug for tools with non-standard version output
-   - Issue: ExtractVersion only handles "X.Y.Z" format; fails for tools outputting "X.Y.Z-suffix" or other formats
-   - Detected: Copilot CLI outputs "1.0.79." (trailing dot), which should be "1.0.79"
-   - Impact: Malformed version strings in output; unprofessional appearance
-   - Estimated effort: 20 minutes
+### Scoring Breakdown
 
-3. BLOCKING - Empty/stub test file
-   - Issue: UnitTest1.cs is empty (only has empty Test1() method)
-   - Tests for DoctorCommand are present but original stub test remains
-   - Estimated effort: 5 minutes (just remove it)
+**Strengths (60/100 before fixes):**
+- ✅ Probe-based architecture enables testing (5/5)
+- ✅ Process isolation with timeouts (4/5)
+- ✅ No shell execution (`UseShellExecute=false`) (5/5)
+- ✅ Graceful error handling; never crashes (4/5)
+- ✅ Hardcoded paths prevent traversal (4/5)
+- ✅ Read-only tool probes; no side effects (5/5)
+- ✅ Unit tests with mocked probes (5/5)
+- ⚠️  Scope detection heuristics (2/5 — assumes PATH integrity)
 
-MEDIUM PRIORITY (Affects UX/Reliability):
-4. Bare exception catch blocks without logging
-   - Issue: Lines 143, 187, 226: bare catch blocks swallow exceptions silently
-   - Risk: Difficult to diagnose issues; users don't know why detection failed
-   - Suggested fix: Log at Debug level at minimum; consider more specific exception handling
+**Critical Gaps (MUST FIX):**
+- 🔴 PathProbe command injection via unescaped arguments (-10)
+- 🔴 MockProbe compilation error (-5)
+- 🟡 RawOutput over-exposes tool stderr (-8)
+- 🟡 No path traversal validation (-5)
+- 🟡 Process argument concatenation pattern (-4)
+- 🟡 Credential exposure in HF CLI guidance (-2)
+- 🟡 Exception messages leak diagnostic paths (-1)
 
-5. No timeout handling for process execution
-   - Issue: TryRunCommandAsync and DetectVsCodeEditorAsync have no timeout
-   - Risk: Hung processes could freeze the doctor command indefinitely
-   - Suggested fix: Add 5-second timeout to Process.WaitForExitAsync
+### Current RAI Completeness: 45%
 
-6. oMLX detection incompatibility with pip3
-   - Issue: Assumes "pip" command exists; most modern systems use "pip3"
-   - Impact: oMLX detection will always fail on systems where pip3 is primary
-   - Suggested fix: Try both "pip" and "pip3" commands
+```
+[████░░░░░░░░░░░░░░] 45% — Below merge threshold
+                    ↓
+              60% required
+```
 
-7. Installation guidance absent in JSON output
-   - Issue: Issue #13 acceptance criteria mentions "installation guidance"
-   - Current: JSON output only includes version/message, no guidance URLs or commands
-   - Note: Table mode says "Run mlx-pep doctor --json for installation guidance" but JSON has no guidance
+### Blockers (Must Fix Before Merge)
 
-STRENGTHS:
-- All 7 dependencies are correctly detected on functioning systems
-- Table output formatting is clean and user-friendly
-- Test coverage includes all major code paths
-- Async process execution is appropriate for performance
-- Proper use of JSON serialization attributes for null handling
+1. **CRITICAL**: Command injection in PathProbe
+   - Blocks: Security audit
+   - Fix effort: 15 min
+   - Test: Add test with escaped arguments
 
-EFFORT ESTIMATE FOR FIXES:
-- Critical fixes (items 1-3): 40 minutes
-- Medium priority fixes (items 4-7): 60-90 minutes
-- Total: ~2-3 hours
+2. **CRITICAL**: MockProbe compilation error
+   - Blocks: Build pass
+   - Fix effort: 1 min
+   - Test: `dotnet build` succeeds
 
-RECOMMENDATION:
-Do not merge in current state. The double JSON output bug is a blocker. Request revisions targeting critical issues, then medium-priority issues for next iteration.
+### Post-Fix Projection: 80% RAI-Complete
+
+After addressing the 7 findings:
+
+```
+[████████████████░░] 80% — Acceptable for merge
+                   ↓
+            60% required ✓
+```
+
+**Remaining Considerations (Low Risk):**
+- oMLX HTTP probe response parsing (ignore body, check status only)
+- `gh` error handling for credential leaks (wrap with generic message)
+- RawOutput removal needs testing to ensure version parsing still works
+
+---
+
+## Effort Estimate
+
+| Task | Time | Complexity |
+|------|------|-----------|
+| Fix PathProbe escaping + tests | 20 min | Medium |
+| Fix MockProbe using directive | 2 min | Trivial |
+| Remove/restrict RawOutput field | 25 min | Medium |
+| Add path traversal validation | 10 min | Low |
+| Update process arg pattern docs | 5 min | Low |
+| Add credential warnings to guidance | 5 min | Low |
+| Sanitize error messages | 10 min | Low |
+| Rebuild + full test suite | 5 min | Low |
+| **Total** | **82 minutes** | **Low-Medium** |
+
+---
+
+## Recommended Action
+
+**Status**: 🟡 **CONDITIONAL APPROVAL WITH FIXES**
+
+**Path Forward**:
+1. Neo (author) implements the 7 fixes above
+2. Rai re-validates build + security scan
+3. Ralph routes for final merge once RAI ≥ 60%
+
+**Do NOT merge until**:
+- [ ] PathProbe escaping implemented
+- [ ] MockProbe compiles cleanly
+- [ ] All unit tests pass
+- [ ] No sensitive data in ToolStatus output
+
+---
+
+## Notes for Neo
+
+Your probe architecture is excellent and makes this easy to fix. Focus on:
+1. Escaping in PathProbe (use ArgumentList API if available in .NET 10)
+2. Data minimization: Do you really need RawOutput for CLI display?
+3. Error handling: Remove exception details from user-facing warnings
+
+I'm available for pair programming on the security fixes. — Rai
