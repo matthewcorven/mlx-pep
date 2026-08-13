@@ -1,22 +1,37 @@
 namespace MlxPep.Cli.Commands;
 
 using MlxPep.Core;
+using System.Text.Json;
 
 /// <summary>
-/// Handler for `mlx-pep assess` command.
-/// Runs profiling for a model and generates tiered profiles.
+/// Handler for `mlx-pep assess <hf-id> [--assistant-model-id X] [--suite smoke|full]` command.
+/// Runs profiling via model-assessor and generates tiered profiles.
+/// 
+/// Issue #17: assess command delegates to model-assessor, emits 3 tiers.
 /// </summary>
 public class AssessCommand
 {
+    private readonly IProfilingRunner _profilingRunner;
     private readonly PublishService _publishService;
+    private readonly string _profilesDirectory;
 
-    public AssessCommand(PublishService? publishService = null)
+    public AssessCommand(
+        IProfilingRunner? profilingRunner = null,
+        PublishService? publishService = null,
+        string? profilesDirectory = null)
     {
+        _profilingRunner = profilingRunner ?? new ProfilingRunner();
         _publishService = publishService ?? new PublishService();
+        _profilesDirectory = profilesDirectory ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".mlx-pep",
+            "profiles");
     }
 
     public async Task<CommandResult> ExecuteAsync(
         string hfId,
+        string? assistantModelId = null,
+        string suite = "smoke",
         bool publish = false,
         CommandContext? context = null)
     {
@@ -24,23 +39,45 @@ public class AssessCommand
 
         try
         {
-            // Create test profiles for the model
-            var profiles = CreateProfilesForModel(hfId);
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Starting assessment: hfId={hfId}, assistantModelId={assistantModelId}, suite={suite}, publish={publish}");
+
+            // Run profiling pipeline via model-assessor
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Calling ProfilingRunner");
+            var manifest = await _profilingRunner.RunProfilingAsync(hfId, assistantModelId, suite);
+
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Received manifest with {manifest.Recommendations.Count} recommendations");
+
+            // Map recommendations to profiles
+            var profiles = MapRecommendationsToProfiles(hfId, manifest);
+
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Mapped {profiles.Count} profiles");
+
+            // Save profiles locally
+            await SaveProfilesToDiskAsync(profiles);
+
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Saved profiles to disk");
+
+            // Validate profiles
+            var validator = new ProfileValidator();
+            var validationResult = validator.ValidateProfileSet(profiles);
+
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Validation result: isValid={validationResult.IsValid}");
 
             if (publish)
             {
-                // Validate profiles for local use
-                var validator = new ProfileValidator();
-                var validationResult = validator.ValidateProfileSet(profiles);
+                System.Diagnostics.Debug.WriteLine($"[AssessCommand] Publishing profiles");
+                var publishResult = await _publishService.PrepareForPublishAsync(profiles);
 
                 if (context.JsonOutput)
                 {
                     var result = new
                     {
                         command = "assess",
-                        status = validationResult.IsValid ? "ok" : "error",
+                        status = publishResult.ValidCount == profiles.Count ? "ok" : "partial",
                         hfId = hfId,
+                        suite = suite,
                         profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier }).ToArray(),
+                        published = publishResult.ValidCount,
                         validation = new
                         {
                             isValid = validationResult.IsValid,
@@ -50,19 +87,15 @@ public class AssessCommand
                             warnings = validationResult.Warnings
                         }
                     };
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                    Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
                 }
                 else
                 {
-                    Console.WriteLine($"Assessing model: {hfId}");
-                    Console.WriteLine($"Generated {profiles.Count} profiles");
-                    if (validationResult.IsValid)
-                        Console.WriteLine($"✓ All profiles valid");
-                    else
-                        Console.WriteLine($"✗ Validation failed with {validationResult.Errors.Count} errors");
-
-                    if (validationResult.Warnings.Count > 0)
-                        Console.WriteLine($"⚠️  {validationResult.Warnings.Count} warnings");
+                    Console.WriteLine($"✓ Assessed {hfId}");
+                    Console.WriteLine($"  Generated {profiles.Count} profiles");
+                    Console.WriteLine($"  Valid for publishing: {publishResult.ValidCount}/{profiles.Count}");
+                    if (!validationResult.IsValid)
+                        Console.WriteLine($"  ⚠️  {validationResult.Errors.Count} validation errors");
                 }
             }
             else
@@ -74,15 +107,18 @@ public class AssessCommand
                         command = "assess",
                         status = "ok",
                         hfId = hfId,
-                        profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier, saved = true }).ToArray(),
+                        suite = suite,
+                        profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier }).ToArray(),
+                        saved = true,
                         published = false
                     };
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                    Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
                 }
                 else
                 {
-                    Console.WriteLine($"Assessing model: {hfId}");
-                    Console.WriteLine($"Generated {profiles.Count} profiles");
+                    Console.WriteLine($"✓ Assessed {hfId}");
+                    Console.WriteLine($"  Generated {profiles.Count} profiles");
+                    Console.WriteLine($"  Saved to {_profilesDirectory}");
                 }
             }
 
@@ -90,40 +126,133 @@ public class AssessCommand
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand] Exception: {ex.Message}");
             return CommandResult.Failure($"Failed to assess model: {ex.Message}");
         }
     }
 
-    private List<Profile> CreateProfilesForModel(string hfId)
+    /// <summary>
+    /// Maps model-assessor recommendation tiers to mlx-pep Profile records.
+    /// </summary>
+    private List<Profile> MapRecommendationsToProfiles(
+        string hfId,
+        RecommendationManifest manifest)
     {
-        var profiles = new List<Profile>();
-        var tiers = new[] { "high-performance", "balanced", "efficient" };
+        System.Diagnostics.Debug.WriteLine($"[AssessCommand.MapRecommendationsToProfiles] Mapping {manifest.Recommendations.Count} recommendations");
 
-        foreach (var tier in tiers)
+        var profiles = new List<Profile>();
+
+        foreach (var rec in manifest.Recommendations)
         {
-            profiles.Add(new Profile(
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand.MapRecommendationsToProfiles] Processing tier: {rec.Tier}");
+
+            var profileId = $"{hfId.Replace("/", "-")}-{rec.Tier}";
+
+            // Build harness config from recommendation
+            var harness = new Dictionary<string, object>();
+            if (rec.HarnessSettings.Any())
+            {
+                harness["vscode"] = rec.HarnessSettings;
+            }
+
+            // Convert sampler settings
+            SamplerSettings? sampler = null;
+            if (rec.SamplerSettings?.Any() == true)
+            {
+                sampler = ConvertSamplerSettings(rec.SamplerSettings);
+            }
+
+            var profile = new Profile(
                 SchemaVersion: 1,
-                Id: $"{hfId.Replace("/", "-")}-{tier}",
+                Id: profileId,
                 ModelHfId: hfId,
-                Tier: tier,
+                Tier: rec.Tier,
                 Engine: "mlx",
                 System: new Dictionary<string, object> { { "os", "macOS" } },
-                OMLXSettings: new Dictionary<string, object> { { "compute_units", tier == "high-performance" ? "ALL" : "GPU" } },
-                Harness: new Dictionary<string, object>
-                {
-                    { "vscode", new Dictionary<string, object>
-                        {
-                            { "maxInputTokens", tier == "high-performance" ? 128000 : 64000 },
-                            { "maxOutputTokens", tier == "high-performance" ? 8000 : 4000 }
-                        }
-                    }
-                },
+                OMLXSettings: rec.OMLXSettings,
+                Harness: harness,
                 Provenance: new ProfileProvenance("assess-command", DateTime.UtcNow.ToString("O"), "cli"),
                 Hardware: new HardwareFingerprint("Apple M1", 16, "MacBookPro"),
-                Sampler: new SamplerSettings(Temperature: 0.7, TopP: null, TopK: null, RepetitionPenalty: null, ContextTokens: null)
-            ));
+                Sampler: sampler
+            );
+
+            profiles.Add(profile);
         }
 
         return profiles;
+    }
+
+    /// <summary>
+    /// Converts sampler settings dict to SamplerSettings record.
+    /// </summary>
+    private SamplerSettings ConvertSamplerSettings(Dictionary<string, object> settings)
+    {
+        System.Diagnostics.Debug.WriteLine($"[AssessCommand.ConvertSamplerSettings] Converting sampler settings");
+
+        double? temperature = TryGetDoubleValue(settings, "temperature");
+        double? topP = TryGetDoubleValue(settings, "topP");
+        int? topK = TryGetIntValue(settings, "topK");
+        double? repPenalty = TryGetDoubleValue(settings, "repetitionPenalty");
+        int? contextTokens = TryGetIntValue(settings, "contextTokens");
+
+        return new SamplerSettings(
+            Temperature: temperature,
+            TopP: topP,
+            TopK: topK,
+            RepetitionPenalty: repPenalty,
+            ContextTokens: contextTokens);
+    }
+
+    private double? TryGetDoubleValue(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var val))
+            return null;
+
+        if (val is double d)
+            return d;
+
+        if (double.TryParse(val?.ToString(), out var parsed))
+            return parsed;
+
+        return null;
+    }
+
+    private int? TryGetIntValue(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var val))
+            return null;
+
+        if (val is int i)
+            return i;
+
+        if (int.TryParse(val?.ToString(), out var parsed))
+            return parsed;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Saves profiles to ~/.mlx-pep/profiles/ directory in JSONL format.
+    /// </summary>
+    private async Task SaveProfilesToDiskAsync(List<Profile> profiles)
+    {
+        System.Diagnostics.Debug.WriteLine($"[AssessCommand.SaveProfilesToDiskAsync] Saving {profiles.Count} profiles to {_profilesDirectory}");
+
+        // Ensure directory exists
+        Directory.CreateDirectory(_profilesDirectory);
+
+        // Save each profile as a separate JSONL file
+        foreach (var profile in profiles)
+        {
+            var fileName = $"{profile.Id}.jsonl";
+            var filePath = Path.Combine(_profilesDirectory, fileName);
+
+            System.Diagnostics.Debug.WriteLine($"[AssessCommand.SaveProfilesToDiskAsync] Writing profile to {filePath}");
+
+            var json = JsonSerializer.Serialize(profile, ProfileJsonSerializerContext.Default.Profile);
+            await File.WriteAllTextAsync(filePath, json + Environment.NewLine);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[AssessCommand.SaveProfilesToDiskAsync] All profiles saved");
     }
 }

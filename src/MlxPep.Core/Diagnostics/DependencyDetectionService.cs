@@ -94,6 +94,7 @@ public class DependencyDetectionService
         result.Installed = true;
         result.Version = probe.ParseVersion(probeResult.RawOutput ?? "");
         result.Scope = DetectScope("dotnet");
+        result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("dotnet");
         return result;
     }
 
@@ -125,6 +126,7 @@ public class DependencyDetectionService
         result.Installed = true;
         result.Version = probe.ParseVersion(probeResult.RawOutput ?? "");
         result.Scope = DetectScope("huggingface-cli");
+        result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("hf-cli");
         return result;
     }
 
@@ -156,6 +158,7 @@ public class DependencyDetectionService
         result.Installed = true;
         result.Version = probe.ParseVersion(probeResult.RawOutput ?? "");
         result.Scope = DetectScope("python3");
+        result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("python3");
         return result;
     }
 
@@ -208,11 +211,13 @@ public class DependencyDetectionService
                 result.Installed = true;
                 result.Version = versionMatch.Groups[1].Value;
                 result.Scope = "python-package";
+                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
             }
             else
             {
                 result.Installed = false;
                 result.Message = "Could not parse version";
+                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
             }
         }
         catch (Exception ex)
@@ -252,6 +257,7 @@ public class DependencyDetectionService
 
         result.Installed = true;
         result.ToolPath = probeResult.RawOutput;
+        result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("omlx");
 
         if (probeResult.RawOutput?.Contains("localhost:8000") == true)
         {
@@ -295,6 +301,7 @@ public class DependencyDetectionService
 
         result.Installed = true;
         result.Scope = DetectScope("code");
+        result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("vscode");
 
         // Try to detect version via CLI
         try

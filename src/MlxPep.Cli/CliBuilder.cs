@@ -173,15 +173,36 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--publish]");
+            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--assistant-model-id <id>] [--suite smoke|full] [--publish]");
         }
 
         string hfId = args[0];
+        string? assistantModelId = null;
+        string suite = "smoke"; // default
         bool publish = args.Contains("--publish");
+
+        // Parse optional arguments
+        for (int i = 1; i < args.Length; i++)
+        {
+            if (args[i] == "--assistant-model-id" && i + 1 < args.Length)
+            {
+                assistantModelId = args[i + 1];
+                i++;
+            }
+            else if (args[i] == "--suite" && i + 1 < args.Length)
+            {
+                suite = args[i + 1];
+                if (suite != "smoke" && suite != "full")
+                {
+                    return PrintErrorAndReturn1("Invalid suite: must be 'smoke' or 'full'");
+                }
+                i++;
+            }
+        }
 
         var handler = new AssessCommand();
         var context = new CommandContext(isJson);
-        var result = await handler.ExecuteAsync(hfId, publish, context);
+        var result = await handler.ExecuteAsync(hfId, assistantModelId, suite, publish, context);
 
         if (isJson)
         {

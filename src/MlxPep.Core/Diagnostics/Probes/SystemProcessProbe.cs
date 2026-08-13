@@ -96,8 +96,14 @@ public class HuggingFaceCliProbe : SystemProcessProbe
     public override string? ParseVersion(string rawOutput)
     {
         // huggingface-cli --version outputs something like "huggingface_hub version: 0.19.0"
-        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+\.\d+)");
-        return match.Success ? match.Groups[1].Value : null;
+        // Handle semver with optional patch and prerelease suffixes
+        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)");
+        if (match.Success)
+        {
+            var version = match.Groups[1].Value.TrimEnd('.');
+            return version;
+        }
+        return null;
     }
 }
 
@@ -111,9 +117,14 @@ public class Python3Probe : SystemProcessProbe
 
     public override string? ParseVersion(string rawOutput)
     {
-        // python3 --version outputs "Python 3.11.0" or similar
-        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+\.\d+)");
-        return match.Success ? match.Groups[1].Value : null;
+        // python3 --version outputs "Python 3.11.0" or similar, can have prerelease suffixes
+        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)");
+        if (match.Success)
+        {
+            var version = match.Groups[1].Value.TrimEnd('.');
+            return version;
+        }
+        return null;
     }
 }
 
@@ -127,8 +138,15 @@ public class CopilotCliProbe : SystemProcessProbe
 
     public override string? ParseVersion(string rawOutput)
     {
-        // gh copilot --version outputs something like "gh version 2.45.0 (2024-01-01)"
-        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+\.\d+)");
-        return match.Success ? match.Groups[1].Value : null;
+        // gh copilot --version outputs something like "1.0.79." or "1.0.79-alpha"
+        // Match semantic version: digits.digits.digits[.digits][-suffix], removing trailing dots
+        var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)");
+        if (match.Success)
+        {
+            var version = match.Groups[1].Value;
+            // Remove trailing dots
+            return version.TrimEnd('.');
+        }
+        return null;
     }
 }
