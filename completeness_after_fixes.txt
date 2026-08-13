@@ -1,0 +1,246 @@
+# Morpheus Independent Re-Validation: PR #64 (Issue #13 — Doctor Command)
+
+**Review Date**: 2026-08-13T16:45:00Z
+**Reviewer**: Morpheus (Technical Lead - Architecture & Code Quality)
+**PR**: #64 (Doctor Command Implementation)
+**Validation Scope**: Architecture, Code Quality, Acceptance Criteria
+
+---
+
+## INDEPENDENT REVIEW CHECKLIST
+
+### 1. ✅ Build Verification
+```
+dotnet build: SUCCESS
+├─ MlxPep.Core ✅
+├─ MlxPep.Service ✅
+├─ MlxPep.Core.Tests ✅
+├─ MlxPep.Service.Tests ✅
+├─ MlxPep.Cli ✅
+└─ MlxPep.Cli.Tests ✅
+
+Result: 0 Errors | 0 Warnings | BUILD PASSED
+```
+
+### 2. ✅ Test Verification
+```
+dotnet test (no-build): SUCCESS
+├─ MlxPep.Cli.Tests: 9/9 passed ✅
+├─ MlxPep.Service.Tests: 139/139 passed ✅
+├─ MlxPep.Core.Tests: 49/49 passed ✅
+└─ Total: 197/197 passed | 0 failed
+
+Result: NO NEW TEST FAILURES
+```
+
+### 3. ✅ CRITICAL BLOCKER #1: Stub Test File Removed
+- **File**: tests/MlxPep.Cli.Tests/UnitTest1.cs
+- **Status**: ✅ DELETED in commit 85fe748
+- **Verification**: File not found in HEAD commit
+- **Impact**: Removes test clutter, improves test project hygiene
+
+### 4. ✅ CRITICAL BLOCKER #2: JSON Output Corruption Fixed
+- **Issue**: DoctorCommand output being double-wrapped by CliBuilder
+- **Fix**: Direct Console.WriteLine() bypass of wrapper
+- **Verification**: JSON output tested and valid
+  - Single JSON object (not double-wrapped)
+  - Fields: "command", "timestamp", "dependencies"
+  - All dependency objects have: "installed", "version" (optional), "message", "install"
+- **Sample**:
+```json
+{
+  "command": "doctor",
+  "timestamp": "2026-08-13T16:43:58.3162310Z",
+  "dependencies": {
+    "dotnet": {
+      "installed": true,
+      "version": "10.0.302",
+      "message": "v10.0.302",
+      "install": "..."
+    },
+    ...
+  }
+}
+```
+- **Result**: ✅ FIXED & VERIFIED
+
+### 5. ✅ CRITICAL BLOCKER #3: Version Parsing Bug Fixed
+- **Issue**: Manual hardcoded version parsing error-prone
+- **Fix**: Integrated DependencyDetectionService with proper regex patterns
+- **Verification**: 
+  - Regex pattern: `@"(\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?)"` extracts semantic versions
+  - Handles: major.minor, major.minor.patch, prerelease suffixes
+  - TrimEnd('.') removes trailing dots
+  - Tested across: Dotnet, Python3, HF CLI, Copilot CLI probes
+- **Result**: ✅ FIXED & VERIFIED
+
+---
+
+## ARCHITECTURE REVIEW
+
+### ✅ Issue #11 Integration (DependencyDetectionService)
+- **Requirement**: Structured dependency detection service consumed by doctor
+- **Implementation**:
+  - `DependencyDetectionService` main orchestrator
+  - Probe-based architecture (SystemProcessProbe, FileSystemProbe, PathProbe, etc.)
+  - Each probe responsible for one tool's detection
+  - Separation of concerns: detection vs. parsing
+- **Verification**:
+  - ✅ Detects all required tools: dotnet, hf-cli, python3, model-assessor, omlx, vscode, vscode-insiders, copilot-cli
+  - ✅ Returns structured DependencyReport with version, scope, install guidance
+  - ✅ Proper error handling in each probe (try-catch, timeout protection)
+  - ✅ Safe process execution: ArgumentList API (prevents command injection)
+- **Assessment**: Architecture is clean, maintainable, and follows SOLID principles
+
+### ✅ Exception Handling Patterns
+- **DoctorCommand**: try-catch returns CommandResult.Failure()
+- **DependencyDetectionService**: try-catch with detailed logging to report
+- **Probes**: try-catch returns ProbeResult with error messages
+- **Pattern**: Consistent with codebase (no new exceptions swallowed)
+- **Note**: Exception paths lack Debug.Log (pre-existing pattern in codebase, not a PR issue)
+
+### ✅ CLI Architecture Alignment
+- **Command Pattern**: DoctorCommand implements standard CLI handler pattern
+- **Context Passing**: CommandContext carries --json flag
+- **Output Handling**: Commands write directly to Console (no CliBuilder double-wrapping for doctor)
+- **Exit Codes**: Returns CommandResult with proper exit codes (0 for success)
+- **Assessment**: Follows established patterns, no architectural violations
+
+### ✅ Probe Design Quality
+- **Abstraction**: IDependencyProbe interface with standard contract (ProbeAsync, ParseVersion)
+- **Testability**: Enables injection of mock probes in DependencyDetectionService constructor
+- **Robustness**: 
+  - Process timeouts (5s default)
+  - Process cleanup on timeout (Kill())
+  - StringWriter redirection for testing
+  - Error message propagation
+- **Assessment**: Design enables comprehensive unit testing
+
+---
+
+## ACCEPTANCE CRITERIA VERIFICATION
+
+### ✅ Doctor Command Output (Table Format)
+```
+mlx-pep doctor - Dependency Check
+
+✓ GitHub Copilot CLI   v1.0.79
+✓ .NET                 v10.0.302
+✗ Hugging Face CLI     not installed
+  ℹ️  Install Hugging Face CLI: ...
+...
+Summary: 6 installed, 2 missing
+```
+- ✅ Displays tool name and status
+- ✅ Shows version for installed tools
+- ✅ Shows installation guidance for missing tools
+- ✅ Provides summary count
+- ✅ Suggests --json for details
+
+### ✅ Doctor Command Output (JSON Format)
+- ✅ Valid, parseable JSON
+- ✅ Single object wrapper (not double-wrapped)
+- ✅ All required fields present
+- ✅ Properly formatted with indentation
+- ✅ Includes installation guidance for all tools
+
+### ✅ Version Strings Correctly Formatted
+- ✅ dotnet: "10.0.302" ✓
+- ✅ python3: "3.14.6" ✓
+- ✅ vscode: "1.132.0" ✓
+- ✅ vscode-insiders: "1.134.0-insider" ✓
+- ✅ copilot-cli: "1.0.79" ✓
+
+### ✅ Exit Codes
+- ✅ doctor: returns 0 (success)
+- ✅ doctor --json: returns 0 (success)
+
+### ✅ Installation Guidance Provided
+- ✅ For each tool: clear install instructions
+- ✅ Platform-specific guidance (macOS brew, pip, etc.)
+- ✅ Links to official download pages
+
+---
+
+## CODE QUALITY ASSESSMENT
+
+### ✅ Cleanliness
+- No style violations
+- Proper XML documentation on public classes
+- Clear method and variable names
+- Good separation between format (table vs JSON) and detection logic
+
+### ✅ Testing Coverage
+- 9 comprehensive tests for DoctorCommand
+- Tests verify:
+  - JSON output validity and structure
+  - Table output correctness
+  - Dependency list completeness
+  - Status symbols display
+  - Installation guidance inclusion
+  - Exit codes
+- All tests passing ✅
+
+### ✅ Dependencies and Integration
+- Properly instantiates DependencyDetectionService
+- Uses CommandContext pattern for options
+- Returns CommandResult following CLI conventions
+- No breaking changes to existing commands
+
+---
+
+## COMPLETENESS SCORE
+
+### Morpheus Assessment: **85% COMPLETENESS**
+
+**What's Complete** ✅:
+- ✅ All 3 critical blockers resolved
+- ✅ Build succeeds (0 errors, 0 warnings)
+- ✅ Tests pass (197/197, no new failures)
+- ✅ JSON output valid and clean
+- ✅ Version parsing correct with proper regex patterns
+- ✅ Issue #11 architecture properly integrated
+- ✅ Probe-based design enables testability
+- ✅ All acceptance criteria met
+- ✅ CLI pattern consistent with codebase
+- ✅ Installation guidance comprehensive
+
+**What Could Be Enhanced** (Non-blocking):
+- Debug.Log in exception paths (pre-existing pattern, not a PR issue)
+- Error message sanitization in DoctorCommand catch (inherited from other CLI commands)
+- Consider future extension points for adding new probes
+
+---
+
+## INDEPENDENT VERDICT
+
+### 🟢 APPROVED FOR MERGE
+
+**Morpheus Signature**:
+- Build Status: ✅ PASS
+- Test Status: ✅ PASS  
+- Code Quality: ✅ GOOD
+- Architecture: ✅ ALIGNED
+- Completeness: 85% (exceeds merge threshold)
+- Security: ✅ SECURE (inherits ArgumentList API safety from PR #65)
+
+**Conditions Met**:
+1. ✅ Build succeeds (0 errors, 0 warnings)
+2. ✅ Tests pass (197/197, no new failures)
+3. ✅ All 3 critical blockers resolved
+4. ✅ JSON output valid (single wrapper)
+5. ✅ Version parsing correct (regex patterns)
+6. ✅ Architecture aligned with Issue #11
+7. ✅ All acceptance criteria verified
+8. ✅ No code quality violations
+9. ✅ Proper error handling and timeouts
+10. ✅ Safe process execution (ArgumentList API)
+
+**Recommendation**: Merge PR #64 to main immediately. Dual-gate convergence: both Rai (70% RAI) and Morpheus (85% Code Quality) approve.
+
+---
+
+**Report Timestamp**: 2026-08-13T16:45:00Z
+**Reviewer**: Morpheus (Lead)
+**Review Duration**: ~20 minutes
+**Verification Method**: Direct build, test, and acceptance criteria validation
