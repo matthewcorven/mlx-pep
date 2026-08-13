@@ -118,14 +118,44 @@ https://github.com/matthewcorven/mlx-pep/settings/secrets/actions:
 
 | Secret Name | Source | Purpose |
 |---|---|---|
-| `AZURE_SUBSCRIPTION_ID` | `az account show --query id -o tsv` | Azure subscription identifier for workflow authentication |
-| `AZURE_TENANT_ID` | `az account show --query tenantId -o tsv` | Azure AD tenant for login |
-| `AZURE_CLIENT_ID` | (Optional; set if using service principal) | Service principal app ID |
-| `AZURE_CLIENT_SECRET` | (Optional; set if using service principal) | Service principal secret |
 | `AZURE_REGISTRY_LOGIN_SERVER` | ACR login server (e.g., `mlxpepregistry.azurecr.io`) | Docker registry URL |
 | `AZURE_REGISTRY_USERNAME` | `az acr credential show --name mlxpepregistry --query username -o tsv` | ACR admin username |
 | `AZURE_REGISTRY_PASSWORD` | `az acr credential show --name mlxpepregistry --query passwords[0].value -o tsv` | ACR admin password |
-| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage connection string | Blob Storage access for profile data |
+| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage connection string | Blob Storage access for profile data (Phase 2) |
+
+### Azure Authentication: OIDC Federation
+
+The CI/CD workflow authenticates with Azure using **OpenID Connect (OIDC) federation**, which eliminates the need to store Azure credentials as GitHub secrets. Here's how it works:
+
+1. **GitHub Actions provides an OIDC token** when the workflow runs
+2. **Azure AD trusts the token** via a federated identity credential
+3. **Workflow exchanges token for Azure access token** (no stored secrets needed)
+4. **Azure CLI commands execute with full permissions** (e.g., `az containerapp update`)
+
+**Credentials hardcoded in workflow (safe under OIDC model):**
+- `client-id`: `5726df39-f34e-4ec8-b8a3-4287cd793394`
+- `tenant-id`: `bbdb7146-4bdb-4eae-b50d-ff09b9d191b5`
+- `subscription-id`: `de345105-2ffc-4619-a6bc-9c41dec93241`
+
+These are app identifiers (not secrets) and are safe to publish. The actual security comes from the federated credential that links:
+- GitHub repo: `matthewcorven/mlx-pep`
+- GitHub branch: `main`
+- Azure service principal (above)
+
+**To add OIDC federation for a new branch** (e.g., `develop`):
+```bash
+az ad app federated-credential create \
+  --id 5726df39-f34e-4ec8-b8a3-4287cd793394 \
+  --parameters '{
+    "name": "mlx-pep-github-oidc-develop",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:matthewcorven/mlx-pep:ref:refs/heads/develop",
+    "description": "OIDC federation for develop branch",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
+```
+
+See `.github/workflows/publish-and-deploy.yml` lines 100-105 for the workflow implementation.
 
 ---
 
