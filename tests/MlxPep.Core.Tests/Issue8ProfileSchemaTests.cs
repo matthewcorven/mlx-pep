@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using MlxPep.Core;
 using Xunit;
 
 /// <summary>
@@ -19,19 +20,16 @@ public class Issue8ProfileSchemaTests
     /// </summary>
     private static readonly string ExampleProfileJson = @"{""schemaVersion"":1,""id"":""ornith-35b-mtplx-balanced-a1b2c3"",""modelHfId"":""wang-yang/Ornith-1.0-35B-MTPLX"",""tier"":""balanced"",""engine"":""omlx"",""system"":{""iogpu.wired_limit_mb"":122880},""omlx"":{""memory_guard_tier"":""balanced"",""memory_guard_ceiling_gb"":108},""harness"":{""vscode"":{""maxInputTokens"":64000,""maxOutputTokens"":3072},""copilotCli"":{""maxPromptTokens"":64000}},""sampler"":{""temperature"":0.7,""topP"":0.95,""topK"":20,""repetitionPenalty"":1.02,""contextTokens"":64000},""provenance"":{""author"":""matthewcorven"",""createdAt"":""2026-08-11T00:00:00Z"",""source"":""assess""},""hardware"":{""chip"":""Apple M4 Max"",""memoryGb"":128,""modelIdentifier"":""Mac16,5""}}";
 
+    private static readonly ProfileJsonSerializerContext JsonContext = new();
+
     [Fact]
     public void RoundTrip_ExampleProfile_PreservesAllFields()
     {
         // Arrange
         var json = ExampleProfileJson;
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
 
-        // Act: Deserialize
-        var profile = JsonSerializer.Deserialize<Profile>(json, options);
+        // Act: Deserialize using source-generated context
+        var profile = JsonSerializer.Deserialize<Profile>(json, JsonContext.Profile);
 
         // Assert: Verify all fields were preserved
         Assert.NotNull(profile);
@@ -73,17 +71,11 @@ public class Issue8ProfileSchemaTests
     {
         // Arrange
         var json = ExampleProfileJson;
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = false
-        };
 
-        // Act: Deserialize then re-serialize
-        var profile = JsonSerializer.Deserialize<Profile>(json, options);
+        // Act: Deserialize then re-serialize using source-generated context
+        var profile = JsonSerializer.Deserialize<Profile>(json, JsonContext.Profile);
         Assert.NotNull(profile);
-        var reserialized = JsonSerializer.Serialize(profile, options);
+        var reserialized = JsonSerializer.Serialize(profile, typeof(Profile), JsonContext);
 
         // Assert: Round-trip should preserve all essential fields
         // Note: Property order may differ in reflection-based serialization, so we check semantic equivalence
@@ -102,12 +94,7 @@ public class Issue8ProfileSchemaTests
     {
         // Arrange
         var json = ExampleProfileJson;
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-        var profile = JsonSerializer.Deserialize<Profile>(json, options);
+        var profile = JsonSerializer.Deserialize<Profile>(json, JsonContext.Profile);
         Assert.NotNull(profile);
         var validator = new ProfileValidator();
 
@@ -370,12 +357,7 @@ public class Issue8ProfileSchemaTests
         // Arrange
         var tempFile = Path.GetTempFileName() + ".jsonl";
         var json = ExampleProfileJson;
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-        var originalProfile = JsonSerializer.Deserialize<Profile>(json, options)!;
+        var originalProfile = JsonSerializer.Deserialize<Profile>(json, JsonContext.Profile)!;
         var profiles = new List<Profile> { originalProfile };
         var reader = new ProfileReader();
 
@@ -444,6 +426,42 @@ public class Issue8ProfileSchemaTests
         Assert.Equal(20, sampler.TopK);
         Assert.Null(sampler.RepetitionPenalty);
         Assert.Null(sampler.ContextTokens);
+    }
+
+    [Fact]
+    public void SourceGenContext_CanSerializeAndDeserialize_WithContextDirectly()
+    {
+        // This test directly exercises ProfileJsonSerializerContext (source-gen context)
+        // to verify that the source-generated serialization metadata works correctly.
+        
+        // Arrange
+        var profile = CreateTestProfile("source-gen-test-profile", "high", "omlx");
+        var context = new ProfileJsonSerializerContext();
+
+        // Act: Serialize using source-gen context with typeof overload
+        var serialized = JsonSerializer.Serialize(profile, typeof(Profile), context);
+
+        // Assert: Verify serialization produced valid JSON with expected fields
+        Assert.NotEmpty(serialized);
+        var doc = JsonDocument.Parse(serialized);
+        var root = doc.RootElement;
+        
+        Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal("source-gen-test-profile", root.GetProperty("id").GetString());
+        Assert.Equal("model/test", root.GetProperty("modelHfId").GetString());
+        Assert.Equal("high", root.GetProperty("tier").GetString());
+        Assert.Equal("omlx", root.GetProperty("engine").GetString());
+
+        // Act: Deserialize using source-gen context
+        var deserialized = JsonSerializer.Deserialize<Profile>(serialized, context.Profile);
+
+        // Assert: Verify round-trip fidelity with source-gen context
+        Assert.NotNull(deserialized);
+        Assert.Equal(profile.SchemaVersion, deserialized.SchemaVersion);
+        Assert.Equal(profile.Id, deserialized.Id);
+        Assert.Equal(profile.ModelHfId, deserialized.ModelHfId);
+        Assert.Equal(profile.Tier, deserialized.Tier);
+        Assert.Equal(profile.Engine, deserialized.Engine);
     }
 
     // Helper method to create a test profile

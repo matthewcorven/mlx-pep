@@ -1,6 +1,7 @@
 namespace MlxPep.Core;
 
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 [JsonSourceGenerationOptions(
@@ -13,6 +14,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(HardwareFingerprint))]
 [JsonSerializable(typeof(SamplerSettings))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
+[JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(List<Profile>))]
 public partial class ProfileJsonSerializerContext : JsonSerializerContext
 {
