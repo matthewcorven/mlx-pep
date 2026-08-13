@@ -33,11 +33,11 @@ public class ProfileReader
 
         if (!File.Exists(filePath))
         {
-            Debug.WriteLine($"[ProfileReader] Profile file not found: {filePath}");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Profile file not found: {filePath}");
             return profiles;
         }
 
-        Debug.WriteLine($"[ProfileReader] Reading profile set from: {filePath}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Reading profile set from: {filePath}");
 
         using var reader = new StreamReader(filePath);
         string? line;
@@ -48,28 +48,28 @@ public class ProfileReader
             lineNumber++;
             if (string.IsNullOrWhiteSpace(line))
             {
-                Debug.WriteLine($"[ProfileReader] Skipping empty line {lineNumber}");
+                System.Diagnostics.Debug.WriteLine($"[ProfileReader] Skipping empty line {lineNumber}");
                 continue;
             }
 
-            Debug.WriteLine($"[ProfileReader] Processing JSONL line {lineNumber}: {line.Substring(0, Math.Min(50, line.Length))}...");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Processing JSONL line {lineNumber}: {line.Substring(0, Math.Min(50, line.Length))}...");
 
             try
             {
                 var profile = JsonSerializer.Deserialize<Profile>(line, JsonContext.Profile);
                 if (profile != null)
                 {
-                    Debug.WriteLine($"[ProfileReader] Successfully deserialized profile '{profile.Id}' (tier: {profile.Tier})");
+                    System.Diagnostics.Debug.WriteLine($"[ProfileReader] Successfully deserialized profile '{profile.Id}' (tier: {profile.Tier})");
                     profiles.Add(profile);
                 }
                 else
                 {
-                    Debug.WriteLine($"[ProfileReader] Deserialization returned null at line {lineNumber}");
+                    System.Diagnostics.Debug.WriteLine($"[ProfileReader] Deserialization returned null at line {lineNumber}");
                 }
             }
             catch (JsonException ex)
             {
-                Debug.WriteLine($"[ProfileReader] Deserialization error at line {lineNumber}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ProfileReader] Deserialization error at line {lineNumber}: {ex.Message}");
                 var msg = $"Failed to deserialize JSONL at line {lineNumber}: {ex.Message}\n\nLine content: {line}\n\nUsing ProfileJsonSerializerContext for source-generated, AOT-compatible deserialization.";
                 throw new InvalidOperationException(msg, ex);
             }
@@ -78,34 +78,34 @@ public class ProfileReader
         // Validate the entire profile set if requested
         if (validateAfterRead && profiles.Any())
         {
-            Debug.WriteLine($"[ProfileReader] Validating profile set: {profiles.Count} profiles from '{filePath}'");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Validating profile set: {profiles.Count} profiles from '{filePath}'");
             var result = _validator.ValidateProfileSet(profiles);
             if (!result.IsValid)
             {
-                Debug.WriteLine($"[ProfileReader] Profile set validation failed with {result.Errors.Count} errors");
+                System.Diagnostics.Debug.WriteLine($"[ProfileReader] Profile set validation failed with {result.Errors.Count} errors");
                 var errorMessage = $"Failed to validate profile set from '{filePath}':\n" +
                                    string.Join("\n", result.Errors.Select(e => $"  - {e}"));
                 throw new InvalidOperationException(errorMessage);
             }
 
-            Debug.WriteLine($"[ProfileReader] Profile set validation passed");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Profile set validation passed");
 
             // Log warnings if any
             if (result.Warnings.Any())
             {
-                Debug.WriteLine($"[ProfileReader] Validation produced {result.Warnings.Count} warnings");
+                System.Diagnostics.Debug.WriteLine($"[ProfileReader] Validation produced {result.Warnings.Count} warnings");
                 foreach (var warning in result.Warnings)
                 {
-                    Debug.WriteLine($"[ProfileReader] Warning: {warning}");
+                    System.Diagnostics.Debug.WriteLine($"[ProfileReader] Warning: {warning}");
                 }
             }
         }
         else if (!validateAfterRead)
         {
-            Debug.WriteLine($"[ProfileReader] Skipping post-read validation (validateAfterRead=false)");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Skipping post-read validation (validateAfterRead=false)");
         }
 
-        Debug.WriteLine($"[ProfileReader] Completed reading profile set: {profiles.Count} profiles");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Completed reading profile set: {profiles.Count} profiles");
         return profiles;
     }
 
@@ -116,31 +116,31 @@ public class ProfileReader
     /// </summary>
     public async Task WriteProfileSetAsync(string filePath, List<Profile> profiles, bool validateBeforeWrite = true)
     {
-        Debug.WriteLine($"[ProfileReader] Writing {profiles.Count} profiles to: {filePath}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Writing {profiles.Count} profiles to: {filePath}");
 
         if (validateBeforeWrite && profiles.Any())
         {
-            Debug.WriteLine($"[ProfileReader] Validating {profiles.Count} profiles before write");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Validating {profiles.Count} profiles before write");
             var result = _validator.ValidateProfileSet(profiles);
             if (!result.IsValid)
             {
-                Debug.WriteLine($"[ProfileReader] Pre-write validation failed with {result.Errors.Count} errors");
+                System.Diagnostics.Debug.WriteLine($"[ProfileReader] Pre-write validation failed with {result.Errors.Count} errors");
                 var errorMessage = $"Failed to validate profiles before writing to '{filePath}':\n" +
                                    string.Join("\n", result.Errors.Select(e => $"  - {e}"));
                 throw new InvalidOperationException(errorMessage);
             }
 
-            Debug.WriteLine($"[ProfileReader] Pre-write validation passed");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Pre-write validation passed");
         }
         else if (!validateBeforeWrite)
         {
-            Debug.WriteLine($"[ProfileReader] Skipping pre-write validation (validateBeforeWrite=false)");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Skipping pre-write validation (validateBeforeWrite=false)");
         }
 
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
-            Debug.WriteLine($"[ProfileReader] Creating directory: {directory}");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Creating directory: {directory}");
             Directory.CreateDirectory(directory);
         }
 
@@ -149,11 +149,11 @@ public class ProfileReader
         foreach (var profile in profiles)
         {
             var json = JsonSerializer.Serialize(profile, typeof(Profile), JsonContext);
-            Debug.WriteLine($"[ProfileReader] Serialized profile '{profile.Id}' to JSONL");
+            System.Diagnostics.Debug.WriteLine($"[ProfileReader] Serialized profile '{profile.Id}' to JSONL");
             await writer.WriteLineAsync(json);
         }
 
-        Debug.WriteLine($"[ProfileReader] Completed writing {profiles.Count} profiles");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Completed writing {profiles.Count} profiles");
     }
 
     /// <summary>
@@ -161,10 +161,10 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByTier(List<Profile> profiles, string tier)
     {
-        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by tier: {tier}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by tier: {tier}");
         var result = profiles.Where(p =>
             p.Tier.Equals(tier, StringComparison.OrdinalIgnoreCase)).ToList();
-        Debug.WriteLine($"[ProfileReader] Tier filter result: {result.Count} profiles matched");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Tier filter result: {result.Count} profiles matched");
         return result;
     }
 
@@ -173,10 +173,10 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByEngine(List<Profile> profiles, string engine)
     {
-        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engine: {engine}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engine: {engine}");
         var result = profiles.Where(p =>
             p.Engine.Equals(engine, StringComparison.OrdinalIgnoreCase)).ToList();
-        Debug.WriteLine($"[ProfileReader] Engine filter result: {result.Count} profiles matched");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Engine filter result: {result.Count} profiles matched");
         return result;
     }
 
@@ -185,10 +185,10 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByEngines(List<Profile> profiles, params string[] engines)
     {
-        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engines: {string.Join(", ", engines)}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engines: {string.Join(", ", engines)}");
         var engineSet = new HashSet<string>(engines, StringComparer.OrdinalIgnoreCase);
         var result = profiles.Where(p => engineSet.Contains(p.Engine)).ToList();
-        Debug.WriteLine($"[ProfileReader] Multi-engine filter result: {result.Count} profiles matched");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Multi-engine filter result: {result.Count} profiles matched");
         return result;
     }
 
@@ -197,10 +197,10 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByModel(List<Profile> profiles, string modelHfId)
     {
-        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by model: {modelHfId}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by model: {modelHfId}");
         var result = profiles.Where(p =>
             p.ModelHfId.Equals(modelHfId, StringComparison.OrdinalIgnoreCase)).ToList();
-        Debug.WriteLine($"[ProfileReader] Model filter result: {result.Count} profiles matched");
+        System.Diagnostics.Debug.WriteLine($"[ProfileReader] Model filter result: {result.Count} profiles matched");
         return result;
     }
 }
