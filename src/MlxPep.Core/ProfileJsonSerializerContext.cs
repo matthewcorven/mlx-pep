@@ -12,8 +12,8 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(ProfileProvenance))]
 [JsonSerializable(typeof(HardwareFingerprint))]
 [JsonSerializable(typeof(SamplerSettings))]
-[JsonSerializable(typeof(CommunityMetadata))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
+[JsonSerializable(typeof(List<Profile>))]
 public partial class ProfileJsonSerializerContext : JsonSerializerContext
 {
 }

@@ -5,25 +5,47 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Validates profiles for local use or publishing.
-/// Issue #27: profiling: publish-flow polish + community metadata
+/// Validates profiles for local use.
+/// Issue #8: core: profile schema records + STJ source-gen + JSONL validation
+///
+/// Validation rules:
+/// - schemaVersion must be 1
+/// - id, modelHfId, tier, engine must be non-empty
+/// - Tiers in a profile set must be unique (high, balanced, efficient)
+/// - Unknown keys in system/omlx/harness: log warning (forward compatibility)
+/// - Known keys are validated against allowlist
 /// </summary>
 public class ProfileValidator
 {
-    private static readonly HashSet<string> ValidTags = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> KnownSystemKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "production", "experimental", "benchmark", "inference", "training",
-        "quantized", "unquantized", "streaming", "cpu", "gpu", "npu",
-        "high-latency", "low-latency", "high-throughput", "memory-optimized",
-        "speed-optimized", "accuracy-optimized"
+        "iogpu.wired_limit_mb",
+        "memory_cache_mb",
+        "antml.max_model_size_mb",
+        "antml.npu_timeout",
+        "antml.allow_remote_execution",
+        "gpu_memory_fraction"
     };
 
-    private readonly RuntimeEngineRegistry _engineRegistry;
-
-    public ProfileValidator(RuntimeEngineRegistry? engineRegistry = null)
+    private static readonly HashSet<string> KnownOMLXKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        _engineRegistry = engineRegistry ?? new RuntimeEngineRegistry();
-    }
+        "memory_guard_tier",
+        "memory_guard_ceiling_gb",
+        "thread_limit",
+        "quantization",
+        "enable_multi_gpu",
+        "compute_units",
+        "model_dtype",
+        "batch_size"
+    };
+
+    private static readonly HashSet<string> KnownHarnessKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "vscode",
+        "copilotCli",
+        "claudeCode",
+        "opencode"
+    };
 
     /// <summary>
     /// Validates a profile for local use only.
@@ -31,93 +53,125 @@ public class ProfileValidator
     public ValidationResult ValidateForLocalUse(Profile profile)
     {
         var errors = new List<string>();
+        var warnings = new List<string>();
+
+        // Required fields
+        if (profile.SchemaVersion != 1)
+            errors.Add($"schemaVersion must be 1, got {profile.SchemaVersion}");
 
         if (string.IsNullOrWhiteSpace(profile.Id))
-            errors.Add("Profile ID is required.");
+            errors.Add("id is required");
 
         if (string.IsNullOrWhiteSpace(profile.ModelHfId))
-            errors.Add("Model HuggingFace ID is required.");
+            errors.Add("modelHfId is required");
+
+        if (string.IsNullOrWhiteSpace(profile.Tier))
+            errors.Add("tier is required");
+        else if (!IsValidTier(profile.Tier))
+            errors.Add($"tier must be 'high', 'balanced', or 'efficient', got '{profile.Tier}'");
 
         if (string.IsNullOrWhiteSpace(profile.Engine))
-            errors.Add("Engine is required.");
-        else if (!_engineRegistry.IsSupported(profile.Engine))
-            errors.Add($"Unsupported engine '{profile.Engine}'. Supported engines: {string.Join(", ", _engineRegistry.GetEngineIds())}");
+            errors.Add("engine is required");
+
+        // Validate required nested objects
+        if (profile.Provenance == null)
+            errors.Add("provenance is required");
+        else
+        {
+            if (string.IsNullOrWhiteSpace(profile.Provenance.Author))
+                errors.Add("provenance.author is required");
+            if (string.IsNullOrWhiteSpace(profile.Provenance.CreatedAt))
+                errors.Add("provenance.createdAt is required");
+            if (string.IsNullOrWhiteSpace(profile.Provenance.Source))
+                errors.Add("provenance.source is required");
+        }
+
+        if (profile.Hardware == null)
+            errors.Add("hardware is required");
+
+        // Validate unknown keys with warnings (forward compatibility)
+        if (profile.System != null)
+        {
+            foreach (var key in profile.System.Keys)
+            {
+                if (!KnownSystemKeys.Contains(key))
+                    warnings.Add($"Unknown key in system: '{key}' (may be from a newer version)");
+            }
+        }
+
+        if (profile.OMLXSettings != null)
+        {
+            foreach (var key in profile.OMLXSettings.Keys)
+            {
+                if (!KnownOMLXKeys.Contains(key))
+                    warnings.Add($"Unknown key in omlx: '{key}' (may be from a newer version)");
+            }
+        }
+
+        if (profile.Harness != null)
+        {
+            foreach (var key in profile.Harness.Keys)
+            {
+                if (!KnownHarnessKeys.Contains(key))
+                    warnings.Add($"Unknown key in harness: '{key}' (may be from a newer version)");
+            }
+        }
 
         return errors.Any()
-            ? new ValidationResult(false, errors)
-            : new ValidationResult(true, new List<string>());
+            ? new ValidationResult(false, errors, warnings)
+            : new ValidationResult(true, new List<string>(), warnings);
     }
 
     /// <summary>
-    /// Validates a profile for publishing to the community repository.
-    /// Requires community metadata and stricter validation.
+    /// Validates a set of profiles loaded from JSONL, ensuring tier uniqueness.
     /// </summary>
-    public ValidationResult ValidateForPublishing(Profile profile)
+    public ValidationResult ValidateProfileSet(List<Profile> profiles)
     {
         var errors = new List<string>();
+        var warnings = new List<string>();
 
-        // First, validate local requirements
-        var localValidation = ValidateForLocalUse(profile);
-        if (!localValidation.IsValid)
-            return localValidation;
+        if (!profiles.Any())
+            return new ValidationResult(true, new List<string>(), new List<string>());
 
-        // Require community metadata
-        if (profile.Community == null)
+        // Check for tier uniqueness
+        var tierCounts = profiles
+            .GroupBy(p => p.Tier, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        foreach (var (tier, count) in tierCounts)
         {
-            errors.Add("Community metadata is required for publishing.");
-            return new ValidationResult(false, errors);
+            if (count > 1)
+                errors.Add($"Tier '{tier}' appears {count} times in the profile set. Each tier must appear exactly once.");
         }
 
-        var community = profile.Community;
-
-        // Validate dedupKey (required for publishing)
-        if (string.IsNullOrWhiteSpace(community.DedupKey))
-            errors.Add("Deduplication key (dedupKey) is required for publishing.");
-        else if (!IsValidDedupKey(community.DedupKey))
-            errors.Add("Deduplication key must be alphanumeric with hyphens, 3-50 characters.");
-
-        // Validate memory range if specified
-        if (community.MinMemoryGb.HasValue && community.MaxMemoryGb.HasValue)
+        // Validate each profile
+        foreach (var profile in profiles)
         {
-            if (community.MinMemoryGb > community.MaxMemoryGb)
-                errors.Add("Minimum memory cannot exceed maximum memory.");
-        }
-
-        // Validate description length
-        if (!string.IsNullOrWhiteSpace(community.Description) && community.Description.Length > 500)
-            errors.Add("Description cannot exceed 500 characters.");
-
-        // Validate tags
-        if (community.Tags?.Any() == true)
-        {
-            var invalidTags = community.Tags.Where(t => !ValidTags.Contains(t)).ToList();
-            if (invalidTags.Any())
-                errors.Add($"Invalid tags: {string.Join(", ", invalidTags)}. Valid tags: {string.Join(", ", ValidTags)}");
+            var result = ValidateForLocalUse(profile);
+            if (!result.IsValid)
+                errors.AddRange(result.Errors.Select(e => $"Profile '{profile.Id}': {e}"));
+            warnings.AddRange(result.Warnings);
         }
 
         return errors.Any()
-            ? new ValidationResult(false, errors)
-            : new ValidationResult(true, new List<string>());
+            ? new ValidationResult(false, errors, warnings)
+            : new ValidationResult(true, new List<string>(), warnings);
     }
 
-    /// <summary>
-    /// Validates engine-specific settings using the appropriate runtime engine handler.
-    /// </summary>
-    public ValidationResult ValidateEngineSettings(Profile profile)
+    private static bool IsValidTier(string tier) => tier switch
     {
-        return _engineRegistry.ValidateProfileForEngine(profile);
-    }
-
-    private static bool IsValidDedupKey(string key)
-    {
-        if (key.Length < 3 || key.Length > 50)
-            return false;
-
-        return key.All(c => char.IsLetterOrDigit(c) || c == '-');
-    }
+        "high" or "balanced" or "efficient" => true,
+        _ => false
+    };
 }
 
 /// <summary>
 /// Result of profile validation.
 /// </summary>
-public record ValidationResult(bool IsValid, List<string> Errors);
+public record ValidationResult(
+    bool IsValid,
+    List<string> Errors,
+    List<string> Warnings = null!)
+{
+    public ValidationResult(bool isValid, List<string> errors) : this(isValid, errors, new List<string>()) { }
+}

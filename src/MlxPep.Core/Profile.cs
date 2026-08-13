@@ -5,10 +5,9 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Represents a complete MLX profile with optional community metadata.
-/// Issue #27: profiling: publish-flow polish + community metadata
+/// Represents a complete MLX profile for a specific model and tier.
+/// Issue #8: core: profile schema records + STJ source-gen + JSONL validation
 /// </summary>
-[JsonConverter(typeof(ProfileJsonConverter))]
 public record Profile(
     [property: JsonPropertyName("schemaVersion")]
     int SchemaVersion,
@@ -42,11 +41,7 @@ public record Profile(
 
     [property: JsonPropertyName("sampler")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    SamplerSettings? Sampler = null,
-
-    [property: JsonPropertyName("community")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    CommunityMetadata? Community = null);
+    SamplerSettings? Sampler = null);
 
 /// <summary>
 /// Represents profile origin and creation metadata.
@@ -75,45 +70,27 @@ public record HardwareFingerprint(
     string ModelIdentifier);
 
 /// <summary>
-/// Represents sampler configuration (optional).
+/// Represents sampler configuration (optional) with direct fields.
 /// </summary>
 public record SamplerSettings(
-    [property: JsonPropertyName("type")]
-    string Type,
-
-    [property: JsonPropertyName("parameters")]
+    [property: JsonPropertyName("temperature")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    Dictionary<string, object>? Parameters = null);
+    double? Temperature = null,
 
-/// <summary>
-/// Represents community-contributed metadata for profiles.
-/// Required for publishing, optional for local-only profiles.
-/// </summary>
-public record CommunityMetadata(
-    [property: JsonPropertyName("tags")]
+    [property: JsonPropertyName("topP")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    List<string>? Tags = null,
+    double? TopP = null,
 
-    [property: JsonPropertyName("keywords")]
+    [property: JsonPropertyName("topK")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    List<string>? Keywords = null,
+    int? TopK = null,
 
-    [property: JsonPropertyName("description")]
+    [property: JsonPropertyName("repetitionPenalty")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    string? Description = null,
+    double? RepetitionPenalty = null,
 
-    [property: JsonPropertyName("minMemoryGb")]
+    [property: JsonPropertyName("contextTokens")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    int? MinMemoryGb = null,
+    int? ContextTokens = null);
 
-    [property: JsonPropertyName("maxMemoryGb")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    int? MaxMemoryGb = null,
 
-    [property: JsonPropertyName("hardwareFamily")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    string? HardwareFamily = null,
-
-    [property: JsonPropertyName("dedupKey")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    string? DedupKey = null);

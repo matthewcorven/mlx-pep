@@ -6,13 +6,13 @@ using System.Linq;
 
 /// <summary>
 /// Hardware-based profile discovery and compatibility matching.
-/// Issue #27: profiling: publish-flow polish + community metadata
-/// 
+/// Issue #8: Core foundation - basic hardware matching
+///
 /// Enables profiles to be discoverable by similar hardware, supporting:
 /// - Exact chip matching (e.g., "Apple M4 Max")
-/// - Memory range compatibility
 /// - Hardware family matching (e.g., "Apple Silicon", "GPU Cluster")
-/// - Similarity scoring for recommendations
+///
+/// Note: Issue #27 (publish-flow polish) will extend this with memory ranges and community metadata.
 /// </summary>
 public class HardwareProfileMatcher
 {
@@ -72,7 +72,7 @@ public class HardwareProfileMatcher
 
     /// <summary>
     /// Finds profiles compatible with a target hardware configuration.
-    /// Considers chip family, memory range, and other factors.
+    /// Considers chip family and similar factors.
     /// </summary>
     public List<HardwareMatch> FindCompatibleProfiles(
         List<Profile> profiles,
@@ -85,17 +85,17 @@ public class HardwareProfileMatcher
 
         foreach (var profile in profiles)
         {
+            var profileFamily = DetermineHardwareFamily(profile.Hardware.Chip);
             var score = CalculateCompatibilityScore(
                 profile: profile,
-                targetMemoryGb: targetMemoryGb,
                 targetChip: targetChip,
                 targetFamily: targetFamily,
-                profileFamily: profile.Community?.HardwareFamily ?? DetermineHardwareFamily(profile.Hardware.Chip)
+                profileFamily: profileFamily
             );
 
             if (score > 0)
             {
-                var reason = BuildMatchReason(profile, targetMemoryGb, targetChip, score);
+                var reason = BuildMatchReason(profile, targetChip);
                 matches.Add(new HardwareMatch(profile, score, reason));
             }
         }
@@ -109,7 +109,6 @@ public class HardwareProfileMatcher
     /// </summary>
     private double CalculateCompatibilityScore(
         Profile profile,
-        int targetMemoryGb,
         string targetChip,
         string? targetFamily,
         string? profileFamily)
@@ -131,20 +130,6 @@ public class HardwareProfileMatcher
             score += 0.5;
         }
 
-        // Memory compatibility (within range): +0.2
-        var community = profile.Community;
-        if (community != null)
-        {
-            bool inRange = true;
-            if (community.MinMemoryGb.HasValue && targetMemoryGb < community.MinMemoryGb)
-                inRange = false;
-            if (community.MaxMemoryGb.HasValue && targetMemoryGb > community.MaxMemoryGb)
-                inRange = false;
-
-            if (inRange)
-                score += 0.2;
-        }
-
         // Normalize to 0.0-1.0 range
         return Math.Min(score, 1.0);
     }
@@ -152,7 +137,7 @@ public class HardwareProfileMatcher
     /// <summary>
     /// Builds a human-readable match reason string.
     /// </summary>
-    private string BuildMatchReason(Profile profile, int targetMemoryGb, string targetChip, double score)
+    private string BuildMatchReason(Profile profile, string targetChip)
     {
         var reasons = new List<string>();
 
@@ -160,23 +145,6 @@ public class HardwareProfileMatcher
             reasons.Add("exact chip match");
         else
             reasons.Add($"compatible with {targetChip}");
-
-        var community = profile.Community;
-        if (community != null)
-        {
-            bool inMemoryRange = true;
-            if (community.MinMemoryGb.HasValue && targetMemoryGb < community.MinMemoryGb)
-                inMemoryRange = false;
-            if (community.MaxMemoryGb.HasValue && targetMemoryGb > community.MaxMemoryGb)
-                inMemoryRange = false;
-
-            if (inMemoryRange && (community.MinMemoryGb.HasValue || community.MaxMemoryGb.HasValue))
-            {
-                var minStr = community.MinMemoryGb?.ToString() ?? "?";
-                var maxStr = community.MaxMemoryGb?.ToString() ?? "?";
-                reasons.Add($"memory {minStr}GB-{maxStr}GB");
-            }
-        }
 
         return string.Join(", ", reasons);
     }
@@ -191,40 +159,15 @@ public class HardwareProfileMatcher
         int targetMemoryGb,
         string targetChip)
     {
+        // For issue #8, just return all profiles that have compatible chip family
+        var targetFamily = DetermineHardwareFamily(targetChip);
         return profiles.Where(p =>
         {
-            var community = p.Community;
-            if (community == null)
-                return true;
-
-            // Exclude if target memory is outside the specified range
-            if (community.MinMemoryGb.HasValue && targetMemoryGb < community.MinMemoryGb)
-                return false;
-            if (community.MaxMemoryGb.HasValue && targetMemoryGb > community.MaxMemoryGb)
-                return false;
-
-            return true;
+            var profileFamily = DetermineHardwareFamily(p.Hardware.Chip);
+            // Allow exact match or family match
+            return p.Hardware.Chip.Equals(targetChip, StringComparison.OrdinalIgnoreCase) ||
+                   (targetFamily != null && profileFamily != null &&
+                    targetFamily.Equals(profileFamily, StringComparison.OrdinalIgnoreCase));
         }).ToList();
-    }
-
-    /// <summary>
-    /// Generates a hardware fingerprint string suitable for deduplication and discovery.
-    /// Format: "family:chip:memory_range"
-    /// Example: "Apple Silicon:Apple M4 Max:16-128GB"
-    /// </summary>
-    public string GenerateHardwareFingerprint(Profile profile)
-    {
-        var family = profile.Community?.HardwareFamily ?? DetermineHardwareFamily(profile.Hardware.Chip) ?? "Unknown";
-        var chip = profile.Hardware.Chip;
-
-        var memoryStr = "any";
-        if (profile.Community?.MinMemoryGb.HasValue == true || profile.Community?.MaxMemoryGb.HasValue == true)
-        {
-            var minStr = profile.Community.MinMemoryGb?.ToString() ?? "*";
-            var maxStr = profile.Community.MaxMemoryGb?.ToString() ?? "*";
-            memoryStr = $"{minStr}-{maxStr}GB";
-        }
-
-        return $"{family}:{chip}:{memoryStr}";
     }
 }

@@ -8,18 +8,14 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Handles profile I/O, serialization, and deduplication.
-/// Issue #27: profiling: publish-flow polish + community metadata
+/// Handles profile JSONL I/O with validation.
+/// Issue #8: core: profile schema records + STJ source-gen + JSONL validation
+///
+/// JSONL format: one JSON object per line, one line per tier (high|balanced|efficient).
+/// Round-trip validation ensures serialization fidelity and tier uniqueness.
 /// </summary>
 public class ProfileReader
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
-
     private static readonly JsonSerializerOptions JsonLOptions = new()
     {
         WriteIndented = false,
@@ -27,10 +23,13 @@ public class ProfileReader
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
+    private readonly ProfileValidator _validator = new();
+
     /// <summary>
-    /// Reads a set of profiles from a JSONL file.
+    /// Reads a set of profiles from a JSONL file with validation.
+    /// Throws InvalidOperationException if validation fails.
     /// </summary>
-    public async Task<List<Profile>> ReadProfileSetAsync(string filePath)
+    public async Task<List<Profile>> ReadProfileSetAsync(string filePath, bool validateAfterRead = true)
     {
         var profiles = new List<Profile>();
 
@@ -39,9 +38,11 @@ public class ProfileReader
 
         using var reader = new StreamReader(filePath);
         string? line;
+        int lineNumber = 0;
 
         while ((line = await reader.ReadLineAsync()) != null)
         {
+            lineNumber++;
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
@@ -51,9 +52,31 @@ public class ProfileReader
                 if (profile != null)
                     profiles.Add(profile);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                // Skip malformed lines
+                var msg = $"Failed to deserialize JSONL at line {lineNumber}: {ex.Message}\n\nLine content: {line}\n\nNote: Use source-generated JsonSerializerContext from ProfileJsonSerializerContext, not reflection-based deserialization.";
+                throw new InvalidOperationException(msg, ex);
+            }
+        }
+
+        // Validate the entire profile set if requested
+        if (validateAfterRead && profiles.Any())
+        {
+            var result = _validator.ValidateProfileSet(profiles);
+            if (!result.IsValid)
+            {
+                var errorMessage = $"Failed to validate profile set from '{filePath}':\n" +
+                                   string.Join("\n", result.Errors.Select(e => $"  - {e}"));
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            // Log warnings if any
+            if (result.Warnings.Any())
+            {
+                foreach (var warning in result.Warnings)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileReader] Warning: {warning}");
+                }
             }
         }
 
@@ -62,9 +85,21 @@ public class ProfileReader
 
     /// <summary>
     /// Writes profiles to a JSONL file (one JSON object per line).
+    /// Automatically validates tier uniqueness before writing.
     /// </summary>
-    public async Task WriteProfileSetAsync(string filePath, List<Profile> profiles)
+    public async Task WriteProfileSetAsync(string filePath, List<Profile> profiles, bool validateBeforeWrite = true)
     {
+        if (validateBeforeWrite && profiles.Any())
+        {
+            var result = _validator.ValidateProfileSet(profiles);
+            if (!result.IsValid)
+            {
+                var errorMessage = $"Failed to validate profiles before writing to '{filePath}':\n" +
+                                   string.Join("\n", result.Errors.Select(e => $"  - {e}"));
+                throw new InvalidOperationException(errorMessage);
+            }
+        }
+
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);
@@ -79,129 +114,12 @@ public class ProfileReader
     }
 
     /// <summary>
-    /// Deduplicates profiles by dedupKey, keeping the newest (by CreatedAt).
-    /// Only applies to profiles with community metadata containing a dedupKey.
+    /// Filters profiles by tier.
     /// </summary>
-    public List<Profile> DeduplicateByDedupKey(List<Profile> profiles)
-    {
-        var dedupGroups = new Dictionary<string, List<Profile>>();
-
-        foreach (var profile in profiles)
-        {
-            var key = profile.Community?.DedupKey;
-
-            if (string.IsNullOrEmpty(key))
-                continue;
-
-            if (!dedupGroups.ContainsKey(key))
-                dedupGroups[key] = new List<Profile>();
-
-            dedupGroups[key].Add(profile);
-        }
-
-        var result = new List<Profile>(profiles);
-
-        foreach (var (dedupKey, group) in dedupGroups)
-        {
-            if (group.Count <= 1)
-                continue;
-
-            // Sort by CreatedAt descending (newest first)
-            var sorted = group.OrderByDescending(p => p.Provenance.CreatedAt).ToList();
-            var newest = sorted[0];
-
-            // Remove all but the newest
-            foreach (var old in sorted.Skip(1))
-                result.Remove(old);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Finds profiles with duplicate dedupKeys.
-    /// </summary>
-    public Dictionary<string, List<Profile>> FindDuplicatesByDedupKey(List<Profile> profiles)
-    {
-        var groups = new Dictionary<string, List<Profile>>();
-
-        foreach (var profile in profiles)
-        {
-            var key = profile.Community?.DedupKey;
-            if (string.IsNullOrEmpty(key))
-                continue;
-
-            if (!groups.ContainsKey(key))
-                groups[key] = new List<Profile>();
-
-            groups[key].Add(profile);
-        }
-
-        return groups.Where(g => g.Value.Count > 1)
-            .ToDictionary(g => g.Key, g => g.Value);
-    }
-
-    /// <summary>
-    /// Searches profiles by description, tags, or keywords.
-    /// </summary>
-    public List<Profile> SearchProfiles(List<Profile> profiles, string query)
-    {
-        var lowerQuery = query.ToLowerInvariant();
-
-        return profiles.Where(p =>
-        {
-            var community = p.Community;
-            if (community == null)
-                return false;
-
-            if (!string.IsNullOrEmpty(community.Description) &&
-                community.Description.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (community.Tags?.Any(t => t.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase)) == true)
-                return true;
-
-            if (community.Keywords?.Any(k => k.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase)) == true)
-                return true;
-
-            return false;
-        }).ToList();
-    }
-
-    /// <summary>
-    /// Filters profiles by hardware requirements.
-    /// </summary>
-    public List<Profile> FilterByHardware(List<Profile> profiles, int memoryGb, string? hardwareFamily = null)
+    public List<Profile> FilterByTier(List<Profile> profiles, string tier)
     {
         return profiles.Where(p =>
-        {
-            var community = p.Community;
-            if (community == null)
-                return true;
-
-            // Check memory range
-            if (community.MinMemoryGb.HasValue && memoryGb < community.MinMemoryGb)
-                return false;
-
-            if (community.MaxMemoryGb.HasValue && memoryGb > community.MaxMemoryGb)
-                return false;
-
-            // Check hardware family if specified
-            if (!string.IsNullOrEmpty(hardwareFamily) &&
-                !string.IsNullOrEmpty(community.HardwareFamily) &&
-                !community.HardwareFamily.Equals(hardwareFamily, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            return true;
-        }).ToList();
-    }
-
-    /// <summary>
-    /// Filters profiles to only those with community metadata.
-    /// </summary>
-    public List<Profile> FilterPublishable(List<Profile> profiles)
-    {
-        return profiles.Where(p => p.Community != null).ToList();
+            p.Tier.Equals(tier, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     /// <summary>
@@ -220,5 +138,14 @@ public class ProfileReader
     {
         var engineSet = new HashSet<string>(engines, StringComparer.OrdinalIgnoreCase);
         return profiles.Where(p => engineSet.Contains(p.Engine)).ToList();
+    }
+
+    /// <summary>
+    /// Filters profiles by model Hugging Face ID.
+    /// </summary>
+    public List<Profile> FilterByModel(List<Profile> profiles, string modelHfId)
+    {
+        return profiles.Where(p =>
+            p.ModelHfId.Equals(modelHfId, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 }

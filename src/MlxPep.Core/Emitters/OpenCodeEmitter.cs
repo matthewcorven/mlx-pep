@@ -81,15 +81,15 @@ public class OpenCodeEmitter : IHarnessEmitter
         }
 
         // Extract sampler settings
-        if (profile.Sampler != null && profile.Sampler.Parameters != null)
+        if (profile.Sampler != null)
         {
             var samplerConfig = new JsonObject();
 
-            if (profile.Sampler.Parameters.TryGetValue("temperature", out var temp))
-                samplerConfig["temperature"] = Convert.ToDouble(temp);
+            if (profile.Sampler.Temperature.HasValue)
+                samplerConfig["temperature"] = profile.Sampler.Temperature.Value;
 
-            if (profile.Sampler.Parameters.TryGetValue("topP", out var p))
-                samplerConfig["topP"] = Convert.ToDouble(p);
+            if (profile.Sampler.TopP.HasValue)
+                samplerConfig["topP"] = profile.Sampler.TopP.Value;
 
             if (samplerConfig.Count > 0)
                 config["sampler"] = samplerConfig;
