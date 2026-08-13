@@ -21,6 +21,47 @@ public class IpBlockingMiddleware
         _next = next;
         _logger = logger;
         _optionsMonitor = optionsMonitor;
+        
+        // Validate configuration on startup
+        ValidateConfiguration(optionsMonitor.CurrentValue);
+    }
+
+    private void ValidateConfiguration(BlockingConfig config)
+    {
+        if (config.EnableIpBlocking)
+        {
+            foreach (var ip in config.BlockedIps)
+            {
+                if (!IPAddress.TryParse(ip, out _))
+                {
+                    _logger.LogWarning("Invalid IP address in BlockedIps configuration: {InvalidIp}", ip);
+                }
+            }
+        }
+
+        if (config.EnableCidrBlocking)
+        {
+            foreach (var cidr in config.BlockedCidrs)
+            {
+                if (!IsValidCidr(cidr))
+                {
+                    _logger.LogWarning("Invalid CIDR range in BlockedCidrs configuration: {InvalidCidr}", cidr);
+                }
+            }
+        }
+    }
+
+    private static bool IsValidCidr(string cidr)
+    {
+        var parts = cidr.Split('/');
+        if (parts.Length != 2)
+            return false;
+        if (!IPAddress.TryParse(parts[0], out var network))
+            return false;
+        if (!int.TryParse(parts[1], out var prefixLength))
+            return false;
+        var maxPrefixLength = network.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 128 : 32;
+        return prefixLength >= 0 && prefixLength <= maxPrefixLength;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -192,7 +233,9 @@ public class IpBlockingMiddleware
 
     /// <summary>
     /// Matches a hostname against a pattern with optional wildcard.
-    /// Patterns: "example.com", "*.example.com", etc.
+    /// Patterns: "example.com" (exact match), "*.example.com" (subdomains only, NOT parent)
+    /// Wildcard patterns only match one level deep (e.g., "sub.example.com" matches "*.example.com", 
+    /// but "example.com" does NOT).
     /// </summary>
     private static bool HostnameMatches(string hostname, string pattern)
     {
@@ -202,12 +245,12 @@ public class IpBlockingMiddleware
             return true;
         }
 
-        // Wildcard match
+        // Wildcard match (subdomains only, NOT parent domain)
         if (pattern.StartsWith("*.", StringComparison.OrdinalIgnoreCase))
         {
             var domain = pattern[2..]; // Remove "*."
-            return hostname.EndsWith("." + domain, StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(hostname, domain, StringComparison.OrdinalIgnoreCase);
+            // ONLY match if hostname ends with ".domain" (subdomain), not "domain" itself
+            return hostname.EndsWith("." + domain, StringComparison.OrdinalIgnoreCase);
         }
 
         return false;

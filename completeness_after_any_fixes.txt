@@ -1,0 +1,1 @@
+78% - Missing IPv6 test coverage, X-Forwarded-For proxy header test, hostname wildcard edge case clarification, and configuration validation
