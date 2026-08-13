@@ -167,7 +167,16 @@ public class DependencyDetectionService
             DisplayName = "model-assessor (Python package)"
         };
 
-        // model-assessor is a Python package; check via pip
+        // DESIGN NOTE: model-assessor is a Python package installed via pip, not a CLI tool.
+        // Unlike other tools that have IDependencyProbe implementations, this detection
+        // runs `pip show model-assessor` directly. While this creates architectural
+        // inconsistency, it's appropriate because:
+        // 1. pip is the discovery mechanism for Python packages (not version flags)
+        // 2. The output format is unique to pip (Version: X.Y.Z, not CLI standard formats)
+        // 3. Testing uses MockProbe injection in the service's probes dictionary
+        //
+        // Future refactor: Could wrap this in a PythonPackageProbe(packageName) class
+        // to improve consistency, but current design is functional and testable.
         try
         {
             using var process = new Process
