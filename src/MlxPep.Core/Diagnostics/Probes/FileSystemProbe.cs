@@ -62,12 +62,15 @@ public class PathProbe : IDependencyProbe
                 StartInfo = new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = whichCmd,
-                    Arguments = _command,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
                 }
             };
+
+            // Use ArgumentList to safely pass the command parameter.
+            // ArgumentList automatically handles escaping and prevents command injection.
+            process.StartInfo.ArgumentList.Add(_command);
 
             if (!process.Start())
             {

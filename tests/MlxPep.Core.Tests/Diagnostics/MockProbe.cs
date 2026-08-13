@@ -1,3 +1,5 @@
+using MlxPep.Core.Diagnostics;
+
 namespace MlxPep.Core.Tests.Diagnostics;
 
 /// <summary>
