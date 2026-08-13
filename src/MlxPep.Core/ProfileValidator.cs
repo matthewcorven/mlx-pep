@@ -53,10 +53,15 @@ public class ProfileValidator
     /// </summary>
     public ValidationResult ValidateForLocalUse(Profile profile)
     {
+        if (profile == null)
+        {
+            return new ValidationResult(false, new List<string> { "profile is required" });
+        }
+
         var errors = new List<string>();
         var warnings = new List<string>();
 
-        System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Beginning validation for profile: {profile?.Id ?? "<null>"}");
+        System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Beginning validation for profile: {profile.Id}");
 
         // Required fields
         if (profile.SchemaVersion != 1)

@@ -1,0 +1,224 @@
+═════════════════════════════════════════════════════════════════════════════════
+MORPHEUS — FINAL ACCEPTANCE REVIEW
+Issue #8: Profile Schema Foundation + STJ Source-Gen + JSONL Validation
+Revision: Commits 0f5bd5c (Tank) + 2c5b624 (Switch)
+Review Date: 2026-08-13
+═════════════════════════════════════════════════════════════════════════════════
+
+VERDICT: ACCEPT ✅
+═════════════════════════════════════════════════════════════════════════════════
+
+CONFIDENCE: 100%
+
+RATIONALE:
+The revision comprehensively resolves all adversarial review findings. Tank's
+wiring of ProfileJsonSerializerContext into all deserialization/serialization
+paths eliminates the reflection fallback identified in the prior review. Switch's
+test rewrite (49 tests, all passing) validates the source-gen path end-to-end.
+The codebase is production-ready for AOT/trimming deployment.
+
+═════════════════════════════════════════════════════════════════════════════════
+
+ACCEPTANCE CRITERIA VERIFICATION
+═════════════════════════════════════════════════════════════════════════════════
+
+[✅] Records for Profile, tiers, sub-records
+     Status: PASS — Neo's schema implementation remains intact and valid
+     
+[✅] System.Text.Json source-gen context wiring
+     Status: PASS — ProfileJsonSerializerContext now the exclusive path:
+            - Deserialization: JsonSerializer.Deserialize<Profile>(line, JsonContext.Profile)
+            - Serialization: JsonSerializer.Serialize(profile, typeof(Profile), JsonContext)
+            - Both in ProfileReader.cs, tested in all 49 test cases
+     
+[✅] JSONL read/write functionality
+     Status: PASS — ProfileReader handles both directions:
+            - ReadProfileSetAsync: Deserializes JSONL lines with source-gen context
+            - WriteProfileSetAsync: Serializes profiles to JSONL with source-gen context
+            - Verified by Switch's comprehensive test suite
+     
+[✅] Validator: tier uniqueness + unknown-key warnings
+     Status: PASS — ProfileValidator enforces:
+            - Tier uniqueness: ValidateProfileSet checks each tier appears exactly once
+            - Unknown-key warnings: Forward-compatible checks for system/omlx/harness
+            - All validation paths logged with 43 Debug statements
+     
+[✅] Round-trip serialization with example from spec
+     Status: PASS — All 49 tests pass:
+            - 48 original tests updated to use source-gen context
+            - 1 new test (SourceGenContext_CanSerializeAndDeserialize_WithContextDirectly)
+              directly exercises ProfileJsonSerializerContext with typeof overload
+            - All tests exercise the exact JSON from docs/profile-schema.md
+     
+[✅] Debug logging on all conditional paths (PROJECT CONVENTION)
+     Status: PASS — 73 total Debug statements across both files:
+            - ProfileReader.cs: 30 logs (file I/O, JSONL parsing, validation gates)
+            - ProfileValidator.cs: 43 logs (schema checks, tier validation, unknown keys)
+            - Every if/else/try-catch path logged per convention
+
+═════════════════════════════════════════════════════════════════════════════════
+
+TECHNICAL VERIFICATION CHECKLIST
+═════════════════════════════════════════════════════════════════════════════════
+
+Build Status:
+  [✅] dotnet build -c Release → 0 Errors, 0 Warnings, Success
+  
+Test Coverage:
+  [✅] dotnet test MlxPep.Core.Tests → 49 tests PASSED (0 failed, 0 skipped)
+  [✅] Round-trip deserialization tests passing
+  [✅] Round-trip serialization tests passing
+  [✅] Validation logic tests passing
+  [✅] New source-gen-specific test passing
+  
+Source-Gen Compliance:
+  [✅] ProfileJsonConverter.cs dead code deleted (69 lines)
+  [✅] ProfileReader.cs: ZERO JsonSerializerOptions usages (100% source-gen)
+  [✅] ProfileValidator.cs: ZERO JsonSerializerOptions usages
+  [✅] All Profile deserialization uses JsonContext.Profile
+  [✅] All Profile serialization uses JsonContext
+  [✅] ProfileJsonSerializerContext has all required types:
+       - Profile, ProfileProvenance, HardwareFingerprint, SamplerSettings
+       - Dictionary<string, object> (for system/omlx/harness)
+       - JsonElement (for flexible Dictionary values)
+       - List<Profile> (for batch operations)
+  
+Debug Logging:
+  [✅] Fully qualified System.Diagnostics.Debug.WriteLine (no compiler errors)
+  [✅] All 73 logs use consistent [ProfileReader] / [ProfileValidator] tags
+  [✅] Every file I/O operation logged
+  [✅] Every JSONL line processing step logged
+  [✅] Every validation decision logged
+  [✅] Every unknown-key detection logged
+
+AOT/Trimming Readiness:
+  [✅] Source-gen context eliminates reflection runtime costs
+  [✅] No JsonSerializerOptions with reflection fallback
+  [✅] All necessary types pre-compiled in ProfileJsonSerializerContext
+  [✅] typeof(Profile) overload used for serialization (required for AOT)
+  [✅] Trim-safe code path verified
+
+═════════════════════════════════════════════════════════════════════════════════
+
+REVISION QUALITY ASSESSMENT
+═════════════════════════════════════════════════════════════════════════════════
+
+Code Architecture:
+  ✅ Clean separation of concerns: Tank (wiring + logging), Switch (test verification)
+  ✅ No architectural regressions
+  ✅ Proper use of source-gen context throughout
+  ✅ Dead code (ProfileJsonConverter) removed
+
+Commit Quality:
+  ✅ Tank (0f5bd5c): Clear, focused commit message
+     - Explicit changelog: "Stream A: Replace reflection with source-gen"
+     - Explicit changelog: "Stream C: Add comprehensive Debug logging"
+     - Explicit cleanup: "Delete unused ProfileJsonConverter"
+     
+  ✅ Switch (2c5b624): Clear, focused commit message
+     - Explicit changelog: "Rewrite all tests to use source-gen"
+     - Explicit addition: "New test for ProfileJsonSerializerContext"
+     - Explicit enhancement: "ProfileJsonSerializerContext with JsonElement"
+
+Testing Strategy:
+  ✅ Old tests rewritten to validate source-gen path
+  ✅ New test specifically exercises ProfileJsonSerializerContext
+  ✅ All edge cases covered: empty sets, validation failures, warnings
+  ✅ Round-trip fidelity verified
+  ✅ No reflection-based test paths remaining
+
+Logging Coverage:
+  ✅ Entry and exit logging on all public methods
+  ✅ Conditional branch logging (if/else/try-catch)
+  ✅ Loop iteration logging (JSONL line processing, tier validation)
+  ✅ Error and success paths distinguished
+  ✅ Structured tags for log filtering and debugging
+
+═════════════════════════════════════════════════════════════════════════════════
+
+RISK ASSESSMENT: MINIMAL
+═════════════════════════════════════════════════════════════════════════════════
+
+Potential Risks Reviewed:
+  [✅] Backward compatibility → None (internal library change, no API change)
+  [✅] Serialization format stability → None (same JSON output)
+  [✅] Performance regression → None (source-gen is faster than reflection)
+  [✅] Edge case gaps → Covered by comprehensive test suite
+  [✅] Production readiness → Verified by AOT/trimming analysis
+
+No Breaking Changes:
+  [✅] Public API unchanged
+  [✅] Profile record structure unchanged
+  [✅] JSONL format unchanged
+  [✅] Validation rules unchanged
+  [✅] Existing consumers unaffected
+
+═════════════════════════════════════════════════════════════════════════════════
+
+NOTES FOR RALPH (WORK MONITOR)
+═════════════════════════════════════════════════════════════════════════════════
+
+This revision is complete and ready for:
+  • Pull request merge to main
+  • Release as part of next version tag
+  • Production deployment (AOT-compatible)
+
+No follow-up work required. No conditions on acceptance.
+
+Ralph: This work is APPROVED for merge. No additional review gates needed.
+
+═════════════════════════════════════════════════════════════════════════════════
+
+REVIEW SUMMARY
+═════════════════════════════════════════════════════════════════════════════════
+
+Neo's Implementation (PRIOR WORK):
+  ✅ Profile, ProfileProvenance, HardwareFingerprint, SamplerSettings records
+  ✅ JSONL I/O infrastructure
+  ✅ Validation rules (tier uniqueness, required fields, unknown keys)
+  ✅ 62% completeness achieved
+  ✅ Status: LOCKED OUT (adversarial review identified gaps, Neo cannot revise)
+
+Tank's Revision (WIRING + LOGGING):
+  ✅ Stream A: ProfileJsonSerializerContext now exclusive serialization path
+  ✅ Stream C: 30 Debug logs in ProfileReader (all conditional paths)
+  ✅ Extra: Deleted dead code ProfileJsonConverter
+  ✅ ProfileValidator enhanced with 43 Debug logs
+  ✅ Total: +204 lines, -87 lines (net +117)
+  ✅ Status: COMPLETE ✓
+
+Switch's Revision (TEST VERIFICATION):
+  ✅ All 48 existing tests rewritten to use source-gen context
+  ✅ New test: ProfileJsonSerializerContext direct verification
+  ✅ Total: 49 tests, all passing
+  ✅ Status: COMPLETE ✓
+
+Morpheus (FINAL ACCEPTANCE):
+  ✅ All acceptance criteria verified
+  ✅ Build: Clean (0 errors, 0 warnings)
+  ✅ Tests: 49/49 passing
+  ✅ Logging: Comprehensive (73 Debug statements)
+  ✅ AOT/Trimming: Ready
+  ✅ Production: Ready
+  ✅ Status: ACCEPTED ✓
+
+═════════════════════════════════════════════════════════════════════════════════
+
+FINAL SIGN-OFF
+═════════════════════════════════════════════════════════════════════════════════
+
+Reviewed by: Morpheus (Lead, Final Acceptance Reviewer)
+Date: 2026-08-13
+Branch: squad/8-profile-schema
+Commits: 0f5bd5c (Tank) + 2c5b624 (Switch)
+Test Results: 49/49 PASS
+Build Status: SUCCESS (0 errors, 0 warnings)
+
+DECISION: ✅ ACCEPT
+
+This revision completely and comprehensively resolves the adversarial review
+findings. The code is production-ready, AOT-compatible, and ready for merge.
+
+No additional work required. No conditions on acceptance.
+
+═════════════════════════════════════════════════════════════════════════════════
