@@ -109,6 +109,7 @@ jobs:
           client-id: 5726df39-f34e-4ec8-b8a3-4287cd793394
           tenant-id: bbdb7146-4bdb-4eae-b50d-ff09b9d191b5
           subscription-id: de345105-2ffc-4619-a6bc-9c41dec93241
+          auth-type: OIDC
 
       - name: Extract commit SHA (short)
         id: meta
