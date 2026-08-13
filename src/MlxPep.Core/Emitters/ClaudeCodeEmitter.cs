@@ -76,18 +76,18 @@ public class ClaudeCodeEmitter : IHarnessEmitter
         }
 
         // Extract sampler settings for inference
-        if (profile.Sampler != null && profile.Sampler.Parameters != null && profile.Sampler.Parameters.Count > 0)
+        if (profile.Sampler != null)
         {
             var inference = new JsonObject();
 
-            if (profile.Sampler.Parameters.TryGetValue("temperature", out var temp))
-                inference["temperature"] = Convert.ToDouble(temp);
+            if (profile.Sampler.Temperature.HasValue)
+                inference["temperature"] = profile.Sampler.Temperature.Value;
 
-            if (profile.Sampler.Parameters.TryGetValue("topP", out var topP))
-                inference["topP"] = Convert.ToDouble(topP);
+            if (profile.Sampler.TopP.HasValue)
+                inference["topP"] = profile.Sampler.TopP.Value;
 
-            if (profile.Sampler.Parameters.TryGetValue("topK", out var topK))
-                inference["topK"] = Convert.ToInt32(topK);
+            if (profile.Sampler.TopK.HasValue)
+                inference["topK"] = profile.Sampler.TopK.Value;
 
             if (inference.Count > 0)
                 config["inference"] = inference;

@@ -60,10 +60,12 @@ public class ProfileCRUDEndpointTests
                 ModelIdentifier: "MacBook16,5"
             ),
             Sampler: new SamplerSettings(
-                Type: "default",
-                Parameters: new Dictionary<string, object> { { "temperature", 0.7 } }
-            ),
-            Community: null
+                Temperature: 0.7,
+                TopP: null,
+                TopK: null,
+                RepetitionPenalty: null,
+                ContextTokens: null
+            )
         );
     }
 
@@ -101,47 +103,44 @@ public class ProfileCRUDEndpointTests
     }
 
     [Fact]
-    public void ProfileWithNullCommunityMetadataSerializesCorrectly()
+    public void ProfileWithNullSamplerSerializesCorrectly()
     {
-        // Arrange: Create a profile without community metadata (common for local profiles)
-        var profile = CreateTestProfile();
+        // Arrange: Create a profile without sampler (common for local profiles)
+        var profile = CreateTestProfile() with { Sampler = null };
 
         // Act: Serialize to JSON
         var json = JsonSerializer.Serialize(profile);
 
-        // Assert: Verify community is omitted when null (per JsonIgnore condition)
+        // Assert: Verify sampler is omitted when null
         var doc = JsonDocument.Parse(json);
-        bool hasCommunity = doc.RootElement.TryGetProperty("community", out _);
-        Assert.False(hasCommunity, "Community metadata should be omitted when null");
+        bool hasSampler = doc.RootElement.TryGetProperty("sampler", out _);
+        Assert.False(hasSampler, "Sampler should be omitted when null");
     }
 
     [Fact]
-    public void ProfileWithCommunityMetadataSerializesCorrectly()
+    public void ProfileWithSamplerSettingsSerializesCorrectly()
     {
-        // Arrange: Create a profile with community metadata
+        // Arrange: Create a profile with sampler settings
         var profile = CreateTestProfile() with
         {
-            Community = new CommunityMetadata(
-                Tags: new List<string> { "efficient", "testing" },
-                Keywords: new List<string> { "test", "omlx" },
-                Description: "A test profile for unit testing",
-                MinMemoryGb: 32,
-                MaxMemoryGb: 128,
-                HardwareFamily: "MacBook Pro",
-                DedupKey: "test-dedup-key"
+            Sampler = new SamplerSettings(
+                Temperature: 0.8,
+                TopP: 0.9,
+                TopK: 40,
+                RepetitionPenalty: 1.1,
+                ContextTokens: 2048
             )
         };
 
         // Act: Serialize to JSON
         var json = JsonSerializer.Serialize(profile);
 
-        // Assert: Verify community metadata is included
+        // Assert: Verify sampler settings are included
         var doc = JsonDocument.Parse(json);
-        bool hasCommunity = doc.RootElement.TryGetProperty("community", out var communityObj);
-        Assert.True(hasCommunity, "Community metadata should be included when not null");
-        Assert.True(communityObj.TryGetProperty("tags", out _), "Tags should be present");
-        Assert.True(communityObj.TryGetProperty("description", out _), "Description should be present");
+        bool hasSampler = doc.RootElement.TryGetProperty("sampler", out var samplerObj);
+        Assert.True(hasSampler, "Sampler settings should be included when not null");
+        Assert.True(samplerObj.TryGetProperty("temperature", out _), "Temperature should be present");
+        Assert.True(samplerObj.TryGetProperty("topP", out _), "TopP should be present");
     }
 }
-
 

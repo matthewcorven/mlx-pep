@@ -26,30 +26,28 @@ public class AssessCommand
         {
             // Create test profiles for the model
             var profiles = CreateProfilesForModel(hfId);
-            var publishedProfiles = new List<Profile>();
 
             if (publish)
             {
-                var batchResult = await _publishService.PrepareForPublishAsync(profiles, publishedProfiles);
-                var report = _publishService.GenerateReport(batchResult);
+                // Validate profiles for local use
+                var validator = new ProfileValidator();
+                var validationResult = validator.ValidateProfileSet(profiles);
 
                 if (context.JsonOutput)
                 {
                     var result = new
                     {
                         command = "assess",
-                        status = report.HasErrors ? "warning" : "ok",
+                        status = validationResult.IsValid ? "ok" : "error",
                         hfId = hfId,
-                        profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier, saved = true }).ToArray(),
-                        publish = new
+                        profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier }).ToArray(),
+                        validation = new
                         {
-                            totalProfiles = report.TotalProfiles,
-                            validProfiles = report.ValidProfiles,
-                            deduplicatedProfiles = report.DeduplicatedProfiles,
-                            duplicateSavings = report.DuplicateSavings,
-                            successRate = report.SuccessRate,
-                            hasErrors = report.HasErrors,
-                            failedProfiles = report.FailedProfileIds
+                            isValid = validationResult.IsValid,
+                            errorCount = validationResult.Errors.Count,
+                            warningCount = validationResult.Warnings.Count,
+                            errors = validationResult.Errors,
+                            warnings = validationResult.Warnings
                         }
                     };
                     Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
@@ -58,11 +56,13 @@ public class AssessCommand
                 {
                     Console.WriteLine($"Assessing model: {hfId}");
                     Console.WriteLine($"Generated {profiles.Count} profiles");
-                    Console.WriteLine($"Publish check: {report.ValidProfiles}/{report.TotalProfiles} profiles valid");
-                    if (report.DuplicateSavings > 0)
-                        Console.WriteLine($"Deduplication would remove {report.DuplicateSavings} duplicates");
-                    if (report.HasErrors)
-                        Console.WriteLine($"⚠️  {report.FailedProfileIds.Count} profiles failed validation");
+                    if (validationResult.IsValid)
+                        Console.WriteLine($"✓ All profiles valid");
+                    else
+                        Console.WriteLine($"✗ Validation failed with {validationResult.Errors.Count} errors");
+
+                    if (validationResult.Warnings.Count > 0)
+                        Console.WriteLine($"⚠️  {validationResult.Warnings.Count} warnings");
                 }
             }
             else
@@ -120,8 +120,7 @@ public class AssessCommand
                 },
                 Provenance: new ProfileProvenance("assess-command", DateTime.UtcNow.ToString("O"), "cli"),
                 Hardware: new HardwareFingerprint("Apple M1", 16, "MacBookPro"),
-                Sampler: new SamplerSettings("default", new Dictionary<string, object> { { "temperature", 0.7 } }),
-                Community: null
+                Sampler: new SamplerSettings(Temperature: 0.7, TopP: null, TopK: null, RepetitionPenalty: null, ContextTokens: null)
             ));
         }
 

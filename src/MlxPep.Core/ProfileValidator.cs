@@ -2,28 +2,51 @@ namespace MlxPep.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 /// <summary>
-/// Validates profiles for local use or publishing.
-/// Issue #27: profiling: publish-flow polish + community metadata
+/// Validates profiles for local use.
+/// Issue #8: core: profile schema records + STJ source-gen + JSONL validation
+///
+/// Validation rules:
+/// - schemaVersion must be 1
+/// - id, modelHfId, tier, engine must be non-empty
+/// - Tiers in a profile set must be unique (high, balanced, efficient)
+/// - Unknown keys in system/omlx/harness: log warning (forward compatibility)
+/// - Known keys are validated against allowlist
 /// </summary>
 public class ProfileValidator
 {
-    private static readonly HashSet<string> ValidTags = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> KnownSystemKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "production", "experimental", "benchmark", "inference", "training",
-        "quantized", "unquantized", "streaming", "cpu", "gpu", "npu",
-        "high-latency", "low-latency", "high-throughput", "memory-optimized",
-        "speed-optimized", "accuracy-optimized"
+        "iogpu.wired_limit_mb",
+        "memory_cache_mb",
+        "antml.max_model_size_mb",
+        "antml.npu_timeout",
+        "antml.allow_remote_execution",
+        "gpu_memory_fraction"
     };
 
-    private readonly RuntimeEngineRegistry _engineRegistry;
-
-    public ProfileValidator(RuntimeEngineRegistry? engineRegistry = null)
+    private static readonly HashSet<string> KnownOMLXKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        _engineRegistry = engineRegistry ?? new RuntimeEngineRegistry();
-    }
+        "memory_guard_tier",
+        "memory_guard_ceiling_gb",
+        "thread_limit",
+        "quantization",
+        "enable_multi_gpu",
+        "compute_units",
+        "model_dtype",
+        "batch_size"
+    };
+
+    private static readonly HashSet<string> KnownHarnessKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "vscode",
+        "copilotCli",
+        "claudeCode",
+        "opencode"
+    };
 
     /// <summary>
     /// Validates a profile for local use only.
@@ -31,93 +54,255 @@ public class ProfileValidator
     public ValidationResult ValidateForLocalUse(Profile profile)
     {
         var errors = new List<string>();
+        var warnings = new List<string>();
+
+        Debug.WriteLine($"[ProfileValidator] Beginning validation for profile: {profile?.Id ?? "<null>"}");
+
+        // Required fields
+        if (profile.SchemaVersion != 1)
+        {
+            Debug.WriteLine($"[ProfileValidator] schemaVersion check failed: expected 1, got {profile.SchemaVersion}");
+            errors.Add($"schemaVersion must be 1, got {profile.SchemaVersion}");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] schemaVersion check passed: {profile.SchemaVersion}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.Id))
-            errors.Add("Profile ID is required.");
+        {
+            Debug.WriteLine($"[ProfileValidator] id check failed: id is required and empty");
+            errors.Add("id is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] id check passed: {profile.Id}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.ModelHfId))
-            errors.Add("Model HuggingFace ID is required.");
+        {
+            Debug.WriteLine($"[ProfileValidator] modelHfId check failed: modelHfId is required and empty");
+            errors.Add("modelHfId is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] modelHfId check passed: {profile.ModelHfId}");
+        }
+
+        if (string.IsNullOrWhiteSpace(profile.Tier))
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check failed: tier is required and empty");
+            errors.Add("tier is required");
+        }
+        else if (!IsValidTier(profile.Tier))
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check failed: '{profile.Tier}' is not valid (must be 'high', 'balanced', or 'efficient')");
+            errors.Add($"tier must be 'high', 'balanced', or 'efficient', got '{profile.Tier}'");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] tier check passed: {profile.Tier}");
+        }
 
         if (string.IsNullOrWhiteSpace(profile.Engine))
-            errors.Add("Engine is required.");
-        else if (!_engineRegistry.IsSupported(profile.Engine))
-            errors.Add($"Unsupported engine '{profile.Engine}'. Supported engines: {string.Join(", ", _engineRegistry.GetEngineIds())}");
+        {
+            Debug.WriteLine($"[ProfileValidator] engine check failed: engine is required and empty");
+            errors.Add("engine is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] engine check passed: {profile.Engine}");
+        }
 
-        return errors.Any()
-            ? new ValidationResult(false, errors)
-            : new ValidationResult(true, new List<string>());
+        // Validate required nested objects
+        if (profile.Provenance == null)
+        {
+            Debug.WriteLine($"[ProfileValidator] provenance check failed: provenance is null");
+            errors.Add("provenance is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] provenance check passed: object present");
+            if (string.IsNullOrWhiteSpace(profile.Provenance.Author))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.author check failed: empty");
+                errors.Add("provenance.author is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.author check passed: {profile.Provenance.Author}");
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Provenance.CreatedAt))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.createdAt check failed: empty");
+                errors.Add("provenance.createdAt is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.createdAt check passed: {profile.Provenance.CreatedAt}");
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Provenance.Source))
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.source check failed: empty");
+                errors.Add("provenance.source is required");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] provenance.source check passed: {profile.Provenance.Source}");
+            }
+        }
+
+        if (profile.Hardware == null)
+        {
+            Debug.WriteLine($"[ProfileValidator] hardware check failed: hardware is null");
+            errors.Add("hardware is required");
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] hardware check passed: object present");
+        }
+
+        // Validate unknown keys with warnings (forward compatibility)
+        if (profile.System != null)
+        {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.System.Count} system keys");
+            foreach (var key in profile.System.Keys)
+            {
+                if (!KnownSystemKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown system key found: '{key}'");
+                    warnings.Add($"Unknown key in system: '{key}' (may be from a newer version)");
+                }
+            }
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] system is null, skipping unknown key check");
+        }
+
+        if (profile.OMLXSettings != null)
+        {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.OMLXSettings.Count} OMLX keys");
+            foreach (var key in profile.OMLXSettings.Keys)
+            {
+                if (!KnownOMLXKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown OMLX key found: '{key}'");
+                    warnings.Add($"Unknown key in omlx: '{key}' (may be from a newer version)");
+                }
+            }
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] omlxSettings is null, skipping unknown key check");
+        }
+
+        if (profile.Harness != null)
+        {
+            Debug.WriteLine($"[ProfileValidator] Checking {profile.Harness.Count} harness keys");
+            foreach (var key in profile.Harness.Keys)
+            {
+                if (!KnownHarnessKeys.Contains(key))
+                {
+                    Debug.WriteLine($"[ProfileValidator] Unknown harness key found: '{key}'");
+                    warnings.Add($"Unknown key in harness: '{key}' (may be from a newer version)");
+                }
+            }
+        }
+        else
+        {
+            Debug.WriteLine($"[ProfileValidator] harness is null, skipping unknown key check");
+        }
+
+        var result = errors.Any()
+            ? new ValidationResult(false, errors, warnings)
+            : new ValidationResult(true, new List<string>(), warnings);
+
+        Debug.WriteLine($"[ProfileValidator] Validation complete for profile {profile.Id}: Valid={result.IsValid}, Errors={result.Errors.Count}, Warnings={result.Warnings.Count}");
+        return result;
     }
 
     /// <summary>
-    /// Validates a profile for publishing to the community repository.
-    /// Requires community metadata and stricter validation.
+    /// Validates a set of profiles loaded from JSONL, ensuring tier uniqueness.
     /// </summary>
-    public ValidationResult ValidateForPublishing(Profile profile)
+    public ValidationResult ValidateProfileSet(List<Profile> profiles)
     {
         var errors = new List<string>();
+        var warnings = new List<string>();
 
-        // First, validate local requirements
-        var localValidation = ValidateForLocalUse(profile);
-        if (!localValidation.IsValid)
-            return localValidation;
+        Debug.WriteLine($"[ProfileValidator] Beginning profile set validation: {profiles.Count} profiles");
 
-        // Require community metadata
-        if (profile.Community == null)
+        if (!profiles.Any())
         {
-            errors.Add("Community metadata is required for publishing.");
-            return new ValidationResult(false, errors);
+            Debug.WriteLine($"[ProfileValidator] Profile set is empty, validation passed");
+            return new ValidationResult(true, new List<string>(), new List<string>());
         }
 
-        var community = profile.Community;
+        // Check for tier uniqueness
+        Debug.WriteLine($"[ProfileValidator] Checking tier uniqueness across {profiles.Count} profiles");
+        var tierCounts = profiles
+            .GroupBy(p => p.Tier, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count());
 
-        // Validate dedupKey (required for publishing)
-        if (string.IsNullOrWhiteSpace(community.DedupKey))
-            errors.Add("Deduplication key (dedupKey) is required for publishing.");
-        else if (!IsValidDedupKey(community.DedupKey))
-            errors.Add("Deduplication key must be alphanumeric with hyphens, 3-50 characters.");
-
-        // Validate memory range if specified
-        if (community.MinMemoryGb.HasValue && community.MaxMemoryGb.HasValue)
+        foreach (var (tier, count) in tierCounts)
         {
-            if (community.MinMemoryGb > community.MaxMemoryGb)
-                errors.Add("Minimum memory cannot exceed maximum memory.");
+            Debug.WriteLine($"[ProfileValidator] Tier '{tier}' appears {count} time(s)");
+            if (count > 1)
+            {
+                Debug.WriteLine($"[ProfileValidator] Tier uniqueness check failed: '{tier}' appears {count} times (expected exactly 1)");
+                errors.Add($"Tier '{tier}' appears {count} times in the profile set. Each tier must appear exactly once.");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] Tier '{tier}' uniqueness check passed");
+            }
         }
 
-        // Validate description length
-        if (!string.IsNullOrWhiteSpace(community.Description) && community.Description.Length > 500)
-            errors.Add("Description cannot exceed 500 characters.");
-
-        // Validate tags
-        if (community.Tags?.Any() == true)
+        // Validate each profile
+        Debug.WriteLine($"[ProfileValidator] Validating individual profiles in set");
+        foreach (var profile in profiles)
         {
-            var invalidTags = community.Tags.Where(t => !ValidTags.Contains(t)).ToList();
-            if (invalidTags.Any())
-                errors.Add($"Invalid tags: {string.Join(", ", invalidTags)}. Valid tags: {string.Join(", ", ValidTags)}");
+            var result = ValidateForLocalUse(profile);
+            if (!result.IsValid)
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' validation failed with {result.Errors.Count} errors");
+                errors.AddRange(result.Errors.Select(e => $"Profile '{profile.Id}': {e}"));
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' validation passed");
+            }
+            if (result.Warnings.Any())
+            {
+                Debug.WriteLine($"[ProfileValidator] Profile '{profile.Id}' has {result.Warnings.Count} warnings");
+            }
+            warnings.AddRange(result.Warnings);
         }
 
-        return errors.Any()
-            ? new ValidationResult(false, errors)
-            : new ValidationResult(true, new List<string>());
+        var setValid = !errors.Any();
+        Debug.WriteLine($"[ProfileValidator] Profile set validation complete: Valid={setValid}, TotalErrors={errors.Count}, TotalWarnings={warnings.Count}");
+
+        return setValid
+            ? new ValidationResult(true, new List<string>(), warnings)
+            : new ValidationResult(false, errors, warnings);
     }
 
-    /// <summary>
-    /// Validates engine-specific settings using the appropriate runtime engine handler.
-    /// </summary>
-    public ValidationResult ValidateEngineSettings(Profile profile)
+    private static bool IsValidTier(string tier) => tier switch
     {
-        return _engineRegistry.ValidateProfileForEngine(profile);
-    }
-
-    private static bool IsValidDedupKey(string key)
-    {
-        if (key.Length < 3 || key.Length > 50)
-            return false;
-
-        return key.All(c => char.IsLetterOrDigit(c) || c == '-');
-    }
+        "high" or "balanced" or "efficient" => true,
+        _ => false
+    };
 }
 
 /// <summary>
 /// Result of profile validation.
 /// </summary>
-public record ValidationResult(bool IsValid, List<string> Errors);
+public record ValidationResult(
+    bool IsValid,
+    List<string> Errors,
+    List<string> Warnings = null!)
+{
+    public ValidationResult(bool isValid, List<string> errors) : this(isValid, errors, new List<string>()) { }
+}

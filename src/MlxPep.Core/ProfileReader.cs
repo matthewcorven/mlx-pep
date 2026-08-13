@@ -2,206 +2,170 @@ namespace MlxPep.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Handles profile I/O, serialization, and deduplication.
-/// Issue #27: profiling: publish-flow polish + community metadata
+/// Handles profile JSONL I/O with validation.
+/// Issue #8: core: profile schema records + STJ source-gen + JSONL validation
+///
+/// JSONL format: one JSON object per line, one line per tier (high|balanced|efficient).
+/// Round-trip validation ensures serialization fidelity and tier uniqueness.
+/// Uses ProfileJsonSerializerContext for AOT/trimming compatibility.
 /// </summary>
 public class ProfileReader
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
+    private static readonly ProfileJsonSerializerContext JsonContext = new();
 
-    private static readonly JsonSerializerOptions JsonLOptions = new()
-    {
-        WriteIndented = false,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-    };
+    private readonly ProfileValidator _validator = new();
 
     /// <summary>
-    /// Reads a set of profiles from a JSONL file.
+    /// Reads a set of profiles from a JSONL file with validation.
+    /// Throws InvalidOperationException if validation fails.
+    /// Uses ProfileJsonSerializerContext for source-generated, AOT-compatible deserialization.
     /// </summary>
-    public async Task<List<Profile>> ReadProfileSetAsync(string filePath)
+    public async Task<List<Profile>> ReadProfileSetAsync(string filePath, bool validateAfterRead = true)
     {
         var profiles = new List<Profile>();
 
         if (!File.Exists(filePath))
+        {
+            Debug.WriteLine($"[ProfileReader] Profile file not found: {filePath}");
             return profiles;
+        }
+
+        Debug.WriteLine($"[ProfileReader] Reading profile set from: {filePath}");
 
         using var reader = new StreamReader(filePath);
         string? line;
+        int lineNumber = 0;
 
         while ((line = await reader.ReadLineAsync()) != null)
         {
+            lineNumber++;
             if (string.IsNullOrWhiteSpace(line))
+            {
+                Debug.WriteLine($"[ProfileReader] Skipping empty line {lineNumber}");
                 continue;
+            }
+
+            Debug.WriteLine($"[ProfileReader] Processing JSONL line {lineNumber}: {line.Substring(0, Math.Min(50, line.Length))}...");
 
             try
             {
-                var profile = JsonSerializer.Deserialize<Profile>(line, JsonLOptions);
+                var profile = JsonSerializer.Deserialize<Profile>(line, JsonContext.Profile);
                 if (profile != null)
+                {
+                    Debug.WriteLine($"[ProfileReader] Successfully deserialized profile '{profile.Id}' (tier: {profile.Tier})");
                     profiles.Add(profile);
+                }
+                else
+                {
+                    Debug.WriteLine($"[ProfileReader] Deserialization returned null at line {lineNumber}");
+                }
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
-                // Skip malformed lines
+                Debug.WriteLine($"[ProfileReader] Deserialization error at line {lineNumber}: {ex.Message}");
+                var msg = $"Failed to deserialize JSONL at line {lineNumber}: {ex.Message}\n\nLine content: {line}\n\nUsing ProfileJsonSerializerContext for source-generated, AOT-compatible deserialization.";
+                throw new InvalidOperationException(msg, ex);
             }
         }
 
+        // Validate the entire profile set if requested
+        if (validateAfterRead && profiles.Any())
+        {
+            Debug.WriteLine($"[ProfileReader] Validating profile set: {profiles.Count} profiles from '{filePath}'");
+            var result = _validator.ValidateProfileSet(profiles);
+            if (!result.IsValid)
+            {
+                Debug.WriteLine($"[ProfileReader] Profile set validation failed with {result.Errors.Count} errors");
+                var errorMessage = $"Failed to validate profile set from '{filePath}':\n" +
+                                   string.Join("\n", result.Errors.Select(e => $"  - {e}"));
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            Debug.WriteLine($"[ProfileReader] Profile set validation passed");
+
+            // Log warnings if any
+            if (result.Warnings.Any())
+            {
+                Debug.WriteLine($"[ProfileReader] Validation produced {result.Warnings.Count} warnings");
+                foreach (var warning in result.Warnings)
+                {
+                    Debug.WriteLine($"[ProfileReader] Warning: {warning}");
+                }
+            }
+        }
+        else if (!validateAfterRead)
+        {
+            Debug.WriteLine($"[ProfileReader] Skipping post-read validation (validateAfterRead=false)");
+        }
+
+        Debug.WriteLine($"[ProfileReader] Completed reading profile set: {profiles.Count} profiles");
         return profiles;
     }
 
     /// <summary>
     /// Writes profiles to a JSONL file (one JSON object per line).
+    /// Automatically validates tier uniqueness before writing.
+    /// Uses ProfileJsonSerializerContext for source-generated, AOT-compatible serialization.
     /// </summary>
-    public async Task WriteProfileSetAsync(string filePath, List<Profile> profiles)
+    public async Task WriteProfileSetAsync(string filePath, List<Profile> profiles, bool validateBeforeWrite = true)
     {
+        Debug.WriteLine($"[ProfileReader] Writing {profiles.Count} profiles to: {filePath}");
+
+        if (validateBeforeWrite && profiles.Any())
+        {
+            Debug.WriteLine($"[ProfileReader] Validating {profiles.Count} profiles before write");
+            var result = _validator.ValidateProfileSet(profiles);
+            if (!result.IsValid)
+            {
+                Debug.WriteLine($"[ProfileReader] Pre-write validation failed with {result.Errors.Count} errors");
+                var errorMessage = $"Failed to validate profiles before writing to '{filePath}':\n" +
+                                   string.Join("\n", result.Errors.Select(e => $"  - {e}"));
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            Debug.WriteLine($"[ProfileReader] Pre-write validation passed");
+        }
+        else if (!validateBeforeWrite)
+        {
+            Debug.WriteLine($"[ProfileReader] Skipping pre-write validation (validateBeforeWrite=false)");
+        }
+
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Debug.WriteLine($"[ProfileReader] Creating directory: {directory}");
             Directory.CreateDirectory(directory);
+        }
 
         using var writer = new StreamWriter(filePath);
 
         foreach (var profile in profiles)
         {
-            var json = JsonSerializer.Serialize(profile, JsonLOptions);
+            var json = JsonSerializer.Serialize(profile, typeof(Profile), JsonContext);
+            Debug.WriteLine($"[ProfileReader] Serialized profile '{profile.Id}' to JSONL");
             await writer.WriteLineAsync(json);
         }
+
+        Debug.WriteLine($"[ProfileReader] Completed writing {profiles.Count} profiles");
     }
 
     /// <summary>
-    /// Deduplicates profiles by dedupKey, keeping the newest (by CreatedAt).
-    /// Only applies to profiles with community metadata containing a dedupKey.
+    /// Filters profiles by tier.
     /// </summary>
-    public List<Profile> DeduplicateByDedupKey(List<Profile> profiles)
+    public List<Profile> FilterByTier(List<Profile> profiles, string tier)
     {
-        var dedupGroups = new Dictionary<string, List<Profile>>();
-
-        foreach (var profile in profiles)
-        {
-            var key = profile.Community?.DedupKey;
-
-            if (string.IsNullOrEmpty(key))
-                continue;
-
-            if (!dedupGroups.ContainsKey(key))
-                dedupGroups[key] = new List<Profile>();
-
-            dedupGroups[key].Add(profile);
-        }
-
-        var result = new List<Profile>(profiles);
-
-        foreach (var (dedupKey, group) in dedupGroups)
-        {
-            if (group.Count <= 1)
-                continue;
-
-            // Sort by CreatedAt descending (newest first)
-            var sorted = group.OrderByDescending(p => p.Provenance.CreatedAt).ToList();
-            var newest = sorted[0];
-
-            // Remove all but the newest
-            foreach (var old in sorted.Skip(1))
-                result.Remove(old);
-        }
-
+        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by tier: {tier}");
+        var result = profiles.Where(p =>
+            p.Tier.Equals(tier, StringComparison.OrdinalIgnoreCase)).ToList();
+        Debug.WriteLine($"[ProfileReader] Tier filter result: {result.Count} profiles matched");
         return result;
-    }
-
-    /// <summary>
-    /// Finds profiles with duplicate dedupKeys.
-    /// </summary>
-    public Dictionary<string, List<Profile>> FindDuplicatesByDedupKey(List<Profile> profiles)
-    {
-        var groups = new Dictionary<string, List<Profile>>();
-
-        foreach (var profile in profiles)
-        {
-            var key = profile.Community?.DedupKey;
-            if (string.IsNullOrEmpty(key))
-                continue;
-
-            if (!groups.ContainsKey(key))
-                groups[key] = new List<Profile>();
-
-            groups[key].Add(profile);
-        }
-
-        return groups.Where(g => g.Value.Count > 1)
-            .ToDictionary(g => g.Key, g => g.Value);
-    }
-
-    /// <summary>
-    /// Searches profiles by description, tags, or keywords.
-    /// </summary>
-    public List<Profile> SearchProfiles(List<Profile> profiles, string query)
-    {
-        var lowerQuery = query.ToLowerInvariant();
-
-        return profiles.Where(p =>
-        {
-            var community = p.Community;
-            if (community == null)
-                return false;
-
-            if (!string.IsNullOrEmpty(community.Description) &&
-                community.Description.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (community.Tags?.Any(t => t.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase)) == true)
-                return true;
-
-            if (community.Keywords?.Any(k => k.Contains(lowerQuery, StringComparison.OrdinalIgnoreCase)) == true)
-                return true;
-
-            return false;
-        }).ToList();
-    }
-
-    /// <summary>
-    /// Filters profiles by hardware requirements.
-    /// </summary>
-    public List<Profile> FilterByHardware(List<Profile> profiles, int memoryGb, string? hardwareFamily = null)
-    {
-        return profiles.Where(p =>
-        {
-            var community = p.Community;
-            if (community == null)
-                return true;
-
-            // Check memory range
-            if (community.MinMemoryGb.HasValue && memoryGb < community.MinMemoryGb)
-                return false;
-
-            if (community.MaxMemoryGb.HasValue && memoryGb > community.MaxMemoryGb)
-                return false;
-
-            // Check hardware family if specified
-            if (!string.IsNullOrEmpty(hardwareFamily) &&
-                !string.IsNullOrEmpty(community.HardwareFamily) &&
-                !community.HardwareFamily.Equals(hardwareFamily, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            return true;
-        }).ToList();
-    }
-
-    /// <summary>
-    /// Filters profiles to only those with community metadata.
-    /// </summary>
-    public List<Profile> FilterPublishable(List<Profile> profiles)
-    {
-        return profiles.Where(p => p.Community != null).ToList();
     }
 
     /// <summary>
@@ -209,8 +173,11 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByEngine(List<Profile> profiles, string engine)
     {
-        return profiles.Where(p =>
+        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engine: {engine}");
+        var result = profiles.Where(p =>
             p.Engine.Equals(engine, StringComparison.OrdinalIgnoreCase)).ToList();
+        Debug.WriteLine($"[ProfileReader] Engine filter result: {result.Count} profiles matched");
+        return result;
     }
 
     /// <summary>
@@ -218,7 +185,22 @@ public class ProfileReader
     /// </summary>
     public List<Profile> FilterByEngines(List<Profile> profiles, params string[] engines)
     {
+        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by engines: {string.Join(", ", engines)}");
         var engineSet = new HashSet<string>(engines, StringComparer.OrdinalIgnoreCase);
-        return profiles.Where(p => engineSet.Contains(p.Engine)).ToList();
+        var result = profiles.Where(p => engineSet.Contains(p.Engine)).ToList();
+        Debug.WriteLine($"[ProfileReader] Multi-engine filter result: {result.Count} profiles matched");
+        return result;
+    }
+
+    /// <summary>
+    /// Filters profiles by model Hugging Face ID.
+    /// </summary>
+    public List<Profile> FilterByModel(List<Profile> profiles, string modelHfId)
+    {
+        Debug.WriteLine($"[ProfileReader] Filtering {profiles.Count} profiles by model: {modelHfId}");
+        var result = profiles.Where(p =>
+            p.ModelHfId.Equals(modelHfId, StringComparison.OrdinalIgnoreCase)).ToList();
+        Debug.WriteLine($"[ProfileReader] Model filter result: {result.Count} profiles matched");
+        return result;
     }
 }
