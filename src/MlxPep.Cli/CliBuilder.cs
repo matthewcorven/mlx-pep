@@ -119,19 +119,20 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep profiles [list|search|pull]");
+            return PrintErrorAndReturn1("Usage: mlx-pep profiles [list|search|pull] [OPTIONS]");
         }
 
         string subcommand = args[0].ToLowerInvariant();
+        var profileArgs = args.Skip(1).ToArray();
         CommandResult result = subcommand switch
         {
-            "list" => await new ProfilesListCommand().ExecuteAsync(new CommandContext(isJson)),
-            "search" => args.Length > 1
-                ? await new ProfilesSearchCommand().ExecuteAsync(args[1], new CommandContext(isJson))
-                : new CommandResult(1, "Usage: mlx-pep profiles search <query>"),
-            "pull" => args.Length > 1
-                ? await new ProfilesPullCommand().ExecuteAsync(args[1], new CommandContext(isJson))
-                : new CommandResult(1, "Usage: mlx-pep profiles pull <profile_id>"),
+            "list" => await new ProfilesListCommand().ExecuteAsync(profileArgs, new CommandContext(isJson)),
+            "search" => profileArgs.Length > 0
+                ? await new ProfilesSearchCommand().ExecuteAsync(profileArgs[0], profileArgs.Skip(1).ToArray(), new CommandContext(isJson))
+                : new CommandResult(1, "Usage: mlx-pep profiles search <query> [OPTIONS]"),
+            "pull" => profileArgs.Length > 0
+                ? await new ProfilesPullCommand().ExecuteAsync(profileArgs[0], profileArgs.Skip(1).ToArray(), new CommandContext(isJson))
+                : new CommandResult(1, "Usage: mlx-pep profiles pull <profile_id> [OPTIONS]"),
             _ => new CommandResult(1, $"Unknown profiles subcommand: {subcommand}")
         };
 
