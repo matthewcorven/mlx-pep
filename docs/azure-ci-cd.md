@@ -87,14 +87,30 @@ Set at https://github.com/matthewcorven/mlx-pep/settings/secrets/actions:
 
 | Secret | Source | Used In |
 |--------|--------|---------|
-| `AZURE_SUBSCRIPTION_ID` | `az account show --query id` | Azure login (deploy stage) |
-| `AZURE_TENANT_ID` | `az account show --query tenantId` | Azure login (deploy stage) |
-| `AZURE_CLIENT_ID` | Service principal (optional for MVP) | Azure login (deploy stage) |
-| `AZURE_CLIENT_SECRET` | Service principal (optional for MVP) | Azure login (deploy stage) |
 | `AZURE_REGISTRY_LOGIN_SERVER` | ACR FQDN (e.g., `mlxpepregistry.azurecr.io`) | Docker login (build stage) |
 | `AZURE_REGISTRY_USERNAME` | `az acr credential show --query username` | Docker login (build stage) |
 | `AZURE_REGISTRY_PASSWORD` | `az acr credential show --query passwords[0].value` | Docker login (build stage) |
-| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage connection string | (Future use in Container Apps) |
+| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage connection string | (Future use in Container Apps, Phase 2) |
+
+### Azure Authentication via OIDC Federation
+
+The deploy stage authenticates with Azure using **OpenID Connect (OIDC) federation** instead of stored credentials. GitHub Actions automatically provides an OIDC token that Azure AD exchanges for access:
+
+```yaml
+- uses: azure/login@v1
+  with:
+    client-id: 5726df39-f34e-4ec8-b8a3-4287cd793394        # Service principal app ID
+    tenant-id: bbdb7146-4bdb-4eae-b50d-ff09b9d191b5          # Azure AD tenant
+    subscription-id: de345105-2ffc-4619-a6bc-9c41dec93241    # Azure subscription
+```
+
+**Benefits of OIDC:**
+- No secrets stored as GitHub Actions secrets
+- Each token is short-lived and scoped to a single workflow run
+- Federated credential automatically links repo + branch to Azure principal
+- More secure than storing permanent credentials
+
+For details, see `docs/azure-deployment.md` section "Azure Authentication: OIDC Federation".
 
 ### Environment Variables
 
@@ -179,16 +195,22 @@ az containerapp revision list \
 ```
 
 #### ❌ "Azure login failed"
-**Cause:** Secrets not set, or subscription changed
+**Cause:** OIDC token exchange failed, or federated credential misconfigured
 
 **Debug:**
 ```bash
-# Verify GitHub secrets are set
-gh secret list | grep AZURE
+# Verify federated credential exists
+az ad app federated-credential list --id 5726df39-f34e-4ec8-b8a3-4287cd793394
 
-# Test Azure CLI locally
+# Check if OIDC subject matches workflow (should be repo:matthewcorven/mlx-pep:ref:refs/heads/main)
+# If wrong, create new credential or update subject
+
+# Test Azure CLI locally with same subscription
 az account show
 az containerapp show --resource-group mlx-pep-rg --name mlx-pep-api
+
+# View workflow logs for token exchange details
+gh run view <run-id> --log | grep -A 10 "Azure CLI login"
 ```
 
 ---
@@ -257,7 +279,7 @@ az containerapp revision activate \
 - [ ] **Manual approval gate:** Require review before deploy to production
 - [ ] **Scheduled deploys:** Deploy only during business hours
 - [ ] **Azure Key Vault integration:** Store secrets in Key Vault instead of GitHub
-- [ ] **OIDC authentication:** Replace static credentials with federated identity
+- [x] **OIDC authentication:** Replace static credentials with federated identity (✅ Implemented Phase 1b)
 - [ ] **Application Insights:** Auto-instrument with telemetry and dashboards
 
 ---
