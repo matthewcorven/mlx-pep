@@ -152,6 +152,10 @@ def fetch_pull_requests(repo: str, state: str, limit: int) -> List[Dict[str, obj
 def collect_linked_issue_numbers(pull_requests: List[Dict[str, object]]) -> Set[int]:
     linked_issue_numbers: Set[int] = set()
     for pull_request in pull_requests:
+        # Only count OPEN PRs (not closed/merged drafts) as blocking.
+        # Closed draft PRs are historical artifacts and should not prevent issues from being worked on.
+        if pull_request.get("state") != "OPEN":
+            continue
         for reference in pull_request.get("closingIssuesReferences") or []:
             if not isinstance(reference, dict):
                 continue
