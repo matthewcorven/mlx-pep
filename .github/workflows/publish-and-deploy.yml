@@ -103,26 +103,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Azure CLI login (OIDC)
+      - name: Azure CLI login (Service Principal)
         uses: azure/login@v1
         with:
-          client-id: 5726df39-f34e-4ec8-b8a3-4287cd793394
-          tenant-id: bbdb7146-4bdb-4eae-b50d-ff09b9d191b5
-          subscription-id: de345105-2ffc-4619-a6bc-9c41dec93241
-          auth-type: IDENTITY
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Extract commit SHA (short)
+      - name: Extract commit SHA (short) and image URI
         id: meta
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          IMAGE_URI="${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/mlx-pep:$(git rev-parse --short HEAD)"
+          echo "image_uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
 
       - name: Update Container Apps with new image
         run: |
           az containerapp update \
             --resource-group mlx-pep-rg \
             --name mlx-pep-api \
-            --image ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/mlx-pep:${{ steps.meta.outputs.sha_short }} \
+            --image ${{ steps.meta.outputs.image_uri }} \
             --no-wait
+          echo "✅ Deployment triggered"
 
       - name: Wait for deployment to complete
         run: |
