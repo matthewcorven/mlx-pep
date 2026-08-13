@@ -1,337 +1,458 @@
-# Adversarial Review: HFCacheReader Implementation (Issue #9)
+# Adversarial Review: PR #64 - mlx-pep doctor command
 
-**Reviewer**: Morpheus (Lead)  
-**Branch**: squad/9-hf-cache-reader (commit d91e212)  
-**Date**: 2025-01-16  
-**Verdict**: ⚠️ **CONDITIONAL PASS** — Functional correctness confirmed, but critical blocker + important fixes required
+**Reviewer:** Rai (Independent Review Agent)  
+**PR Number:** #64  
+**Issue:** #13  
+**Branch:** squad/13-doctor-command  
+**Commit:** 3d5981f (feat(#13): Implement `mlx-pep doctor` command for dependency detection)  
+**Date:** 2026-08-13  
 
 ---
 
 ## Executive Summary
 
-Neo's HFCacheReader implementation correctly realizes UC2 (reuse shared Hugging Face cache). The code:
-- ✅ Implements environment variable precedence correctly
-- ✅ Parses models--org--name directory structure correctly  
-- ✅ Extracts revisions and calculates on-disk size correctly
-- ✅ Includes comprehensive fixture-based unit tests (14 tests)
-
-**However**, the submission is **BLOCKED** by a project-level compilation failure that prevents test verification. Additionally, three medium/low severity issues need addressing:
-
-1. 🔴 **BLOCKER**: MlxPep.Core compilation errors (ProfileReader, ProfileValidator)
-2. 🟡 **Medium**: Symlink safety not tested; production risk with real Hugging Face cache
-3. 🟡 **Medium**: GetModelAsync inefficiency (O(n) per lookup)
-4. 🟢 **Low**: Malformed directory rejection not explicitly tested
+The PR implements a functional dependency detection command with reasonable architecture and test coverage. However, **three critical defects block merge approval**: (1) double JSON output corrupting CLI output, (2) malformed version string extraction, and (3) incomplete test suite. Recommendation: **Request revisions** before merge.
 
 ---
 
-## PART 1: BLOCKING ISSUE — Test Execution Impossible
+## Section 1: Blocking Issues (Do Not Merge)
 
-### ✋ STOP HERE: Compilation Errors in Sibling Files
+### BLOCKER #1: Double JSON Output - Invalid CLI Output
 
-Running `dotnet test` on MlxPep.Core.Tests fails because MlxPep.Core project does not compile:
+**Severity:** CRITICAL  
+**File:** `src/MlxPep.Cli/CliBuilder.cs` (HandleDoctor method)  
+**Lines:** 147-155  
 
-```
-/Users/core/git/matthewcorven/mlx-pep/src/MlxPep.Core/ProfileReader.cs(99,27): error CS0117
-/Users/core/git/matthewcorven/mlx-pep/src/MlxPep.Core/ProfileValidator.cs(235,15): error CS0117
-[... 60+ occurrences of: 'Debug' does not contain a definition for 'WriteLine']
-```
-
-**What this means**:
-- HFCacheReader.cs compiles correctly ✅
-- HFCacheReaderTests.cs compiles correctly ✅  
-- **But the entire MlxPep.Core project fails to build** ❌
-- Tests cannot be executed to verify HFCacheReader works ❌
-
-**Responsibility**: This is **not** Neo's fault (the errors are in sibling files), but **Neo should have caught this** during code review — "the tests won't run" is a fatal issue that should have been discovered.
-
-### Action Required — MUST FIX BEFORE PROCEEDING:
-```bash
-# Verify MlxPep.Core compiles
-dotnet build src/MlxPep.Core/MlxPep.Core.csproj
-
-# If it fails, investigate ProfileReader and ProfileValidator  
-# (These files use Debug.WriteLine but project won't compile)
-
-# After fix, verify tests run and pass:
-dotnet test tests/MlxPep.Core.Tests/MlxPep.Core.Tests.csproj --filter HFCacheReader
-```
-
-**Completeness impact**: Until this is fixed, completeness cannot exceed **15%** (code-only, untested).
-
----
-
-## PART 2: Code Quality — Findings & Fixes
-
-### 🟡 Issue A: GetModelAsync Efficiency Regression
-
-**File**: HFCacheReader.cs, lines 131–145  
-**Severity**: Medium (performance under load)  
-**Tests exist**: ✅ Yes (`GetModelAsync_ReturnsModelWhenFound`, etc.)
-
-**Problem**:
+**Problem:**
 ```csharp
-public async Task<Model?> GetModelAsync(string repoId)
+// Inside HandleDoctor (CliBuilder.cs)
+private static async Task<int> HandleDoctor(bool isJson)
 {
-    var models = await ListModelsAsync();  // Full O(n) scan every time
-    return models.FirstOrDefault(m => m.RepoId.Equals(repoId, ...));
-}
-```
+    var handler = new DoctorCommand();
+    var context = new CommandContext(isJson);
+    var result = await handler.ExecuteAsync(context);
 
-On a real cache with 500+ models, each GetModelAsync triggers a complete directory walk.  
-This is fine for MVP (occasional lookups), but not scalable for bulk queries.
-
-**Fix Option 1 (Recommended for MVP)**:  
-Compute directory path directly without full scan:
-```csharp
-public async Task<Model?> GetModelAsync(string repoId)
-{
-    if (string.IsNullOrEmpty(repoId))
-        return null;
-
-    var parts = repoId.Split('/');
-    if (parts.Length != 2) return null;
-    
-    var modelDir = Path.Combine(_cacheDir, $"models--{parts[0]}--{parts[1]}");
-    if (!Directory.Exists(modelDir)) return null;
-    
-    // Scan revisions in this specific model dir only (not full cache)
-    var snapshotsDir = Path.Combine(modelDir, "snapshots");
-    if (!Directory.Exists(snapshotsDir)) return null;
-    
-    // ... load revisions and return first match
-}
-```
-
-**Fix Option 2 (Fast-follow caching)**:  
-Implement simple in-memory cache of ListModelsAsync result with TTL.
-
-**Timeline**: Can be addressed in a follow-up PR (not MVP-blocking).
-
----
-
-### 🟡 Issue B: Symlink Handling Not Tested — Production Risk
-
-**File**: HFCacheReader.cs, lines 183–204 (`CalculateModelSize`), lines 206–230 (`GetLastModified`)  
-**Severity**: Medium (correctness on real cache)  
-**Tests exist**: ❌ **No tests for symlinks**
-
-**Problem**:  
-The Hugging Face cache uses symlinks extensively for blob deduplication. Real cache layout:
-```
-models--meta-llama--Llama-2-7b/snapshots/abc123/
-  config.json (symlink to ../../blobs/abc...)
-  model.safetensors (symlink to ../../blobs/def...)
-```
-
-Current code uses `SearchOption.AllDirectories`, which:
-1. ✅ Handles symlinks correctly (follows them)
-2. ❌ **No protection against circular symlinks** → infinite loop risk
-3. ❌ **No validation** that all followed paths stay within cache root
-
-**Production scenario that breaks**:
-```
-User has corrupted cache with:
-  models--test--model/snapshots/rev1/ → symlink to ../../..
-Result: CalculateModelSize hangs or counts files outside cache
-```
-
-### Fixes Required:
-
-#### Fix B1: Add Unit Test for Symlinked Revision
-```csharp
-[Fact]
-public async Task CalculateModelSize_HandlesSymlinksWithinRevision()
-{
-    // Create a fixture with symlinked files
-    CreateModelFixture("test", "model", "rev1");
-    var revisionDir = Path.Combine(_tempCacheDir, "models--test--model/snapshots/rev1");
-    
-    // Create a symlink to another file
-    var targetFile = Path.Combine(_tempCacheDir, "shared_blob.bin");
-    File.WriteAllBytes(targetFile, new byte[1024 * 1024]); // 1MB
-    
-    var symlinkPath = Path.Combine(revisionDir, "linked_blob");
-    // (Create symlink — platform-dependent)
-    
-    var reader = new HFCacheReader(_tempCacheDir);
-    var models = await reader.ListModelsAsync();
-    
-    // Size should include symlink target correctly
-    Assert.Single(models);
-    Assert.True(models.First().SizeBytes > 1024 * 1024);
-}
-```
-
-#### Fix B2: Add Circular Symlink Protection
-```csharp
-// In CalculateModelSize/GetLastModified:
-private const int MAX_RECURSION_DEPTH = 10;
-
-private long CalculateModelSize(string revisionDir, int depth = 0)
-{
-    if (depth > MAX_RECURSION_DEPTH)
+    if (isJson)
     {
-        Debug.WriteLine($"[HFCacheReader] Max symlink depth exceeded");
-        return 0;
+        var json = new { message = result.Message, exit_code = result.ExitCode };
+        Console.WriteLine(JsonSerializer.Serialize(json));  // ← SECOND JSON OUTPUT
     }
-    // ... rest of method
+    return result.ExitCode;
 }
 ```
 
-Or use `EnumerationOptions.SkipInaccessible` to skip unresolvable symlinks.
+The `DoctorCommand.ExecuteAsync()` already calls `OutputJson()` which writes doctor JSON to `Console.WriteLine()`. Then `HandleDoctor` writes **another** JSON object, creating invalid output:
 
-#### Fix B3: Validate All Files Stay In Cache Root
-```csharp
-private bool IsFileInCacheRoot(string filePath, string cacheRoot)
+```json
 {
-    var fullPath = Path.GetFullPath(filePath);
-    var fullRoot = Path.GetFullPath(cacheRoot);
-    return fullPath.StartsWith(fullRoot + Path.DirectorySeparatorChar);
+  "command": "doctor",
+  "timestamp": "2026-08-13T16:17:15.734Z",
+  "dependencies": { ... }
 }
+{"message":null,"exit_code":0}
 ```
 
-**Timeline**: Must be addressed before production deployment (affects real cache correctness).
+**Impact:**
+- JSON parsers will fail on the second object
+- CLI tools consuming `--json` output cannot handle this format
+- Violates basic API contract (valid JSON output)
+- Users hitting this will think the feature is broken
 
----
+**Root Cause:**
+The `HandleDoctor` method assumes `OutputJson()` is not writing directly to stdout. It needs to either:
+1. Not print the second JSON, OR
+2. Let `DoctorCommand` return the data without printing, and handle output in `HandleDoctor`
 
-### 🟢 Issue C: Malformed Directory Rejection Not Explicitly Tested
-
-**File**: HFCacheReader.cs, lines 163–170 (`ParseRepoIdFromDir`)  
-**Severity**: Low (code correctly rejects, but test gap)  
-**Tests exist**: ❌ **No explicit test**
-
-**Problem**:  
-The code correctly rejects "models--singlepart" (no second `--`):
+**How to Fix:**
+Option A (Recommended): Modify `DoctorCommand` to return structured data instead of printing. Example:
 ```csharp
-if (parts.Length != 2)
-    return null;  // ✅ Correct
-```
-
-But HFCacheReaderTests does not have an explicit test for this case. Integration testing 
-would catch this eventually, but the test suite should be explicit.
-
-### Fix:
-Add unit test:
-```csharp
-[Fact]
-public async Task ListModelsAsync_SkipsMalformedModelDirectoryName()
+// In DoctorCommand
+public async Task<(CommandResult result, Dictionary<string, DependencyStatus> dependencies)> ExecuteAsync(CommandContext context)
 {
-    // Create directory that doesn't match models--org--name pattern
-    Directory.CreateDirectory(Path.Combine(_tempCacheDir, "models--incomplete"));
-    var reader = new HFCacheReader(_tempCacheDir);
-
-    // Act
-    var models = await reader.ListModelsAsync();
-
-    // Assert: Malformed dir is silently skipped
-    Assert.Empty(models);
+    var dependencies = new Dictionary<string, DependencyStatus> { /* ... */ };
+    return (CommandResult.Success(), dependencies);
 }
-```
 
-**Timeline**: Low priority (can be added as test coverage improvement).
-
----
-
-### 🟢 Issue D: Empty Revision Directory Timestamp Semantics
-
-**File**: HFCacheReader.cs, lines 213–216  
-**Severity**: Low (misleading but non-critical)
-
-**Problem**:
-```csharp
-if (files.Count == 0)
-    return DateTime.UtcNow;  // Empty dir appears "just created"
-```
-
-An empty revision directory (edge case: snapshot dir created but files not yet symlinked) 
-appears to have been modified "now" rather than when it was actually created.
-
-### Fix (Optional):
-```csharp
-if (files.Count == 0)
+// In HandleDoctor
+if (isJson)
 {
-    var dirInfo = new DirectoryInfo(revisionDir);
-    return dirInfo.LastWriteTimeUtc;  // Use dir's actual mtime
+    var json = new { command = "doctor", timestamp = DateTime.UtcNow.ToString("O"), dependencies = depResult.dependencies };
+    Console.WriteLine(JsonSerializer.Serialize(json));
 }
 ```
 
-**Timeline**: Nice-to-have, low impact.
+Option B (Quick fix): Only print the metadata JSON if there's an error message:
+```csharp
+if (isJson && !string.IsNullOrEmpty(result.Message))
+{
+    var json = new { message = result.Message, exit_code = result.ExitCode };
+    Console.WriteLine(JsonSerializer.Serialize(json));
+}
+```
+
+**Effort:** 15-30 minutes
 
 ---
 
-## PART 3: Acceptance Criteria vs. Implementation
+### BLOCKER #2: Malformed Version String Extraction
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Read ~/.cache/huggingface/hub | ✅ PASS | Lines 20–34 (env var precedence), Line 50 (default path) |
-| Parse models--org--name dirs, refs/, snapshots/, blobs/ | ✅ PASS | Lines 73–101 (ParseRepoIdFromDir correctly splits) |
-| Return repo_id, revisions, size, last-modified | ✅ PASS | Lines 102–111 (Model record with all 4 fields) |
-| List real models; handle empty cache; unit tests over fixtures | ✅ PASS | 14 fixture-based tests, IDisposable cleanup, empty cache test |
-| Environment precedence: HF_HUB_CACHE > HF_HOME/hub > default | ✅ PASS | Constructor_HonorsHF_HUB_CACHE_EnvVar + Constructor_PreferrsHF_HUB_CACHE_OverHF_HOME tests |
-| Edge cases (no snapshots, malformed names, permissions) | ✅ MOSTLY | Tests exist for no snapshots; malformed names not explicit; permissions not tested |
+**Severity:** CRITICAL  
+**File:** `src/MlxPep.Cli/Commands/DoctorCommand.cs`  
+**Method:** `ExtractVersion()` (lines 234-248)  
+
+**Problem:**
+```csharp
+private string ExtractVersion(string output)
+{
+    var lines = output.Split('\n');
+    var firstLine = lines[0].Trim();
+    
+    var parts = firstLine.Split(new[] { ' ', 'v', 'V' }, StringSplitOptions.RemoveEmptyEntries);
+    foreach (var part in parts)
+    {
+        if (part[0] >= '0' && part[0] <= '9')
+            return part.Split(new[] { '\r' }, StringSplitOptions.None)[0];  // ← INCOMPLETE CLEANUP
+    }
+    
+    return firstLine;
+}
+```
+
+When run on this system:
+- Copilot CLI version: "1.0.79." (trailing dot) — **should be 1.0.79**
+- The split by `\r` only removes carriage returns, not other trailing characters
+
+**Test Output:**
+```
+✓ Copilot CLI          v1.0.79.
+```
+
+The trailing dot looks broken. This happens because:
+1. `copilot --version` outputs something like `1.0.79.\r\n` or `1.0.79.`
+2. Split by `\r` leaves the `.` intact
+
+**Root Cause:**
+The version extraction is too simplistic. It doesn't handle all version output formats.
+
+**How to Fix:**
+Use Regex to extract semantic version only:
+```csharp
+private string ExtractVersion(string output)
+{
+    var firstLine = output.Split('\n')[0].Trim();
+    
+    // Match semantic version: digits.digits[.digits][-suffix]
+    var match = Regex.Match(firstLine, @"\d+\.\d+(?:\.\d+)?(?:-[a-zA-Z0-9]+)?");
+    if (match.Success)
+        return match.Value;
+    
+    return firstLine;
+}
+```
+
+**Effort:** 20 minutes (add Regex.Match, test with various formats)
 
 ---
 
-## PART 4: Test Coverage Summary
+### BLOCKER #3: Incomplete Test Suite - Stub Test Remains
 
-**Passing Tests (when project compiles)**: 14  
-**Test Execution Time**: ~52ms  
-**Fixture-based**: ✅ All use isolated temp directories  
-**Cleanup**: ✅ IDisposable pattern  
+**Severity:** BLOCKING (CI/Quality Gate)  
+**File:** `tests/MlxPep.Cli.Tests/UnitTest1.cs`  
 
-**Coverage Analysis**:
-- Environment variables: 3 tests ✅
-- Multiple models: ✅
-- Multiple revisions: ✅
-- Size calculation: ✅
-- Timestamp: ✅
-- Case-insensitive search: ✅
-- Empty/nonexistent cache: ✅
+**Problem:**
+```csharp
+namespace MlxPep.Cli.Tests;
 
-**Coverage Gaps**:
-- Symlinks (critical for real cache) ❌
-- Malformed directories (explicit) ❌
-- Permission errors ❌
-- Large file sizes (> 2GB) ❌
+public class UnitTest1
+{
+    [Fact]
+    public void Test1()
+    {
+        // Empty test body
+    }
+}
+```
 
----
+This stub test file is still present. It's not related to the doctor command and should have been removed during PR development.
 
-## PART 5: Recommendations
+**Impact:**
+- Confuses reviewers and future maintainers
+- Suggests incomplete cleanup
+- Violates code review standards
 
-### 🔴 BLOCKER — Fix First
-1. Resolve MlxPep.Core compilation errors (ProfileReader, ProfileValidator)
-2. Verify `dotnet test` runs and all HFCacheReader tests pass
-3. Confirm build succeeds: `dotnet build -c Release`
+**How to Fix:**
+Delete `tests/MlxPep.Cli.Tests/UnitTest1.cs` entirely.
 
-### 🟡 CRITICAL — Fix Before Merge
-1. Add symlink safety tests + circular symlink protection
-2. Validate all accessed files stay within cache root
-3. Document symlink handling in code comments
-
-### 🟢 SHOULD FIX — Before Production
-1. Add explicit malformed directory test
-2. Optimize GetModelAsync (Option 1: direct path computation)
-3. Add permission error test cases
-
-### 💡 NICE-TO-HAVE — Fast-Follow
-1. Improve async handling (currently wrapped in Task.FromResult)
-2. Implement in-memory cache for repeated GetModelAsync calls
-3. Add performance benchmarks for large caches (500+models)
+**Effort:** 2 minutes
 
 ---
 
-## Final Verdict
+## Section 2: Medium Priority Issues
 
-**Current Status**: ⚠️ **CONDITIONAL PASS WITH BLOCKER**
+### ISSUE #4: Silent Exception Swallowing
 
-**If compilation error is not present/is fixed**:
-- Acceptance: ✅ **YES, with requested fixes**
-- Completeness: ~75–80%
-- Estimated fix time: 2–4 hours (symlink tests + GetModelAsync optimization)
+**Severity:** MEDIUM  
+**Files:** 
+- `DoctorCommand.cs` line 143 (DetectOmlxAsync)
+- `DoctorCommand.cs` line 187 (DetectVsCodeEditorAsync)  
+- `DoctorCommand.cs` line 226 (TryRunCommandAsync)
 
-**If compilation error persists**:
-- Acceptance: ❌ **NO**
-- Completeness: ~15% (code-only, untested)
-- Blocker: Tests cannot run
+**Example (line 143):**
+```csharp
+catch { }  // ← Bare catch, no logging
 
-**Next Step**: Neo must resolve the project-level compilation error, then re-request review after fixes are applied.
+return new DependencyStatus { Installed = false, Message = "pip command failed or mlx-lm not found" };
+```
+
+**Problem:**
+When a dependency detection fails due to an unexpected exception (e.g., permissions, missing library), the user gets a generic "not found" message. Developers debugging can't see the real cause.
+
+**How to Fix:**
+Add Debug logging:
+```csharp
+catch (Exception ex)
+{
+    Debug.WriteLine($"Failed to detect oMLX: {ex.GetType().Name}: {ex.Message}");
+}
+```
+
+**Effort:** 15 minutes
+
+---
+
+### ISSUE #5: No Process Execution Timeout
+
+**Severity:** MEDIUM  
+**Files:**
+- `TryRunCommandAsync()` line 211-224
+- `DetectVsCodeEditorAsync()` line 172-178
+- `DetectOmlxAsync()` line 127-133
+
+**Problem:**
+If a command hangs (e.g., `pip show` on a slow network, or `code --version` in a stalled process), the entire `doctor` command blocks indefinitely.
+
+```csharp
+await process.WaitForExitAsync();  // ← No timeout
+```
+
+**How to Fix:**
+Add 5-second timeout:
+```csharp
+using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+{
+    await process.WaitForExitAsync(cts.Token);
+}
+```
+
+Catch `OperationCanceledException` and return "timeout" status.
+
+**Effort:** 25 minutes
+
+---
+
+### ISSUE #6: pip vs pip3 Incompatibility
+
+**Severity:** MEDIUM  
+**File:** `DoctorCommand.cs` line 119 (DetectOmlxAsync)
+
+**Problem:**
+```csharp
+var psi = new ProcessStartInfo
+{
+    FileName = "pip",
+    Arguments = "show mlx-lm",
+    // ...
+};
+```
+
+Modern systems (especially macOS and Linux) default to `pip3`, not `pip`. The `pip` command might not exist or might be Python 2.
+
+**Impact:**
+On systems where only `pip3` exists, oMLX detection always fails, even if oMLX is installed.
+
+**How to Fix:**
+Try both commands:
+```csharp
+private async Task<DependencyStatus> DetectOmlxAsync()
+{
+    foreach (var pip in new[] { "pip", "pip3" })
+    {
+        var status = await TryPipShow(pip, "mlx-lm");
+        if (status.Installed) return status;
+    }
+    return new DependencyStatus { Installed = false, Message = "pip/pip3 not available or mlx-lm not found" };
+}
+
+private async Task<DependencyStatus> TryPipShow(string pipCommand, string package)
+{
+    // Existing pip show logic, parameterized
+}
+```
+
+**Effort:** 20 minutes
+
+---
+
+### ISSUE #7: Installation Guidance Missing from JSON
+
+**Severity:** MEDIUM  
+**Context:** Issue #13 Acceptance Criteria mentions "installation guidance"
+
+**Problem:**
+Table mode says:
+```
+Run `mlx-pep doctor --json` for installation guidance.
+```
+
+But the JSON output contains no guidance:
+```json
+{
+  "hf-cli": {
+    "installed": false,
+    "message": "huggingface-cli not found in PATH"
+  }
+}
+```
+
+**Expected (Based on Acceptance Criteria):**
+The JSON should include installation instructions or links.
+
+**How to Fix:**
+Add a `guidance` field to the JSON output:
+```json
+{
+  "hf-cli": {
+    "installed": false,
+    "message": "huggingface-cli not found in PATH",
+    "guidance": "Install via: pip install huggingface-hub"
+  }
+}
+```
+
+Modify `DependencyStatus` and `OutputJson()` to include guidance.
+
+**Effort:** 30 minutes
+
+---
+
+## Section 3: Strengths
+
+### ✓ Architecture is Sound
+- Proper separation of concerns: detection logic, output formatting, CLI routing
+- Async/await used correctly for process execution
+- JSON serialization attributes properly configured
+
+### ✓ Test Coverage is Comprehensive
+- 9 dedicated unit tests for doctor command (plus 1 stub)
+- Tests cover: JSON validity, table format, dependency inclusion, field presence
+- Uses StringWriter to capture console output effectively
+
+### ✓ User-Friendly Output
+- Table format is aligned and readable
+- Summary statistics clear
+- All 7 dependencies properly named for display
+
+### ✓ Proper Process Isolation
+- `UseShellExecute = false` prevents shell injection vulnerabilities
+- `CreateNoWindow = true` prevents console windows on Windows
+- StandardError redirected for error capture
+
+---
+
+## Section 4: Security Assessment
+
+**SCORE: 7/10 (Acceptable with Medium Concerns)**
+
+**Findings:**
+- ✓ No shell execution (safe from injection)
+- ✓ Process isolation properly configured
+- ✓ No hardcoded secrets or credentials
+- ⚠ Silent exception swallowing could hide permission errors (users unaware of failed checks)
+- ⚠ Timeout absence could enable DoS via hung child processes
+- ✓ JSON output properly sanitized (no unescaped user data)
+
+**Recommendation:** Address timeout handling before production use.
+
+---
+
+## Section 5: Code Quality Notes
+
+| Aspect | Rating | Comment |
+|--------|--------|---------|
+| Readability | 9/10 | Clear method names, good structure. StringExtensions nice touch. |
+| Error Handling | 5/10 | Bare catch blocks; missing logging. |
+| Performance | 8/10 | Async is correct; no timeout risk mitigation. |
+| Test Design | 8/10 | Good coverage; stub test needs removal. |
+| Documentation | 7/10 | XML comments present; could add usage examples. |
+
+---
+
+## Section 6: Issue #13 Acceptance Criteria Assessment
+
+| Criterion | Met? | Notes |
+|-----------|------|-------|
+| Reports dependency states correctly | ✓ Yes | All 7 tools detected accurately |
+| Human-readable table output | ✓ Yes | Clean formatting, status symbols |
+| JSON output | ⚠ Partial | Valid structure, but double-output bug; missing guidance |
+| Exit code 0 for success | ✓ Yes | Verified |
+| Installation guidance | ✗ No | JSON missing guidance; table has redirect only |
+| Comprehensive test coverage | ✓ Yes | 9 tests for DoctorCommand |
+
+**Overall:** ~85% of acceptance criteria met, but blockers must be fixed.
+
+---
+
+## Section 7: Next Steps & Recommendations
+
+### Before Merge (Author Must Fix):
+1. **CRITICAL:** Fix double JSON output bug (Option A recommended)
+2. **CRITICAL:** Fix version string extraction with Regex
+3. **CRITICAL:** Remove UnitTest1.cs stub
+
+### For Next PR or Revision (Can Iterate):
+4. Add Debug logging to exception handlers
+5. Implement process execution timeout (5 sec)
+6. Support pip3 in addition to pip
+7. Add installation guidance to JSON output
+
+### Merge Criteria:
+- [ ] Blockers #1-3 resolved
+- [ ] All 10 tests passing
+- [ ] JSON output validated as parseable
+- [ ] Manual testing on 2+ systems (Linux, macOS/Windows)
+
+---
+
+## Detailed Change Locations for Reference
+
+```
+src/MlxPep.Cli/CliBuilder.cs
+  Line 147-155: HandleDoctor method (BLOCKER #1)
+
+src/MlxPep.Cli/Commands/DoctorCommand.cs
+  Line 119: pip hardcoded (ISSUE #6)
+  Line 143: bare catch in DetectOmlxAsync (ISSUE #4)
+  Line 187: bare catch in DetectVsCodeEditorAsync (ISSUE #4)
+  Line 211-224: TryRunCommandAsync no timeout (ISSUE #5, #4)
+  Line 234-248: ExtractVersion malformation (BLOCKER #2)
+
+tests/MlxPep.Cli.Tests/UnitTest1.cs
+  All content: Empty stub (BLOCKER #3)
+
+tests/MlxPep.Cli.Tests/DoctorCommandTests.cs
+  Lines 1-253: Good tests, but parent file needs cleanup
+```
+
+---
+
+## Conclusion
+
+The PR demonstrates solid engineering effort with correct async patterns, reasonable test design, and user-friendly output. The three blockers—JSON corruption, version parsing, and test cleanup—are straightforward to fix and should not take more than 40 minutes combined. After corrections, this will be a solid addition to the CLI.
+
+**Recommendation:** Return for revisions on blockers. Medium issues can be addressed in this PR or deferred to follow-up work based on team bandwidth.
+
+---
+
+**Review completed by:** Rai (RAI Reviewer)  
+**Date:** 2026-08-13  
+**Confidence:** HIGH (verified by testing on live system)
