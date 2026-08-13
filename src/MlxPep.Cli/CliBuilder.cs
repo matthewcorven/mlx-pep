@@ -73,16 +73,6 @@ public static class CliBuilder
         var handler = new DoctorCommand();
         var context = new CommandContext(isJson);
         var result = await handler.ExecuteAsync(context);
-
-        if (isJson)
-        {
-            var json = new { message = result.Message, exit_code = result.ExitCode };
-            Console.WriteLine(JsonSerializer.Serialize(json));
-        }
-        else
-        {
-            Console.WriteLine(result.Message);
-        }
         return result.ExitCode;
     }
 
