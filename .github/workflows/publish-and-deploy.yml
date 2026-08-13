@@ -10,6 +10,10 @@ on:
         required: false
         default: "false"
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   REGISTRY: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}
   IMAGE_NAME: mlx-pep
