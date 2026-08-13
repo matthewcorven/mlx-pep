@@ -7,6 +7,13 @@ namespace MlxPep.Core.Diagnostics;
 /// Orchestrates dependency detection for all tools.
 /// Uses probe-based architecture for testability.
 /// </summary>
+/// <remarks>
+/// PLATFORM ASSUMPTIONS (MVP implementation):
+/// - Paths assume Unix-like system (.local, /Applications, /usr/bin, /System)
+/// - Process-based detection works on macOS/Linux (Windows: may need FileName extensions)
+/// - HTTP detection (oMLX) assumes localhost networking
+/// - Future: Add Windows PATH detection and executable resolution
+/// </remarks>
 public class DependencyDetectionService
 {
     private readonly Dictionary<string, IDependencyProbe> _probes;
