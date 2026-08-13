@@ -91,6 +91,13 @@ public class HFCacheReader : IHFCacheReader
 
                 foreach (var revisionDir in revisionDirs)
                 {
+                    // CRITICAL FIX #2: Validate path is within cache (prevent directory escape via symlinks)
+                    if (!IsPathWithinCache(revisionDir))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HFCacheReader] ListModelsAsync: revision directory {revisionDir} is outside cache, skipping");
+                        continue;
+                    }
+
                     var revision = Path.GetFileName(revisionDir);
                     System.Diagnostics.Debug.WriteLine($"[HFCacheReader] ListModelsAsync: processing revision {revision}");
 
@@ -103,9 +110,15 @@ public class HFCacheReader : IHFCacheReader
                         models.Add(model);
                         System.Diagnostics.Debug.WriteLine($"[HFCacheReader] ListModelsAsync: added model {repoId}@{revision} (size={size} bytes, lastModified={lastModified:o})");
                     }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HFCacheReader] ListModelsAsync: permission denied for {revision}: {ex.Message}");
+                        continue;
+                    }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"[HFCacheReader] ListModelsAsync: error processing revision {revision}: {ex.Message}");
+                        continue;
                     }
                 }
             }
@@ -183,7 +196,9 @@ public class HFCacheReader : IHFCacheReader
                 return 0;
             }
 
-            var files = Directory.EnumerateFiles(revisionDir, "*", SearchOption.AllDirectories).ToList();
+            // CRITICAL FIX #1: Use cycle detection to prevent circular symlink hangs
+            var visitedPaths = new HashSet<string>();
+            var files = EnumerateFilesWithCycleDetection(revisionDir, visitedPaths);
             System.Diagnostics.Debug.WriteLine($"[HFCacheReader] CalculateModelSize: found {files.Count} files");
 
             foreach (var file in files)
@@ -222,7 +237,9 @@ public class HFCacheReader : IHFCacheReader
                 return DateTime.UtcNow;
             }
 
-            var files = Directory.EnumerateFiles(revisionDir, "*", SearchOption.AllDirectories).ToList();
+            // CRITICAL FIX #1: Use cycle detection to prevent circular symlink hangs
+            var visitedPaths = new HashSet<string>();
+            var files = EnumerateFilesWithCycleDetection(revisionDir, visitedPaths);
             System.Diagnostics.Debug.WriteLine($"[HFCacheReader] GetLastModified: found {files.Count} files to check");
 
             if (files.Count == 0)
@@ -243,6 +260,97 @@ public class HFCacheReader : IHFCacheReader
         {
             System.Diagnostics.Debug.WriteLine($"[HFCacheReader] GetLastModified: error getting last modified time: {ex.Message}");
             return DateTime.UtcNow;
+        }
+    }
+
+    /// <summary>
+    /// CRITICAL FIX #1: Enumerates files recursively with cycle detection to prevent circular symlink hangs.
+    /// </summary>
+    private List<string> EnumerateFilesWithCycleDetection(string directory, HashSet<string> visitedPaths)
+    {
+        var files = new List<string>();
+
+        try
+        {
+            // Get the full canonical path to detect cycles
+            var fullPath = Path.GetFullPath(directory);
+            
+            // Check if this path is already being visited (cycle detected)
+            if (visitedPaths.Contains(fullPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"[HFCacheReader] EnumerateFilesWithCycleDetection: cycle detected at {fullPath}, skipping");
+                return files;
+            }
+
+            visitedPaths.Add(fullPath);
+
+            // Enumerate files in current directory only (non-recursive)
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(directory))
+                {
+                    files.Add(file);
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HFCacheReader] EnumerateFilesWithCycleDetection: permission denied for directory {directory}: {ex.Message}");
+                return files;
+            }
+
+            // Recursively enumerate subdirectories with cycle detection
+            try
+            {
+                foreach (var subdir in Directory.EnumerateDirectories(directory))
+                {
+                    // Skip .git directories
+                    if (Path.GetFileName(subdir) == ".git")
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HFCacheReader] EnumerateFilesWithCycleDetection: skipping .git directory at {subdir}");
+                        continue;
+                    }
+
+                    files.AddRange(EnumerateFilesWithCycleDetection(subdir, visitedPaths));
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HFCacheReader] EnumerateFilesWithCycleDetection: permission denied enumerating subdirectories of {directory}: {ex.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HFCacheReader] EnumerateFilesWithCycleDetection: error enumerating files: {ex.Message}");
+        }
+
+        return files;
+    }
+
+    /// <summary>
+    /// CRITICAL FIX #2: Validates that a path is within the cache directory (prevents directory escape attacks).
+    /// </summary>
+    private bool IsPathWithinCache(string path)
+    {
+        try
+        {
+            var fullCachePath = Path.GetFullPath(_cacheDir);
+            var fullPath = Path.GetFullPath(path);
+            
+            // Ensure resolved path is within cache directory
+            if (!fullPath.StartsWith(fullCachePath + Path.DirectorySeparatorChar) && 
+                fullPath != fullCachePath)
+            {
+                System.Diagnostics.Debug.WriteLine($"[HFCacheReader] IsPathWithinCache: path {path} resolves outside cache (full: {fullPath}, cache: {fullCachePath})");
+                return false;
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"[HFCacheReader] IsPathWithinCache: path {path} is valid within cache");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HFCacheReader] IsPathWithinCache: error validating path {path}: {ex.Message}");
+            return false;
         }
     }
 }

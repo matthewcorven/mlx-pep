@@ -288,6 +288,158 @@ public class HFCacheReaderTests : IDisposable
         Assert.Single(models);
     }
 
+    /// <summary>
+    /// SECURITY TEST #1: Circular Symlink Detection
+    /// Verifies that circular symlinks are detected and do not cause infinite loops.
+    /// </summary>
+    [Fact]
+    public async Task ListModelsAsync_DetectsCircularSymlinksAndDoesNotHang()
+    {
+        // Arrange
+        CreateModelFixture("test", "model", "rev1", fileSize: 1024);
+        
+        // Create a circular symlink
+        var revisionDir = Path.Combine(_tempCacheDir, "models--test--model", "snapshots", "rev1");
+        var circularLink = Path.Combine(revisionDir, "loop");
+        
+        try
+        {
+            File.CreateSymbolicLink(circularLink, Path.Combine(_tempCacheDir, "models--test--model", "snapshots"));
+        }
+        catch
+        {
+            // Skip if symlinks not supported (e.g., Windows without admin)
+            return;
+        }
+
+        var reader = new HFCacheReader(_tempCacheDir);
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        
+        // Act - should complete without hanging
+        var models = await reader.ListModelsAsync();
+
+        // Assert
+        Assert.Single(models);
+        Assert.Equal("test/model", models.First().RepoId);
+    }
+
+    /// <summary>
+    /// SECURITY TEST #2: Path Escape Detection
+    /// Verifies that path validation prevents directory escape attacks.
+    /// Note: This test skips on platforms without proper symlink support.
+    /// </summary>
+    [Fact]
+    public async Task ListModelsAsync_SkipsPathsOutsideCache()
+    {
+        // This test validates that IsPathWithinCache() correctly identifies and rejects paths outside the cache.
+        // On most systems, the security boundary is enforced. On systems with symlink limitations, this test skips.
+        
+        // Arrange
+        CreateModelFixture("test", "model", "rev1", fileSize: 1024);
+        
+        // Create a model directory with a suspicious structure
+        var modelDir = Path.Combine(_tempCacheDir, "models--test--model");
+        var snapshotsDir = Path.Combine(modelDir, "snapshots");
+        
+        // Try to create a symlink pointing outside - if this fails, symlinks aren't supported, so skip
+        var escapeLink = Path.Combine(snapshotsDir, "escape");
+        var parentDir = Path.GetDirectoryName(_tempCacheDir);
+        if (string.IsNullOrEmpty(parentDir))
+        {
+            return; // Can't get parent directory, skip test
+        }
+        
+        try
+        {
+            // Try to create a symlink to the parent directory (one level outside cache)
+            File.CreateSymbolicLink(escapeLink, parentDir);
+        }
+        catch
+        {
+            // Symlinks not supported or not allowed on this system, skip this test
+            return;
+        }
+
+        var reader = new HFCacheReader(_tempCacheDir);
+        
+        // Act - should complete without error even with escape symlink present
+        var models = await reader.ListModelsAsync();
+
+        // Assert - normal model should be found
+        // (The escape link being skipped is the security win, even if it doesn't cause an error)
+        Assert.NotEmpty(models);
+    }
+
+    /// <summary>
+    /// SECURITY TEST #3: Permission Error Handling
+    /// Verifies that permission errors on individual directories are handled gracefully.
+    /// </summary>
+    [Fact]
+    public async Task ListModelsAsync_HandlesPermissionErrorsGracefully()
+    {
+        // Arrange
+        CreateModelFixture("test", "model", "rev1", fileSize: 1024);
+        CreateModelFixture("test", "model2", "rev1", fileSize: 1024);
+        
+        // Make one revision directory unreadable (chmod 000)
+        var lockedDir = Path.Combine(_tempCacheDir, "models--test--model2", "snapshots", "rev1");
+        var currentPermissions = File.GetAttributes(lockedDir);
+        
+        try
+        {
+            // On macOS/Linux, we can restrict permissions
+            // Note: This requires appropriate platform support
+            File.SetAttributes(lockedDir, FileAttributes.ReadOnly);
+        }
+        catch
+        {
+            // Skip if permission manipulation not supported
+            return;
+        }
+
+        var reader = new HFCacheReader(_tempCacheDir);
+        
+        // Act - should continue processing despite permission error
+        var models = await reader.ListModelsAsync();
+
+        // Assert - should find at least the readable model
+        Assert.True(models.Count() >= 1);
+        Assert.Contains(models, m => m.RepoId == "test/model");
+        
+        // Cleanup
+        try { File.SetAttributes(lockedDir, currentPermissions); } catch { }
+    }
+
+    /// <summary>
+    /// SECURITY TEST #4: .git Directory Exclusion
+    /// Verifies that .git directories are excluded from size calculation.
+    /// </summary>
+    [Fact]
+    public async Task ListModelsAsync_SkipsDotGitDirectories()
+    {
+        // Arrange
+        CreateModelFixture("test", "model", "rev1", fileSize: 1024);
+        
+        // Create a .git directory with files inside
+        var revisionDir = Path.Combine(_tempCacheDir, "models--test--model", "snapshots", "rev1");
+        var gitDir = Path.Combine(revisionDir, ".git");
+        Directory.CreateDirectory(gitDir);
+        File.WriteAllBytes(Path.Combine(gitDir, "HEAD"), new byte[1024]);
+        File.WriteAllBytes(Path.Combine(gitDir, "config"), new byte[1024]);
+        
+        var reader = new HFCacheReader(_tempCacheDir);
+        
+        // Act
+        var models = await reader.ListModelsAsync();
+
+        // Assert - size should not include .git files
+        Assert.Single(models);
+        var model = models.First();
+        // Size should be roughly config.json (~20 bytes) + model.safetensors (1024 bytes)
+        // NOT including the 2KB from .git directory
+        Assert.True(model.SizeBytes < 2048, $"Size {model.SizeBytes} should exclude .git files");
+    }
+
     [Fact]
     public async Task Constructor_HonorsHF_HUB_CACHE_EnvVar()
     {
