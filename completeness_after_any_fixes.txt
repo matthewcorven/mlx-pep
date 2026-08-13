@@ -1,1 +1,8 @@
-35
+70% complete
+
+- Core command exists and table mode is readable.
+- Blocking: JSON mode emits two JSON documents, so machine consumers cannot parse it as a single object.
+- Blocking: detection is implemented ad hoc in DoctorCommand instead of integrating with the dependency detection service expected by issue #13 / #11.
+- Blocking: JSON mode omits install guidance even though acceptance/task text requires install guidance for dependencies.
+- Medium: build/test flow is fragile on a clean worktree until the CLI project is built first; there is also a placeholder UnitTest1 still committed.
+- Effort to fix blockers: ~0.5-1 day including wiring to the shared detector abstraction and updating tests.
