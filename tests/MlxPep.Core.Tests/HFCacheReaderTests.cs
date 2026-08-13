@@ -441,7 +441,14 @@ public class HFCacheReaderTests : IDisposable
         Assert.Contains("GB", formatted);
         Assert.Contains("1", formatted);
     }
-}
+
+    [Fact]
+    public async Task HFCacheReader_ListModelsAsync_WithValidCache()
+    {
+        // Arrange
+        var reader = new HFCacheReader();
+
+        // Act
         var models = await reader.ListModelsAsync();
         var model = models.FirstOrDefault();
 
