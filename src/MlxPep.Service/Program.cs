@@ -50,6 +50,9 @@ async Task AuthenticationMiddleware(HttpContext context, RequestDelegate next)
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure IP/CIDR/hostname blocking middleware with hot-reload support
+builder.Services.Configure<BlockingConfig>(builder.Configuration.GetSection("Blocking"));
+
 // Initialize Azure Blob Storage client
 var connectionString = builder.Configuration.GetConnectionString("AzureBlobStorage");
 BlobContainerClient? blobContainer = null;
@@ -69,7 +72,9 @@ if (!string.IsNullOrEmpty(connectionString))
 
 var app = builder.Build();
 
-// Apply authentication middleware for write operations
+// Apply blocking middleware first (highest priority for security)
+app.UseMiddleware<IpBlockingMiddleware>();
+
 // Configure and apply rate limiting middleware
 var rateLimitConfig = new RateLimitConfig
 {
@@ -84,6 +89,7 @@ var rateLimitConfig = new RateLimitConfig
 };
 app.UseMiddleware<RateLimitingMiddleware>(rateLimitConfig);
 
+// Apply authentication middleware for write operations
 app.Use(AuthenticationMiddleware);
 
 // Log startup information

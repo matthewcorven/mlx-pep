@@ -4,6 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 /// <summary>
@@ -514,5 +518,329 @@ public class BlockingPriorityTests
 
         // Assert
         Assert.True(blocked);  // Blocked by IP
+    }
+}
+
+public class BlockingMiddlewareIntegrationTests
+{
+    [Fact]
+    public async Task Middleware_Returns403_WhenIPIsBlocked()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = true,
+            BlockedIps = new List<string> { "192.168.1.100" }
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "example.com");
+        var middleware = new IpBlockingMiddleware(
+            next: _ => Task.CompletedTask,
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Middleware_Allows200_WhenIPNotBlocked()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = true,
+            BlockedIps = new List<string> { "192.168.1.100" }
+        };
+
+        var context = CreateHttpContext("192.168.1.101", "example.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.True(nextCalled);
+        Assert.NotEqual(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Middleware_Returns403_WhenIPInCIDRRange()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableCidrBlocking = true,
+            BlockedCidrs = new List<string> { "192.168.1.0/24" }
+        };
+
+        var context = CreateHttpContext("192.168.1.50", "example.com");
+        var middleware = new IpBlockingMiddleware(
+            next: _ => Task.CompletedTask,
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Middleware_AllowsIP_WhenOutsideCIDRRange()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableCidrBlocking = true,
+            BlockedCidrs = new List<string> { "192.168.1.0/24" }
+        };
+
+        var context = CreateHttpContext("192.168.2.50", "example.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.True(nextCalled);
+    }
+
+    [Fact]
+    public async Task Middleware_Returns403_WhenHostnameBlocked()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableHostnameBlocking = true,
+            BlockedHostnames = new List<string> { "blocked.example.com" }
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "blocked.example.com");
+        var middleware = new IpBlockingMiddleware(
+            next: _ => Task.CompletedTask,
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Middleware_Returns403_WhenSubdomainMatchesWildcard()
+    {
+        // Arrange
+        var config = new BlockingConfig
+        {
+            EnableHostnameBlocking = true,
+            BlockedHostnames = new List<string> { "*.blocked.com" }
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "sub.blocked.com");
+        var middleware = new IpBlockingMiddleware(
+            next: _ => Task.CompletedTask,
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Middleware_RespectIndependentIPToggle()
+    {
+        // Arrange: IP blocking disabled, CIDR enabled, should allow IP-blocked request
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = false,
+            EnableCidrBlocking = true,
+            BlockedIps = new List<string> { "192.168.1.100" },
+            BlockedCidrs = new List<string>()
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "example.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert: Request allowed because IP blocking is disabled
+        Assert.True(nextCalled);
+    }
+
+    [Fact]
+    public async Task Middleware_RespectIndependentCIDRToggle()
+    {
+        // Arrange: CIDR blocking disabled, IP enabled, should allow CIDR-blocked request
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = true,
+            EnableCidrBlocking = false,
+            BlockedIps = new List<string>(),
+            BlockedCidrs = new List<string> { "192.168.1.0/24" }
+        };
+
+        var context = CreateHttpContext("192.168.1.50", "example.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert: Request allowed because CIDR blocking is disabled
+        Assert.True(nextCalled);
+    }
+
+    [Fact]
+    public async Task Middleware_RespectIndependentHostnameToggle()
+    {
+        // Arrange: Hostname blocking disabled, should allow hostname-blocked request
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = false,
+            EnableCidrBlocking = false,
+            EnableHostnameBlocking = false,
+            BlockedHostnames = new List<string> { "blocked.com" }
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "blocked.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert: Request allowed because hostname blocking is disabled
+        Assert.True(nextCalled);
+    }
+
+    [Fact]
+    public async Task Middleware_AllowsAllRequests_WhenAllBlockingDisabled()
+    {
+        // Arrange: All blocking disabled
+        var config = new BlockingConfig
+        {
+            EnableIpBlocking = false,
+            EnableCidrBlocking = false,
+            EnableHostnameBlocking = false,
+            BlockedIps = new List<string> { "192.168.1.100" },
+            BlockedCidrs = new List<string> { "192.168.0.0/16" },
+            BlockedHostnames = new List<string> { "blocked.com" }
+        };
+
+        var context = CreateHttpContext("192.168.1.100", "blocked.com");
+        var nextCalled = false;
+        var middleware = new IpBlockingMiddleware(
+            next: _ => { nextCalled = true; return Task.CompletedTask; },
+            logger: CreateLogger(),
+            optionsMonitor: CreateOptionsMonitor(config)
+        );
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert: All requests allowed
+        Assert.True(nextCalled);
+    }
+
+    [Fact]
+    public async Task Middleware_HotReloadsConfiguration()
+    {
+        // Arrange: Start with empty blocklist
+        var initialConfig = new BlockingConfig
+        {
+            EnableIpBlocking = true,
+            BlockedIps = new List<string>()
+        };
+
+        var optionsMonitor = CreateDynamicOptionsMonitor(initialConfig);
+        var context = CreateHttpContext("192.168.1.100", "example.com");
+        var middleware = new IpBlockingMiddleware(
+            next: _ => Task.CompletedTask,
+            logger: CreateLogger(),
+            optionsMonitor: optionsMonitor
+        );
+
+        // Act: First request - should pass
+        await middleware.InvokeAsync(context);
+
+        // Simulate hot-reload by adding IP to blocklist
+        initialConfig.BlockedIps.Add("192.168.1.100");
+
+        // Second request - should be blocked
+        var context2 = CreateHttpContext("192.168.1.100", "example.com");
+        await middleware.InvokeAsync(context2);
+
+        // Assert
+        Assert.Equal(StatusCodes.Status403Forbidden, context2.Response.StatusCode);
+    }
+
+    // Helper methods
+    private static HttpContext CreateHttpContext(string clientIp, string hostname)
+    {
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(clientIp);
+        context.Request.Host = new Microsoft.AspNetCore.Http.HostString(hostname);
+        return context;
+    }
+
+    private static ILogger<IpBlockingMiddleware> CreateLogger()
+    {
+        return new Mock<ILogger<IpBlockingMiddleware>>().Object;
+    }
+
+    private static IOptionsMonitor<BlockingConfig> CreateOptionsMonitor(BlockingConfig config)
+    {
+        var mockMonitor = new Mock<IOptionsMonitor<BlockingConfig>>();
+        mockMonitor
+            .Setup(m => m.CurrentValue)
+            .Returns(config);
+        return mockMonitor.Object;
+    }
+
+    private static IOptionsMonitor<BlockingConfig> CreateDynamicOptionsMonitor(BlockingConfig config)
+    {
+        var mockMonitor = new Mock<IOptionsMonitor<BlockingConfig>>();
+        mockMonitor
+            .Setup(m => m.CurrentValue)
+            .Returns(() => config);  // Returns dynamic value, reflects changes
+        return mockMonitor.Object;
     }
 }
