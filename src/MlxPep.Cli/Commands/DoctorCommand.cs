@@ -1,5 +1,8 @@
 namespace MlxPep.Cli.Commands;
 
+using System.Diagnostics;
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Handler for `mlx-pep doctor` command.
 /// Detects system dependencies and provides installation guidance.
@@ -10,36 +13,24 @@ public class DoctorCommand
     {
         try
         {
+            var dependencies = new Dictionary<string, DependencyStatus>
+            {
+                { "dotnet", await DetectDotnetAsync() },
+                { "python3", await DetectPython3Async() },
+                { "hf-cli", await DetectHfCliAsync() },
+                { "omlx", await DetectOmlxAsync() },
+                { "vscode", await DetectVsCodeAsync() },
+                { "vscode-insiders", await DetectVsCodeInsidersAsync() },
+                { "copilot-cli", await DetectCopilotCliAsync() }
+            };
+
             if (context.JsonOutput)
             {
-                var result = new
-                {
-                    command = "doctor",
-                    status = "ok",
-                    dependencies = new
-                    {
-                        dotnet = DetectDotnet(),
-                        hfCli = DetectHfCli(),
-                        python3 = DetectPython3(),
-                        omlx = DetectOmlx(),
-                        vsCode = DetectVsCode(),
-                        vsCodeInsiders = DetectVsCodeInsiders(),
-                        copilotCli = DetectCopilotCli()
-                    }
-                };
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                OutputJson(dependencies);
             }
             else
             {
-                Console.WriteLine("mlx-pep doctor - Dependency Check");
-                Console.WriteLine();
-                Console.WriteLine("✓ dotnet: " + GetStatusString(DetectDotnet()));
-                Console.WriteLine("✓ hf CLI: " + GetStatusString(DetectHfCli()));
-                Console.WriteLine("✓ python3: " + GetStatusString(DetectPython3()));
-                Console.WriteLine("✓ oMLX: " + GetStatusString(DetectOmlx()));
-                Console.WriteLine("✓ VS Code: " + GetStatusString(DetectVsCode()));
-                Console.WriteLine("✓ VS Code Insiders: " + GetStatusString(DetectVsCodeInsiders()));
-                Console.WriteLine("✓ Copilot CLI: " + GetStatusString(DetectCopilotCli()));
+                OutputTable(dependencies);
             }
 
             return CommandResult.Success();
@@ -50,53 +41,210 @@ public class DoctorCommand
         }
     }
 
-    private DependencyStatus DetectDotnet()
+    private void OutputJson(Dictionary<string, DependencyStatus> dependencies)
     {
-        // TODO: Implement dotnet detection
-        return new DependencyStatus { Installed = true, Version = "10.0.0" };
+        var result = new
+        {
+            command = "doctor",
+            timestamp = DateTime.UtcNow.ToString("O"),
+            dependencies
+        };
+        
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, options));
     }
 
-    private DependencyStatus DetectHfCli()
+    private void OutputTable(Dictionary<string, DependencyStatus> dependencies)
     {
-        // TODO: Implement hf CLI detection
-        return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
+        Console.WriteLine("mlx-pep doctor - Dependency Check");
+        Console.WriteLine();
+        
+        var installed = 0;
+        var missing = 0;
+        
+        foreach (var (name, status) in dependencies)
+        {
+            var displayName = name.ToDisplayName();
+            var statusSymbol = status.Installed ? "✓" : "✗";
+            
+            if (status.Installed)
+            {
+                var version = status.Version ?? "unknown";
+                Console.WriteLine($"{statusSymbol} {displayName,-20} v{version}");
+                installed++;
+            }
+            else
+            {
+                Console.WriteLine($"{statusSymbol} {displayName,-20} not installed");
+                missing++;
+            }
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine($"Summary: {installed} installed, {missing} missing");
+        
+        if (missing > 0)
+        {
+            Console.WriteLine("Run `mlx-pep doctor --json` for installation guidance.");
+        }
     }
 
-    private DependencyStatus DetectPython3()
+    private async Task<DependencyStatus> DetectDotnetAsync()
     {
-        // TODO: Implement python3 detection
-        return new DependencyStatus { Installed = true, Version = "3.11.0" };
+        return await TryRunCommandAsync("dotnet", "--version");
     }
 
-    private DependencyStatus DetectOmlx()
+    private async Task<DependencyStatus> DetectPython3Async()
     {
-        // TODO: Implement oMLX detection
-        return new DependencyStatus { Installed = false, Message = "Not installed" };
+        return await TryRunCommandAsync("python3", "--version");
     }
 
-    private DependencyStatus DetectVsCode()
+    private async Task<DependencyStatus> DetectHfCliAsync()
     {
-        // TODO: Implement VS Code detection
-        return new DependencyStatus { Installed = true, Version = "1.92.0" };
+        return await TryRunCommandAsync("huggingface-cli", "--version");
     }
 
-    private DependencyStatus DetectVsCodeInsiders()
+    private async Task<DependencyStatus> DetectOmlxAsync()
     {
-        // TODO: Implement VS Code Insiders detection
-        return new DependencyStatus { Installed = false, Message = "Not installed" };
+        // Try pip show mlx-lm
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "pip",
+                Arguments = "show mlx-lm",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(psi))
+            {
+                if (process == null)
+                    return new DependencyStatus { Installed = false, Message = "Could not start pip process" };
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode == 0 && output.Contains("Name: mlx-lm"))
+                {
+                    var versionLine = output.Split('\n').FirstOrDefault(l => l.StartsWith("Version:"));
+                    var version = versionLine?.Split(':').LastOrDefault()?.Trim() ?? "installed";
+                    return new DependencyStatus { Installed = true, Version = version };
+                }
+            }
+        }
+        catch { }
+
+        return new DependencyStatus { Installed = false, Message = "pip command failed or mlx-lm not found" };
     }
 
-    private DependencyStatus DetectCopilotCli()
+    private async Task<DependencyStatus> DetectVsCodeAsync()
     {
-        // TODO: Implement Copilot CLI detection
-        return new DependencyStatus { Installed = false, Message = "Not found in PATH" };
+        return await DetectVsCodeEditorAsync("code", "VS Code");
     }
 
-    private string GetStatusString(DependencyStatus status)
+    private async Task<DependencyStatus> DetectVsCodeInsidersAsync()
     {
-        if (status.Installed)
-            return $"Installed (v{status.Version})";
-        return $"Not installed ({status.Message})";
+        return await DetectVsCodeEditorAsync("code-insiders", "VS Code Insiders");
+    }
+
+    private async Task<DependencyStatus> DetectVsCodeEditorAsync(string command, string name)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = "--version",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(psi))
+            {
+                if (process == null)
+                    return new DependencyStatus { Installed = false, Message = "Command not found" };
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                {
+                    var version = output.Split('\n')[0].Trim();
+                    return new DependencyStatus { Installed = true, Version = version };
+                }
+            }
+        }
+        catch { }
+
+        return new DependencyStatus { Installed = false, Message = $"{name} not found" };
+    }
+
+    private async Task<DependencyStatus> DetectCopilotCliAsync()
+    {
+        return await TryRunCommandAsync("copilot", "--version");
+    }
+
+    private async Task<DependencyStatus> TryRunCommandAsync(string command, string arguments)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(psi))
+            {
+                if (process == null)
+                    return new DependencyStatus { Installed = false, Message = "Command not found" };
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                {
+                    var version = ExtractVersion(output);
+                    return new DependencyStatus { Installed = true, Version = version };
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to detect {command}: {ex.Message}");
+        }
+
+        return new DependencyStatus { Installed = false, Message = $"{command} not found in PATH" };
+    }
+
+    private string ExtractVersion(string output)
+    {
+        var lines = output.Split('\n');
+        var firstLine = lines[0].Trim();
+        
+        // Try to extract version number
+        var parts = firstLine.Split(new[] { ' ', 'v', 'V' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
+        {
+            if (part[0] >= '0' && part[0] <= '9')
+                return part.Split(new[] { '\r' }, StringSplitOptions.None)[0];
+        }
+        
+        return firstLine;
     }
 }
 
@@ -105,7 +253,32 @@ public class DoctorCommand
 /// </summary>
 public class DependencyStatus
 {
+    [JsonPropertyName("installed")]
     public bool Installed { get; set; }
+    
+    [JsonPropertyName("version")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Version { get; set; }
+    
+    [JsonPropertyName("message")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Message { get; set; }
+}
+
+/// <summary>
+/// Extension methods for DoctorCommand.
+/// </summary>
+internal static class StringExtensions
+{
+    public static string ToDisplayName(this string name) => name switch
+    {
+        "dotnet" => ".NET",
+        "python3" => "Python 3",
+        "hf-cli" => "Hugging Face CLI",
+        "omlx" => "oMLX",
+        "vscode" => "VS Code",
+        "vscode-insiders" => "VS Code Insiders",
+        "copilot-cli" => "Copilot CLI",
+        _ => name
+    };
 }
