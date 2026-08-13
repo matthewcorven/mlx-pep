@@ -1,337 +1,609 @@
-# Adversarial Review: HFCacheReader Implementation (Issue #9)
+# Adversarial Code Review: PR #66 - Profiles CLI Service Client
 
-**Reviewer**: Morpheus (Lead)  
-**Branch**: squad/9-hf-cache-reader (commit d91e212)  
-**Date**: 2025-01-16  
-**Verdict**: ⚠️ **CONDITIONAL PASS** — Functional correctness confirmed, but critical blocker + important fixes required
+**PR**: [#66](https://github.com/matthewcorven/mlx-pep/pull/66)  
+**Issue**: [#15](https://github.com/matthewcorven/mlx-pep/issues/15)  
+**Branch**: `matthewcorven-profiles-cli-service-client`  
+**Status**: REJECT - Fundamental implementation missing  
+**Reviewer**: Tank (QA Specialist)  
+**Date**: 2026-08-13  
 
 ---
 
 ## Executive Summary
 
-Neo's HFCacheReader implementation correctly realizes UC2 (reuse shared Hugging Face cache). The code:
-- ✅ Implements environment variable precedence correctly
-- ✅ Parses models--org--name directory structure correctly  
-- ✅ Extracts revisions and calculates on-disk size correctly
-- ✅ Includes comprehensive fixture-based unit tests (14 tests)
+PR #66 claims to implement a complete profiles CLI service client with remote profile listing/searching, local file storage, and JSON output support. However, **the implementation is fundamentally incomplete and non-functional**. 
 
-**However**, the submission is **BLOCKED** by a project-level compilation failure that prevents test verification. Additionally, three medium/low severity issues need addressing:
+Critical files are missing entirely:
+- `ProfileServiceClient.cs` - No HTTP client for service endpoints
+- `ProfileLocalStore.cs` - No local file storage implementation
 
-1. 🔴 **BLOCKER**: MlxPep.Core compilation errors (ProfileReader, ProfileValidator)
-2. 🟡 **Medium**: Symlink safety not tested; production risk with real Hugging Face cache
-3. 🟡 **Medium**: GetModelAsync inefficiency (O(n) per lookup)
-4. 🟢 **Low**: Malformed directory rejection not explicitly tested
+The existing `ProfilesCommand.cs` contains only stub implementations that return empty arrays and hardcoded messages without actually calling any services or performing file operations.
+
+**Recommendation**: REJECT. Request Neo to complete the missing implementations before re-review.
 
 ---
 
-## PART 1: BLOCKING ISSUE — Test Execution Impossible
+## Blockers (Must Fix Before Merge)
 
-### ✋ STOP HERE: Compilation Errors in Sibling Files
+### 1. **CRITICAL: ProfileServiceClient.cs Missing**
 
-Running `dotnet test` on MlxPep.Core.Tests fails because MlxPep.Core project does not compile:
+**Issue**: The HTTP client for service integration doesn't exist. This is a core requirement.
 
-```
-/Users/core/git/matthewcorven/mlx-pep/src/MlxPep.Core/ProfileReader.cs(99,27): error CS0117
-/Users/core/git/matthewcorven/mlx-pep/src/MlxPep.Core/ProfileValidator.cs(235,15): error CS0117
-[... 60+ occurrences of: 'Debug' does not contain a definition for 'WriteLine']
-```
+**Impact**: 
+- `profiles list` cannot fetch profiles from service
+- `profiles search` cannot query remote service
+- `profiles pull` cannot fetch individual profiles
+- Violates Issue #15 acceptance criteria #1-2
 
-**What this means**:
-- HFCacheReader.cs compiles correctly ✅
-- HFCacheReaderTests.cs compiles correctly ✅  
-- **But the entire MlxPep.Core project fails to build** ❌
-- Tests cannot be executed to verify HFCacheReader works ❌
-
-**Responsibility**: This is **not** Neo's fault (the errors are in sibling files), but **Neo should have caught this** during code review — "the tests won't run" is a fatal issue that should have been discovered.
-
-### Action Required — MUST FIX BEFORE PROCEEDING:
-```bash
-# Verify MlxPep.Core compiles
-dotnet build src/MlxPep.Core/MlxPep.Core.csproj
-
-# If it fails, investigate ProfileReader and ProfileValidator  
-# (These files use Debug.WriteLine but project won't compile)
-
-# After fix, verify tests run and pass:
-dotnet test tests/MlxPep.Core.Tests/MlxPep.Core.Tests.csproj --filter HFCacheReader
+**What's Required**:
+```csharp
+// src/MlxPep.Cli/Services/ProfileServiceClient.cs
+public class ProfileServiceClient
+{
+    // Must implement:
+    public async Task<List<Profile>> ListProfilesAsync()
+    public async Task<Profile?> GetProfileAsync(string id)
+    public async Task<List<Profile>> SearchProfilesAsync(string query)
+    
+    // Must support:
+    - Service URL from MLX_PEP_SERVICE_URL env var (default: http://localhost:5000)
+    - HTTP timeout handling
+    - Connection error recovery
+    - JSON deserialization from service responses
+}
 ```
 
-**Completeness impact**: Until this is fixed, completeness cannot exceed **15%** (code-only, untested).
+**How to Fix**:
+1. Create `src/MlxPep.Cli/Services/ProfileServiceClient.cs`
+2. Inject `HttpClient` via constructor (use DI pattern)
+3. Implement three methods: `ListProfilesAsync()`, `GetProfileAsync(id)`, `SearchProfilesAsync(query)`
+4. Call service endpoints: `GET /api/profiles`, `GET /api/profiles/{id}`, `GET /api/profiles/search?query=...`
+5. Add `Debug.WriteLine()` on all conditional paths (service timeout, connection failure, invalid response)
+6. Add unit tests in `tests/MlxPep.Cli.Tests/Services/ProfileServiceClientTests.cs`
+
+**Effort**: 2-3 hours
 
 ---
 
-## PART 2: Code Quality — Findings & Fixes
+### 2. **CRITICAL: ProfileLocalStore.cs Missing**
 
-### 🟡 Issue A: GetModelAsync Efficiency Regression
+**Issue**: Local file storage doesn't exist. This is required for offline access and caching profiles.
 
-**File**: HFCacheReader.cs, lines 131–145  
-**Severity**: Medium (performance under load)  
-**Tests exist**: ✅ Yes (`GetModelAsync_ReturnsModelWhenFound`, etc.)
+**Impact**:
+- `profiles list --local` cannot work (no local profiles to list)
+- `profiles pull` cannot save profiles to local store
+- `~/.mlx-pep/profiles/` is never created
+- Violates Issue #15 acceptance criteria #3
 
-**Problem**:
+**What's Required**:
 ```csharp
-public async Task<Model?> GetModelAsync(string repoId)
+// src/MlxPep.Core/ProfileLocalStore.cs
+public class ProfileLocalStore
 {
-    var models = await ListModelsAsync();  // Full O(n) scan every time
-    return models.FirstOrDefault(m => m.RepoId.Equals(repoId, ...));
+    // Must implement:
+    public async Task<List<Profile>> ListLocalProfilesAsync()
+    public async Task<Profile?> GetProfileAsync(string id)
+    public async Task SaveProfileAsync(Profile profile)
+    public async Task<bool> ProfileExistsAsync(string id)
+    public async Task<List<Profile>> SearchLocalProfilesAsync(string query)
+    
+    // Must support:
+    - Auto-create ~/.mlx-pep/profiles/ on first use
+    - Store profiles as individual files (JSONL format)
+    - Cross-platform path handling (Windows/macOS/Linux)
+    - File I/O error recovery
+    - Directory permission issues
 }
 ```
 
-On a real cache with 500+ models, each GetModelAsync triggers a complete directory walk.  
-This is fine for MVP (occasional lookups), but not scalable for bulk queries.
+**How to Fix**:
+1. Create `src/MlxPep.Core/ProfileLocalStore.cs`
+2. Use `Path.Combine(Environment.GetFolderPath(SpecialFolder.Home), ".mlx-pep", "profiles")`
+3. Store each profile as `{id}.json` in that directory
+4. Implement CRUD operations using `File.ReadAllTextAsync()`, `File.WriteAllTextAsync()`
+5. Add `Debug.WriteLine()` on all conditional paths (directory creation, file read/write, permission errors)
+6. Add unit tests in `tests/MlxPep.Core.Tests/ProfileLocalStoreTests.cs`
 
-**Fix Option 1 (Recommended for MVP)**:  
-Compute directory path directly without full scan:
-```csharp
-public async Task<Model?> GetModelAsync(string repoId)
-{
-    if (string.IsNullOrEmpty(repoId))
-        return null;
-
-    var parts = repoId.Split('/');
-    if (parts.Length != 2) return null;
-    
-    var modelDir = Path.Combine(_cacheDir, $"models--{parts[0]}--{parts[1]}");
-    if (!Directory.Exists(modelDir)) return null;
-    
-    // Scan revisions in this specific model dir only (not full cache)
-    var snapshotsDir = Path.Combine(modelDir, "snapshots");
-    if (!Directory.Exists(snapshotsDir)) return null;
-    
-    // ... load revisions and return first match
-}
-```
-
-**Fix Option 2 (Fast-follow caching)**:  
-Implement simple in-memory cache of ListModelsAsync result with TTL.
-
-**Timeline**: Can be addressed in a follow-up PR (not MVP-blocking).
+**Effort**: 2-3 hours
 
 ---
 
-### 🟡 Issue B: Symlink Handling Not Tested — Production Risk
+### 3. **CRITICAL: ProfilesCommand.cs Contains Only Stubs**
 
-**File**: HFCacheReader.cs, lines 183–204 (`CalculateModelSize`), lines 206–230 (`GetLastModified`)  
-**Severity**: Medium (correctness on real cache)  
-**Tests exist**: ❌ **No tests for symlinks**
+**Issue**: Commands are implemented as empty placeholders that return hardcoded empty arrays instead of actual logic.
 
-**Problem**:  
-The Hugging Face cache uses symlinks extensively for blob deduplication. Real cache layout:
-```
-models--meta-llama--Llama-2-7b/snapshots/abc123/
-  config.json (symlink to ../../blobs/abc...)
-  model.safetensors (symlink to ../../blobs/def...)
-```
-
-Current code uses `SearchOption.AllDirectories`, which:
-1. ✅ Handles symlinks correctly (follows them)
-2. ❌ **No protection against circular symlinks** → infinite loop risk
-3. ❌ **No validation** that all followed paths stay within cache root
-
-**Production scenario that breaks**:
-```
-User has corrupted cache with:
-  models--test--model/snapshots/rev1/ → symlink to ../../..
-Result: CalculateModelSize hangs or counts files outside cache
-```
-
-### Fixes Required:
-
-#### Fix B1: Add Unit Test for Symlinked Revision
+**Evidence**:
 ```csharp
-[Fact]
-public async Task CalculateModelSize_HandlesSymlinksWithinRevision()
+public class ProfilesListCommand
 {
-    // Create a fixture with symlinked files
-    CreateModelFixture("test", "model", "rev1");
-    var revisionDir = Path.Combine(_tempCacheDir, "models--test--model/snapshots/rev1");
-    
-    // Create a symlink to another file
-    var targetFile = Path.Combine(_tempCacheDir, "shared_blob.bin");
-    File.WriteAllBytes(targetFile, new byte[1024 * 1024]); // 1MB
-    
-    var symlinkPath = Path.Combine(revisionDir, "linked_blob");
-    // (Create symlink — platform-dependent)
-    
-    var reader = new HFCacheReader(_tempCacheDir);
-    var models = await reader.ListModelsAsync();
-    
-    // Size should include symlink target correctly
-    Assert.Single(models);
-    Assert.True(models.First().SizeBytes > 1024 * 1024);
-}
-```
-
-#### Fix B2: Add Circular Symlink Protection
-```csharp
-// In CalculateModelSize/GetLastModified:
-private const int MAX_RECURSION_DEPTH = 10;
-
-private long CalculateModelSize(string revisionDir, int depth = 0)
-{
-    if (depth > MAX_RECURSION_DEPTH)
+    public async Task<CommandResult> ExecuteAsync(CommandContext context)
     {
-        Debug.WriteLine($"[HFCacheReader] Max symlink depth exceeded");
-        return 0;
+        try
+        {
+            if (context.JsonOutput)
+            {
+                var result = new
+                {
+                    command = "profiles list",
+                    status = "ok",
+                    profiles = new object[] { }  // ← EMPTY STUB
+                };
+                Console.WriteLine(JsonSerializer.Serialize(result));
+            }
+            else
+            {
+                Console.WriteLine("Community profiles:");
+            }
+            return CommandResult.Success();
+        }
+        catch (Exception ex)
+        {
+            return CommandResult.Failure($"Failed to list profiles: {ex.Message}");
+        }
     }
-    // ... rest of method
 }
 ```
 
-Or use `EnumerationOptions.SkipInaccessible` to skip unresolvable symlinks.
+**Impact**:
+- No actual service calls are made
+- Commands return empty results every time
+- Local store is never checked
+- Violates functional requirements for all three commands
 
-#### Fix B3: Validate All Files Stay In Cache Root
+**How to Fix**:
+1. Inject `ProfileServiceClient` into `ProfilesListCommand`
+2. Replace stub `new object[] { }` with actual service call:
+   ```csharp
+   var profiles = context.UseLocal 
+       ? await _localStore.ListLocalProfilesAsync()
+       : await _serviceClient.ListProfilesAsync();
+   // Then serialize profiles
+   ```
+3. Implement `ProfilesSearchCommand` to call `SearchProfilesAsync(query)`
+4. Implement `ProfilesPullCommand` to:
+   - Call `GetProfileAsync(id)` on service
+   - Save using `_localStore.SaveProfileAsync(profile)`
+   - Respect `--force` flag to overwrite
+5. Add `Debug.WriteLine()` for all conditional paths
+
+**Effort**: 1-2 hours
+
+---
+
+### 4. **BLOCKING: Debug Logging Missing from All Conditional Paths**
+
+**Issue**: Custom `debug-logging-rule` requires all `if`/`else` bodies and try/catch/finally blocks to log at `Debug` level. The PR violates this.
+
+**Evidence**:
+- No `Debug.WriteLine()` calls in `ProfilesListCommand`
+- No `Debug.WriteLine()` calls in `ProfilesSearchCommand`  
+- No `Debug.WriteLine()` calls in `ProfilesPullCommand`
+- Missing logging for: service connection attempts, profile fetch results, local store operations, JSON serialization
+
+**Impact**:
+- No observability in production
+- Cannot troubleshoot service failures without rebuilding
+- Required for production diagnostics
+
+**How to Fix**:
 ```csharp
-private bool IsFileInCacheRoot(string filePath, string cacheRoot)
+public async Task<CommandResult> ExecuteAsync(CommandContext context)
 {
-    var fullPath = Path.GetFullPath(filePath);
-    var fullRoot = Path.GetFullPath(cacheRoot);
-    return fullPath.StartsWith(fullRoot + Path.DirectorySeparatorChar);
+    try
+    {
+        Debug.WriteLine($"ProfilesListCommand: Starting with UseLocal={context.UseLocal}");
+        
+        if (context.UseLocal)
+        {
+            Debug.WriteLine("ProfilesListCommand: Fetching from local store");
+            var profiles = await _localStore.ListLocalProfilesAsync();
+            Debug.WriteLine($"ProfilesListCommand: Found {profiles.Count} local profiles");
+        }
+        else
+        {
+            Debug.WriteLine("ProfilesListCommand: Fetching from service");
+            var profiles = await _serviceClient.ListProfilesAsync();
+            Debug.WriteLine($"ProfilesListCommand: Found {profiles.Count} remote profiles");
+        }
+        
+        if (context.JsonOutput)
+        {
+            Debug.WriteLine("ProfilesListCommand: Formatting as JSON");
+            // Serialize...
+        }
+        else
+        {
+            Debug.WriteLine("ProfilesListCommand: Formatting as text");
+            // Output...
+        }
+    }
+    catch (Exception ex)
+    {
+        Debug.WriteLine($"ProfilesListCommand: Exception - {ex.Message}");
+        return CommandResult.Failure($"Failed to list profiles: {ex.Message}");
+    }
 }
 ```
 
-**Timeline**: Must be addressed before production deployment (affects real cache correctness).
+**Effort**: 0.5-1 hour
 
 ---
 
-### 🟢 Issue C: Malformed Directory Rejection Not Explicitly Tested
+### 5. **BLOCKING: --local Flag Not Implemented**
 
-**File**: HFCacheReader.cs, lines 163–170 (`ParseRepoIdFromDir`)  
-**Severity**: Low (code correctly rejects, but test gap)  
-**Tests exist**: ❌ **No explicit test**
+**Issue**: PR claims to support `--local` flag, but commands don't parse or handle it.
 
-**Problem**:  
-The code correctly rejects "models--singlepart" (no second `--`):
-```csharp
-if (parts.Length != 2)
-    return null;  // ✅ Correct
+**Evidence**:
+- `CommandContext` has no `UseLocal` property
+- Commands always treat `context.UseLocal` as default (false)
+- Argument parsing doesn't extract `--local` from args array
+
+**Impact**:
+- `profiles list --local` doesn't work
+- `profiles search <query> --local` doesn't work
+- Violates Issue #15 acceptance criteria #4
+
+**How to Fix**:
+1. Add `public bool UseLocal { get; set; }` to `CommandContext`
+2. In `CliBuilder.HandleProfiles()`:
+   ```csharp
+   bool useLocal = args.Contains("--local");
+   var context = new CommandContext(isJson, useLocal);
+   ```
+3. Pass context to commands
+4. Commands check `context.UseLocal` to decide service vs local store
+
+**Effort**: 0.5 hour
+
+---
+
+### 6. **BLOCKING: JSON Output Has Double-Print Bug**
+
+**Issue**: Commands output JSON, then CliBuilder wraps it again, resulting in malformed output.
+
+**Evidence**:
 ```
-
-But HFCacheReaderTests does not have an explicit test for this case. Integration testing 
-would catch this eventually, but the test suite should be explicit.
-
-### Fix:
-Add unit test:
-```csharp
-[Fact]
-public async Task ListModelsAsync_SkipsMalformedModelDirectoryName()
+$ mlx-pep profiles list --json
 {
-    // Create directory that doesn't match models--org--name pattern
-    Directory.CreateDirectory(Path.Combine(_tempCacheDir, "models--incomplete"));
-    var reader = new HFCacheReader(_tempCacheDir);
-
-    // Act
-    var models = await reader.ListModelsAsync();
-
-    // Assert: Malformed dir is silently skipped
-    Assert.Empty(models);
+  "command": "profiles list",
+  "status": "ok",
+  "profiles": []
 }
+{"message":null,"exit_code":0}
 ```
 
-**Timeline**: Low priority (can be added as test coverage improvement).
+Note the two JSON objects. The second one is from CliBuilder's `new { message = result.Message, exit_code = result.ExitCode }` wrapper.
 
----
+**Impact**:
+- JSON output is malformed and unparseable
+- Integration with JSON consumers will fail
+- Violates --json flag guarantee
 
-### 🟢 Issue D: Empty Revision Directory Timestamp Semantics
-
-**File**: HFCacheReader.cs, lines 213–216  
-**Severity**: Low (misleading but non-critical)
-
-**Problem**:
+**How to Fix**:
+Option A (Recommended): Commands return structured `CommandResult.Data` instead of printing:
 ```csharp
-if (files.Count == 0)
-    return DateTime.UtcNow;  // Empty dir appears "just created"
+var profileData = new { command = "profiles list", status = "ok", profiles = profiles };
+return CommandResult.Success(data: profileData);
 ```
+Then CliBuilder serializes only once.
 
-An empty revision directory (edge case: snapshot dir created but files not yet symlinked) 
-appears to have been modified "now" rather than when it was actually created.
-
-### Fix (Optional):
+Option B: CliBuilder doesn't wrap JSON output:
 ```csharp
-if (files.Count == 0)
+if (isJson && result.Data != null)
 {
-    var dirInfo = new DirectoryInfo(revisionDir);
-    return dirInfo.LastWriteTimeUtc;  // Use dir's actual mtime
+    Console.WriteLine(JsonSerializer.Serialize(result.Data));
+}
+else if (isJson)
+{
+    var json = new { message = result.Message, exit_code = result.ExitCode };
+    Console.WriteLine(JsonSerializer.Serialize(json));
 }
 ```
 
-**Timeline**: Nice-to-have, low impact.
+**Effort**: 0.5 hour
 
 ---
 
-## PART 3: Acceptance Criteria vs. Implementation
+## High-Priority Issues (Fix Before Merge)
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| Read ~/.cache/huggingface/hub | ✅ PASS | Lines 20–34 (env var precedence), Line 50 (default path) |
-| Parse models--org--name dirs, refs/, snapshots/, blobs/ | ✅ PASS | Lines 73–101 (ParseRepoIdFromDir correctly splits) |
-| Return repo_id, revisions, size, last-modified | ✅ PASS | Lines 102–111 (Model record with all 4 fields) |
-| List real models; handle empty cache; unit tests over fixtures | ✅ PASS | 14 fixture-based tests, IDisposable cleanup, empty cache test |
-| Environment precedence: HF_HUB_CACHE > HF_HOME/hub > default | ✅ PASS | Constructor_HonorsHF_HUB_CACHE_EnvVar + Constructor_PreferrsHF_HUB_CACHE_OverHF_HOME tests |
-| Edge cases (no snapshots, malformed names, permissions) | ✅ MOSTLY | Tests exist for no snapshots; malformed names not explicit; permissions not tested |
+### 7. **Error Handling for Service Connectivity**
 
----
+**Issue**: No error handling for service timeout, connection refused, or HTTP 500 errors.
 
-## PART 4: Test Coverage Summary
+**Evidence**:
+```csharp
+public async Task<CommandResult> ExecuteAsync(CommandContext context)
+{
+    try
+    {
+        // ... service call ...
+        return CommandResult.Success();
+    }
+    catch (Exception ex)
+    {
+        return CommandResult.Failure($"Failed to list profiles: {ex.Message}");  // Too generic
+    }
+}
+```
 
-**Passing Tests (when project compiles)**: 14  
-**Test Execution Time**: ~52ms  
-**Fixture-based**: ✅ All use isolated temp directories  
-**Cleanup**: ✅ IDisposable pattern  
+**Impact**:
+- User gets "Failed to list profiles: Object reference not set" when service is down
+- No helpful error message distinguishing network failure from JSON parsing error
+- Cannot retry or fall back to local cache
 
-**Coverage Analysis**:
-- Environment variables: 3 tests ✅
-- Multiple models: ✅
-- Multiple revisions: ✅
-- Size calculation: ✅
-- Timestamp: ✅
-- Case-insensitive search: ✅
-- Empty/nonexistent cache: ✅
+**How to Fix**:
+```csharp
+catch (HttpRequestException ex)
+{
+    Debug.WriteLine($"ProfilesListCommand: Service connection failed - {ex.Message}");
+    return CommandResult.Failure($"Cannot reach profile service at {_serviceUrl}. Try --local to use cached profiles.");
+}
+catch (JsonException ex)
+{
+    Debug.WriteLine($"ProfilesListCommand: Service response parsing failed - {ex.Message}");
+    return CommandResult.Failure($"Profile service returned invalid JSON: {ex.Message}");
+}
+catch (Exception ex)
+{
+    Debug.WriteLine($"ProfilesListCommand: Unexpected error - {ex.Message}");
+    return CommandResult.Failure($"Failed to list profiles: {ex.Message}");
+}
+```
 
-**Coverage Gaps**:
-- Symlinks (critical for real cache) ❌
-- Malformed directories (explicit) ❌
-- Permission errors ❌
-- Large file sizes (> 2GB) ❌
-
----
-
-## PART 5: Recommendations
-
-### 🔴 BLOCKER — Fix First
-1. Resolve MlxPep.Core compilation errors (ProfileReader, ProfileValidator)
-2. Verify `dotnet test` runs and all HFCacheReader tests pass
-3. Confirm build succeeds: `dotnet build -c Release`
-
-### 🟡 CRITICAL — Fix Before Merge
-1. Add symlink safety tests + circular symlink protection
-2. Validate all accessed files stay within cache root
-3. Document symlink handling in code comments
-
-### 🟢 SHOULD FIX — Before Production
-1. Add explicit malformed directory test
-2. Optimize GetModelAsync (Option 1: direct path computation)
-3. Add permission error test cases
-
-### 💡 NICE-TO-HAVE — Fast-Follow
-1. Improve async handling (currently wrapped in Task.FromResult)
-2. Implement in-memory cache for repeated GetModelAsync calls
-3. Add performance benchmarks for large caches (500+models)
+**Effort**: 1 hour
 
 ---
 
-## Final Verdict
+### 8. **Error Handling for Missing/Invalid Profiles**
 
-**Current Status**: ⚠️ **CONDITIONAL PASS WITH BLOCKER**
+**Issue**: No validation for profile IDs or handling of "not found" cases.
 
-**If compilation error is not present/is fixed**:
-- Acceptance: ✅ **YES, with requested fixes**
-- Completeness: ~75–80%
-- Estimated fix time: 2–4 hours (symlink tests + GetModelAsync optimization)
+**Evidence**:
+```csharp
+public class ProfilesPullCommand
+{
+    public async Task<CommandResult> ExecuteAsync(string profileId, CommandContext context)
+    {
+        // No validation of profileId
+        // No check for HTTP 404
+        // Stub just prints "Pulling profile: abc123" regardless
+    }
+}
+```
 
-**If compilation error persists**:
-- Acceptance: ❌ **NO**
-- Completeness: ~15% (code-only, untested)
-- Blocker: Tests cannot run
+**Impact**:
+- User tries to pull non-existent profile, gets "ok" status
+- No indication that profile doesn't exist
+- Profile is never actually saved
 
-**Next Step**: Neo must resolve the project-level compilation error, then re-request review after fixes are applied.
+**How to Fix**:
+```csharp
+if (string.IsNullOrWhiteSpace(profileId))
+{
+    Debug.WriteLine($"ProfilesPullCommand: Invalid profileId (empty)");
+    return CommandResult.Failure("Profile ID cannot be empty");
+}
+
+var profile = await _serviceClient.GetProfileAsync(profileId);
+if (profile == null)
+{
+    Debug.WriteLine($"ProfilesPullCommand: Profile not found - {profileId}");
+    return CommandResult.Failure($"Profile '{profileId}' not found on service");
+}
+
+if (!context.Force && await _localStore.ProfileExistsAsync(profileId))
+{
+    Debug.WriteLine($"ProfilesPullCommand: Profile already exists - {profileId}");
+    return CommandResult.Failure($"Profile '{profileId}' already exists. Use --force to overwrite.");
+}
+```
+
+**Effort**: 1 hour
+
+---
+
+## Medium-Priority Issues (Should Fix)
+
+### 9. **Insufficient Test Coverage**
+
+**Current State**:
+- ✓ CLI integration test: 1 test (basic)
+- ✗ ProfileServiceClient unit tests: 0
+- ✗ ProfileLocalStore unit tests: 0
+- ✗ ProfilesCommand error path tests: 0
+
+**Gap Analysis**:
+```csharp
+// Missing: ProfileServiceClientTests
+[Test]
+public async Task ListProfilesAsync_WithValidService_ReturnsProfiles()
+{
+    // Mock HttpClient
+    // Assert JSON parsing works
+    // Assert respects service URL from env var
+}
+
+[Test]
+public async Task ListProfilesAsync_WithConnectionError_ThrowsHttpRequestException()
+{
+    // Mock HttpClient to throw
+    // Assert proper error handling
+}
+
+// Missing: ProfileLocalStoreTests
+[Test]
+public async Task SaveProfileAsync_CreatesProfileDirectory_IfNotExists()
+{
+    // Assert ~/.mlx-pep/profiles/ created
+}
+
+[Test]
+public async Task ListLocalProfilesAsync_WithEmptyStore_ReturnsEmptyList()
+{
+    // Assert no crash
+}
+
+[Test]
+public async Task SaveProfileAsync_WithPermissionDenied_ThrowsUnauthorizedAccessException()
+{
+    // Assert proper error handling
+}
+
+// Missing: ProfilesCommandTests
+[Test]
+public async Task ExecuteAsync_WithLocalFlag_UsesLocalStore()
+{
+    // Assert service not called
+}
+
+[Test]
+public async Task ExecuteAsync_WithServiceDown_ReturnsHelpfulError()
+{
+    // Assert good error message
+}
+```
+
+**Recommendation**: Add tests for:
+1. All happy paths (service available, local store available)
+2. All error paths (service down, file I/O error, permissions)
+3. JSON output format validation
+4. --local flag behavior
+5. --force flag behavior
+
+**Effort**: 2-3 hours
+
+---
+
+### 10. **Help Text and Usage Documentation**
+
+**Current State**:
+- ✗ No help text for `profiles` command
+- ✗ No examples of `profiles list --json`
+- ✗ No documentation of service URL configuration
+- ✗ No README section on profiles feature
+
+**Recommendation**: Add:
+```
+mlx-pep profiles --help
+    Usage: mlx-pep profiles [list|search|pull] [options]
+    
+    Commands:
+      list     List all community profiles (remote or local)
+      search   Search profiles by name or description
+      pull     Download and save a profile locally
+    
+    Options:
+      --local    Use local profiles (~/.mlx-pep/profiles/) instead of remote
+      --json     Output in JSON format
+      --force    Overwrite existing profile (pull only)
+    
+    Environment:
+      MLX_PEP_SERVICE_URL    Profile service URL (default: http://localhost:5000)
+    
+    Examples:
+      mlx-pep profiles list
+      mlx-pep profiles list --local
+      mlx-pep profiles search "transformer"
+      mlx-pep profiles pull gpt2 --force
+      mlx-pep profiles list --json | jq '.profiles[] | .name'
+```
+
+**Effort**: 0.5 hour
+
+---
+
+## Strengths
+
+✓ **Clean CLI Architecture**: The routing in `CliBuilder.cs` is well-structured and properly parses subcommands.
+
+✓ **Good Command Abstraction**: `CommandContext` and `CommandResult` provide a clean interface for command implementation.
+
+✓ **JSON Output Scaffolding**: The plumbing for `--json` flag is in place (though double-print bug needs fixing).
+
+✓ **Build Succeeds**: No compilation errors (except unrelated MockProbe in Core tests).
+
+✓ **Proper Error Handling Structure**: Try/catch blocks are present, even if not fully implemented.
+
+---
+
+## Test Results
+
+| Component | Test Result | Notes |
+|-----------|-------------|-------|
+| Build | ✓ PASS | CLI builds without errors |
+| CLI Integration Tests | ✓ PASS | 1 test passes (basic) |
+| Core Tests | ✗ FAIL | Unrelated MockProbe compilation error |
+| Manual: `profiles list` | ✓ RUNS | Returns empty array (expected for stub) |
+| Manual: `profiles search` | ✓ RUNS | Returns empty array (expected for stub) |
+| Manual: `profiles pull` | ✓ RUNS | Prints profile ID (expected for stub) |
+| Manual: `--json` flag | ✗ FAIL | Double-prints JSON (bug) |
+
+---
+
+## Required Fixes Summary
+
+| Priority | Issue | Effort |
+|----------|-------|--------|
+| CRITICAL | ProfileServiceClient.cs missing | 2-3 hrs |
+| CRITICAL | ProfileLocalStore.cs missing | 2-3 hrs |
+| CRITICAL | ProfilesCommand stubs need real logic | 1-2 hrs |
+| BLOCKING | Debug logging on all conditional paths | 0.5-1 hr |
+| BLOCKING | --local flag not implemented | 0.5 hr |
+| BLOCKING | JSON double-print bug | 0.5 hr |
+| HIGH | Service connectivity error handling | 1 hr |
+| HIGH | Missing/invalid profile error handling | 1 hr |
+| MEDIUM | Insufficient test coverage | 2-3 hrs |
+| MEDIUM | Help text and documentation | 0.5 hr |
+| | **TOTAL** | **~11-17 hours** |
+
+---
+
+## Recommendation
+
+### ❌ REJECT for now
+
+**Why**: The core implementation is fundamentally missing. This PR is a shell without implementation:
+- ProfileServiceClient doesn't exist → no remote service access
+- ProfileLocalStore doesn't exist → no local file storage
+- Commands are stubs → no actual functionality
+- No debug logging → no production observability
+- JSON bug → output is malformed
+
+**Next Steps for Neo**:
+1. Implement `ProfileServiceClient.cs` with all three methods
+2. Implement `ProfileLocalStore.cs` with full CRUD operations
+3. Wire up commands to call these services (not return stubs)
+4. Add debug logging to all conditional paths
+5. Implement `--local` flag parsing
+6. Fix JSON double-print bug
+7. Add error handling for service/file I/O failures
+8. Add comprehensive unit tests
+9. Request re-review
+
+**Timeline**: After fixes (~11-17 hours of work), this would be a strong implementation. Request Neo to update PR when ready.
+
+---
+
+## Questions for Neo
+
+1. Was this meant to be a placeholder PR for scaffolding, or is it ready for review?
+2. When do you plan to implement ProfileServiceClient and ProfileLocalStore?
+3. Should search be client-side or server-side filtered?
+4. What profile format are we expecting (JSON, JSONL, or binary)?
+5. Should profiles be cached with timestamps or version tracking?
+
+---
+
+## Appendix: Issue #15 Acceptance Criteria Mapping
+
+| Criteria | Implemented | Notes |
+|----------|-------------|-------|
+| List remote profiles via service | ✗ 0% | Needs ProfileServiceClient |
+| Search remote profiles | ✗ 0% | Needs ProfileServiceClient |
+| Pull profiles locally | ✗ 0% | Needs ProfileServiceClient + ProfileLocalStore |
+| Local store at ~/.mlx-pep/profiles/ | ✗ 0% | Needs ProfileLocalStore |
+| profiles list --local command | ✗ 10% | Routing exists, --local parsing missing |
+| --json flag on all commands | ✓ 80% | Works but has double-print bug |
+| Build without errors | ✓ 100% | CLI builds fine |
+
+**Overall Issue #15 Completion**: ~15% (scaffolding only, no logic)
