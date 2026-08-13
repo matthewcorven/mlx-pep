@@ -92,6 +92,9 @@ jobs:
     needs: build-and-publish
     if: github.event_name == 'push' || github.event.inputs.skip_deploy != 'true'
     environment: production
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout repository
