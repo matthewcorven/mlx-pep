@@ -110,24 +110,27 @@ jobs:
           IMAGE_URI="${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/mlx-pep:$(git rev-parse --short HEAD)"
           echo "image_uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
 
-      - name: Deploy to Container Apps (manual update trigger)
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Container App FQDN
+        id: fqdn
         run: |
-          # Container Apps FQDN (known public endpoint)
-          FQDN="mlx-pep-api.mangobeach-4a2e3a1f.containerapp.azure.com"
-          echo "🚀 Container App available at: https://${FQDN}"
-          echo ""
-          echo "Note: Container Apps deployment was triggered via ACR image push."
-          echo "The service is configured to auto-update on new ACR images."
-          echo "Stabilizing for 30 seconds..."
+          FQDN=$(az containerapp show -n mlx-pep-api -g mlx-pep-rg --query properties.configuration.ingress.fqdn -o tsv)
+          echo "fqdn=${FQDN}" >> $GITHUB_OUTPUT
+          echo "🚀 Container App FQDN: ${FQDN}"
 
       - name: Wait for deployment to complete
         run: |
+          echo "Waiting 30 seconds for Container Apps to update with new image..."
           sleep 30
 
       - name: Health check - verify /health endpoint
         id: health_check
         run: |
-          FQDN="mlx-pep-api.mangobeach-4a2e3a1f.containerapp.azure.com"
+          FQDN="${{ steps.fqdn.outputs.fqdn }}"
           MAX_RETRIES=5
           RETRY_INTERVAL=5
           
@@ -158,19 +161,6 @@ jobs:
           echo ""
           echo "⚠️  Health check FAILED after $MAX_RETRIES attempts"
           echo "status=failed" >> $GITHUB_OUTPUT
-          exit 1
-          
-          # Retry health check up to 5 times
-          for attempt in {1..5}; do
-            echo "Health check attempt $attempt/5..."
-            if curl -f -s "https://${CONTAINER_APP_URL}/health" > /dev/null 2>&1; then
-              echo "✓ Health check passed!"
-              exit 0
-            fi
-            sleep 5
-          done
-          
-          echo "✗ Health check failed after 5 attempts"
           exit 1
 
       - name: Log deployment success
