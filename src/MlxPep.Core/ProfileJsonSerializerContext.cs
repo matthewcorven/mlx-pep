@@ -3,6 +3,7 @@ namespace MlxPep.Core;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MlxPep.Core.Profiling;
 
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
@@ -16,6 +17,9 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(List<Profile>))]
+[JsonSerializable(typeof(RecommendationManifest))]
+[JsonSerializable(typeof(TierRecommendation))]
+[JsonSerializable(typeof(HardwareAssessment))]
 public partial class ProfileJsonSerializerContext : JsonSerializerContext
 {
 }

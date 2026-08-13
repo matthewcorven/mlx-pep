@@ -173,25 +173,30 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--publish]");
+            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--assistant-model-id X] [--suite smoke|full] [--publish]");
         }
 
         string hfId = args[0];
+        string? assistantModelId = GetOptionValue(args, "--assistant-model-id");
+        string suite = GetOptionValue(args, "--suite") ?? "full";
         bool publish = args.Contains("--publish");
+
+        // Validate suite argument
+        if (suite != "smoke" && suite != "full")
+        {
+            return PrintErrorAndReturn1("Error: --suite must be 'smoke' or 'full'");
+        }
 
         var handler = new AssessCommand();
         var context = new CommandContext(isJson);
-        var result = await handler.ExecuteAsync(hfId, publish, context);
+        var result = await handler.ExecuteAsync(hfId, assistantModelId, suite, publish, context);
 
-        if (isJson)
-        {
-            var json = new { message = result.Message, exit_code = result.ExitCode };
-            Console.WriteLine(JsonSerializer.Serialize(json));
-        }
-        else
+        // AssessCommand handles its own JSON output; don't double-output
+        if (!isJson && result.ExitCode != 0)
         {
             Console.WriteLine(result.Message);
         }
+         
         return result.ExitCode;
     }
 
@@ -217,10 +222,10 @@ public static class CliBuilder
     {
         Console.WriteLine(@"
 mlx-pep — MLX Performance Evaluation Platform
-
+ 
 USAGE:
     mlx-pep <COMMAND> [OPTIONS] [--json]
-
+ 
 COMMANDS:
     doctor              Diagnose system and environment
     models list         List available HF models
@@ -229,23 +234,27 @@ COMMANDS:
     profiles search <q> Search profiles by query
     profiles pull <id>  Pull profile from registry
     apply <file>        Apply profile to harness (--dry-run, --harness)
-    assess <hf_id>      Assess model performance (--publish)
+    assess <hf_id>      Assess model performance (--assistant-model-id, --suite, --publish)
     tui                 Start terminal UI
     help                Show this help
     --version           Show version
-
+ 
 OPTIONS:
-    --json              Output JSON (available on all commands)
-    --dry-run           (apply) Show changes without applying
-    --harness <name>    (apply) Target harness (vscode, copilot-cli)
-    --publish           (assess) Publish results
-    --help, -h          Show this help
-
+    --json                    Output JSON (available on all commands)
+    --dry-run                 (apply) Show changes without applying
+    --harness <name>          (apply) Target harness (vscode, copilot-cli)
+    --assistant-model-id <id> (assess) Optional assistant model HF ID
+    --suite <suite>           (assess) Assessment suite (smoke or full, default: full)
+    --publish                 (assess) Publish results to service
+    --help, -h                Show this help
+ 
 EXAMPLES:
     mlx-pep doctor
     mlx-pep models list --json
     mlx-pep apply my-profile.jsonl --harness copilot-cli
-    mlx-pep assess facebook/opt-350m --publish
+    mlx-pep assess meta-llama/Llama-2-7b
+    mlx-pep assess meta-llama/Llama-2-7b --suite smoke --publish
+    mlx-pep assess meta-llama/Llama-2-7b --assistant-model-id mistral/mistral-7b-v0.1
 ");
     }
 
