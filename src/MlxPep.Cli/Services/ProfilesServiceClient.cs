@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using MlxPep.Core;
 
 /// <summary>
@@ -15,30 +16,33 @@ public class ProfilesServiceClient
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
+    private readonly ILogger<ProfilesServiceClient> _logger;
 
-    public ProfilesServiceClient(string? baseUrl = null)
+    public ProfilesServiceClient(HttpClient httpClient, ILogger<ProfilesServiceClient>? logger = null, string? baseUrl = null)
     {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
         _baseUrl = baseUrl ?? GetDefaultServiceUrl();
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        _logger = logger ?? new NullLogger<ProfilesServiceClient>();
     }
 
     /// <summary>
     /// Lists all profiles from the service, optionally filtered by modelHfId or tier.
     /// </summary>
-    public async Task<List<Profile>> ListProfilesAsync(string? modelHfId = null, string? tier = null)
+    public async Task<Result<List<Profile>>> ListProfilesAsync(string? modelHfId = null, string? tier = null)
     {
         try
         {
             var query = BuildQueryString(modelHfId, tier);
             var url = $"{_baseUrl}/api/v1/profiles{query}";
 
-            Console.WriteLine($"[DEBUG] Fetching profile list from {url}");
+            _logger.LogDebug("Fetching profile list from {url}", url);
 
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"[DEBUG] Service returned {response.StatusCode} for profile list");
-                return new List<Profile>();
+                _logger.LogDebug("Service returned {statusCode} for profile list", response.StatusCode);
+                return Result<List<Profile>>.Fail($"Service returned status {response.StatusCode}");
             }
 
             var content = await response.Content.ReadAsStringAsync();
@@ -59,59 +63,65 @@ public class ProfilesServiceClient
                     }
                     catch (JsonException ex)
                     {
-                        Console.WriteLine($"[DEBUG] Failed to deserialize profile: {ex.Message}");
+                        _logger.LogDebug(ex, "Failed to deserialize profile");
                     }
                 }
             }
 
-            Console.WriteLine($"[DEBUG] Retrieved {profiles.Count} profiles from service");
-            return profiles;
+            _logger.LogDebug("Retrieved {count} profiles from service", profiles.Count);
+            return Result<List<Profile>>.Ok(profiles);
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"[DEBUG] HTTP error fetching profiles: {ex.Message}");
-            return new List<Profile>();
+            _logger.LogDebug(ex, "HTTP error fetching profiles");
+            return Result<List<Profile>>.Fail(ex);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Unexpected error listing profiles: {ex.Message}");
-            return new List<Profile>();
+            _logger.LogDebug(ex, "Unexpected error listing profiles");
+            return Result<List<Profile>>.Fail(ex);
         }
     }
 
     /// <summary>
     /// Gets a specific profile by ID from the service.
     /// </summary>
-    public async Task<Profile?> GetProfileAsync(string profileId)
+    public async Task<Result<Profile>> GetProfileAsync(string profileId)
     {
         try
         {
             var url = $"{_baseUrl}/api/v1/profiles/{profileId}";
 
-            Console.WriteLine($"[DEBUG] Fetching profile {profileId} from {url}");
+            _logger.LogDebug("Fetching profile {profileId} from {url}", profileId, url);
 
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"[DEBUG] Profile {profileId} not found ({response.StatusCode})");
-                return null;
+                _logger.LogDebug("Profile {profileId} not found ({statusCode})", profileId, response.StatusCode);
+                return Result<Profile>.Fail($"Profile {profileId} not found");
             }
 
             var content = await response.Content.ReadAsStringAsync();
             var profile = JsonSerializer.Deserialize<Profile>(content);
 
-            Console.WriteLine($"[DEBUG] Retrieved profile {profileId} successfully");
-            return profile;
+            if (profile == null)
+            {
+                _logger.LogDebug("Profile {profileId} deserialized to null", profileId);
+                return Result<Profile>.Fail($"Profile {profileId} is invalid");
+            }
+
+            _logger.LogDebug("Retrieved profile {profileId} successfully", profileId);
+            return Result<Profile>.Ok(profile);
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"[DEBUG] HTTP error fetching profile {profileId}: {ex.Message}");
-            return null;
+            _logger.LogDebug(ex, "HTTP error fetching profile {profileId}", profileId);
+            return Result<Profile>.Fail(ex);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Unexpected error fetching profile {profileId}: {ex.Message}");
-            return null;
+            _logger.LogDebug(ex, "Unexpected error fetching profile {profileId}", profileId);
+            return Result<Profile>.Fail(ex);
         }
     }
 

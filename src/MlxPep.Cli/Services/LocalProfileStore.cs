@@ -4,133 +4,164 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using MlxPep.Core;
 
 /// <summary>
 /// Manages local profile storage in ~/.mlx-pep/profiles/
 /// Handles saving, loading, and listing profiles from the local filesystem.
+/// Thread-safe via SemaphoreSlim for directory/file access synchronization.
 /// </summary>
 public class LocalProfileStore
 {
     private readonly string _storagePath;
+    private readonly ILogger<LocalProfileStore> _logger;
+    private readonly SemaphoreSlim _storageLock;
 
-    public LocalProfileStore(string? basePath = null)
+    public LocalProfileStore(ILogger<LocalProfileStore>? logger = null, string? basePath = null)
     {
         var home = basePath ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         _storagePath = Path.Combine(home, ".mlx-pep", "profiles");
+        _logger = logger ?? new NullLogger<LocalProfileStore>();
+        _storageLock = new SemaphoreSlim(1, 1);
     }
 
     /// <summary>
     /// Saves a profile to the local store.
     /// Creates the directory structure if it doesn't exist.
+    /// Thread-safe via SemaphoreSlim.
     /// </summary>
-    public async Task<bool> SaveProfileAsync(Profile profile)
+    public async Task<Result<bool>> SaveProfileAsync(Profile profile)
     {
+        if (profile == null) throw new ArgumentNullException(nameof(profile));
+
+        await _storageLock.WaitAsync();
         try
         {
-            Console.WriteLine($"[DEBUG] Saving profile {profile.Id} to local store");
+            _logger.LogDebug("Saving profile {profileId} to local store", profile.Id);
 
             if (!Directory.Exists(_storagePath))
             {
                 Directory.CreateDirectory(_storagePath);
-                Console.WriteLine($"[DEBUG] Created directory {_storagePath}");
+                _logger.LogDebug("Created directory {storagePath}", _storagePath);
             }
 
             var filePath = Path.Combine(_storagePath, $"{profile.Id}.json");
             var json = JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
 
             await File.WriteAllTextAsync(filePath, json);
-            Console.WriteLine($"[DEBUG] Profile {profile.Id} saved to {filePath}");
+            _logger.LogDebug("Profile {profileId} saved to {filePath}", profile.Id, filePath);
 
-            return true;
+            return Result<bool>.Ok(true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Failed to save profile {profile.Id}: {ex.Message}");
-            return false;
+            _logger.LogDebug(ex, "Failed to save profile {profileId}", profile.Id);
+            return Result<bool>.Fail(ex);
+        }
+        finally
+        {
+            _storageLock.Release();
         }
     }
 
     /// <summary>
     /// Loads a profile from the local store by ID.
-    /// Returns null if the profile doesn't exist or cannot be deserialized.
+    /// Thread-safe via SemaphoreSlim.
     /// </summary>
-    public async Task<Profile?> LoadProfileAsync(string profileId)
+    public async Task<Result<Profile>> LoadProfileAsync(string profileId)
     {
+        if (string.IsNullOrEmpty(profileId)) throw new ArgumentNullException(nameof(profileId));
+
+        await _storageLock.WaitAsync();
         try
         {
             var filePath = Path.Combine(_storagePath, $"{profileId}.json");
 
-            Console.WriteLine($"[DEBUG] Loading profile {profileId} from {filePath}");
+            _logger.LogDebug("Loading profile {profileId} from {filePath}", profileId, filePath);
 
             if (!File.Exists(filePath))
             {
-                Console.WriteLine($"[DEBUG] Profile {profileId} not found in local store");
-                return null;
+                _logger.LogDebug("Profile {profileId} not found in local store", profileId);
+                return Result<Profile>.Fail($"Profile {profileId} not found");
             }
 
             var json = await File.ReadAllTextAsync(filePath);
             var profile = JsonSerializer.Deserialize<Profile>(json);
 
-            Console.WriteLine($"[DEBUG] Loaded profile {profileId} from local store");
-            return profile;
+            if (profile == null)
+            {
+                _logger.LogDebug("Profile {profileId} deserialized to null", profileId);
+                return Result<Profile>.Fail($"Profile {profileId} is invalid");
+            }
+
+            _logger.LogDebug("Loaded profile {profileId} from local store", profileId);
+            return Result<Profile>.Ok(profile);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Failed to load profile {profileId}: {ex.Message}");
-            return null;
+            _logger.LogDebug(ex, "Failed to load profile {profileId}", profileId);
+            return Result<Profile>.Fail(ex);
+        }
+        finally
+        {
+            _storageLock.Release();
         }
     }
 
     /// <summary>
     /// Lists all profiles in the local store.
+    /// Thread-safe via SemaphoreSlim.
     /// </summary>
-    public async Task<List<Profile>> ListLocalAsync()
+    public async Task<Result<List<Profile>>> ListLocalAsync()
     {
-        return await Task.Run(() =>
+        await _storageLock.WaitAsync();
+        try
         {
             var profiles = new List<Profile>();
 
-            try
+            _logger.LogDebug("Listing profiles from {storagePath}", _storagePath);
+
+            if (!Directory.Exists(_storagePath))
             {
-                Console.WriteLine($"[DEBUG] Listing profiles from {_storagePath}");
-
-                if (!Directory.Exists(_storagePath))
-                {
-                    Console.WriteLine($"[DEBUG] Local profile directory does not exist: {_storagePath}");
-                    return profiles;
-                }
-
-                var jsonFiles = Directory.GetFiles(_storagePath, "*.json");
-                Console.WriteLine($"[DEBUG] Found {jsonFiles.Length} profile files");
-
-                foreach (var file in jsonFiles)
-                {
-                    try
-                    {
-                        var json = File.ReadAllText(file);
-                        var profile = JsonSerializer.Deserialize<Profile>(json);
-                        if (profile != null)
-                        {
-                            profiles.Add(profile);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[DEBUG] Failed to deserialize profile from {file}: {ex.Message}");
-                    }
-                }
-
-                Console.WriteLine($"[DEBUG] Loaded {profiles.Count} profiles from local store");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DEBUG] Error listing local profiles: {ex.Message}");
+                _logger.LogDebug("Local profile directory does not exist: {storagePath}", _storagePath);
+                return Result<List<Profile>>.Ok(profiles);
             }
 
-            return profiles;
-        });
+            var jsonFiles = Directory.GetFiles(_storagePath, "*.json");
+            _logger.LogDebug("Found {count} profile files", jsonFiles.Length);
+
+            foreach (var file in jsonFiles)
+            {
+                try
+                {
+                    var json = File.ReadAllText(file);
+                    var profile = JsonSerializer.Deserialize<Profile>(json);
+                    if (profile != null)
+                    {
+                        profiles.Add(profile);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Failed to deserialize profile from {file}", file);
+                }
+            }
+
+            _logger.LogDebug("Loaded {count} profiles from local store", profiles.Count);
+            return Result<List<Profile>>.Ok(profiles);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Error listing local profiles");
+            return Result<List<Profile>>.Fail(ex);
+        }
+        finally
+        {
+            _storageLock.Release();
+        }
     }
 
     /// <summary>
@@ -140,7 +171,7 @@ public class LocalProfileStore
     {
         var filePath = Path.Combine(_storagePath, $"{profileId}.json");
         var exists = File.Exists(filePath);
-        Console.WriteLine($"[DEBUG] Profile {profileId} exists: {exists}");
+        _logger.LogDebug("Profile {profileId} exists: {exists}", profileId, exists);
         return exists;
     }
 
@@ -159,4 +190,14 @@ public class LocalProfileStore
     {
         return _storagePath;
     }
+}
+
+/// <summary>
+/// No-op logger implementation for use when no real logger is available.
+/// </summary>
+internal class NullLogger<T> : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(LogLevel logLevel) => false;
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
 }

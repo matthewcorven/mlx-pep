@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using MlxPep.Cli.Services;
 using MlxPep.Core;
 
@@ -14,11 +15,18 @@ using MlxPep.Core;
 /// </summary>
 public class ProfilesListCommand
 {
+    private readonly ILogger<ProfilesListCommand>? _logger;
+
+    public ProfilesListCommand(ILogger<ProfilesListCommand>? logger = null)
+    {
+        _logger = logger;
+    }
+
     public async Task<CommandResult> ExecuteAsync(CommandContext context, bool listLocal = false)
     {
         try
         {
-            Console.WriteLine("[DEBUG] Executing profiles list command");
+            _logger?.LogDebug("Executing profiles list command");
 
             if (listLocal)
             {
@@ -29,19 +37,27 @@ public class ProfilesListCommand
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Error in profiles list: {ex.Message}");
+            _logger?.LogDebug(ex, "Error in profiles list");
             return CommandResult.Failure($"Failed to list profiles: {ex.Message}");
         }
     }
 
     private async Task<CommandResult> ExecuteRemoteAsync(CommandContext context)
     {
-        var serviceClient = new ProfilesServiceClient();
-        var profiles = await serviceClient.ListProfilesAsync();
+        using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var serviceClient = new ProfilesServiceClient(httpClient, null);
+        var result = await serviceClient.ListProfilesAsync();
+
+        if (!result.Success)
+        {
+            return CommandResult.Failure(result.Error ?? "Failed to fetch remote profiles");
+        }
+
+        var profiles = result.Data ?? new List<Profile>();
 
         if (context.JsonOutput)
         {
-            var result = new
+            var jsonResult = new
             {
                 command = "profiles list",
                 status = "ok",
@@ -55,7 +71,7 @@ public class ProfilesListCommand
                     engine = p.Engine
                 }).ToList()
             };
-            Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+            Console.WriteLine(JsonSerializer.Serialize(jsonResult, new JsonSerializerOptions { WriteIndented = true }));
         }
         else
         {
@@ -85,12 +101,19 @@ public class ProfilesListCommand
 
     private async Task<CommandResult> ExecuteLocalAsync(CommandContext context)
     {
-        var localStore = new LocalProfileStore();
-        var profiles = await localStore.ListLocalAsync();
+        var localStore = new LocalProfileStore(null);
+        var result = await localStore.ListLocalAsync();
+
+        if (!result.Success)
+        {
+            return CommandResult.Failure(result.Error ?? "Failed to list local profiles");
+        }
+
+        var profiles = result.Data ?? new List<Profile>();
 
         if (context.JsonOutput)
         {
-            var result = new
+            var jsonResult = new
             {
                 command = "profiles list",
                 status = "ok",
@@ -105,7 +128,7 @@ public class ProfilesListCommand
                     engine = p.Engine
                 }).ToList()
             };
-            Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+            Console.WriteLine(JsonSerializer.Serialize(jsonResult, new JsonSerializerOptions { WriteIndented = true }));
         }
         else
         {
@@ -136,15 +159,29 @@ public class ProfilesListCommand
 
 public class ProfilesSearchCommand
 {
+    private readonly ILogger<ProfilesSearchCommand>? _logger;
+
+    public ProfilesSearchCommand(ILogger<ProfilesSearchCommand>? logger = null)
+    {
+        _logger = logger;
+    }
+
     public async Task<CommandResult> ExecuteAsync(string query, CommandContext context)
     {
         try
         {
-            Console.WriteLine($"[DEBUG] Executing profiles search command with query: {query}");
+            _logger?.LogDebug("Executing profiles search command with query: {query}", query);
 
-            var serviceClient = new ProfilesServiceClient();
-            var allProfiles = await serviceClient.ListProfilesAsync();
+            using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var serviceClient = new ProfilesServiceClient(httpClient, null);
+            var profilesResult = await serviceClient.ListProfilesAsync();
 
+            if (!profilesResult.Success)
+            {
+                return CommandResult.Failure(profilesResult.Error ?? "Failed to fetch profiles");
+            }
+
+            var allProfiles = profilesResult.Data ?? new List<Profile>();
             var queryLower = query.ToLowerInvariant();
             var results = allProfiles.Where(p =>
                 p.Id.Contains(queryLower, StringComparison.OrdinalIgnoreCase) ||
@@ -198,7 +235,7 @@ public class ProfilesSearchCommand
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Error in profiles search: {ex.Message}");
+            _logger?.LogDebug(ex, "Error in profiles search");
             return CommandResult.Failure($"Failed to search profiles: {ex.Message}");
         }
     }
@@ -206,19 +243,27 @@ public class ProfilesSearchCommand
 
 public class ProfilesPullCommand
 {
+    private readonly ILogger<ProfilesPullCommand>? _logger;
+
+    public ProfilesPullCommand(ILogger<ProfilesPullCommand>? logger = null)
+    {
+        _logger = logger;
+    }
+
     public async Task<CommandResult> ExecuteAsync(string profileId, CommandContext context)
     {
         try
         {
-            Console.WriteLine($"[DEBUG] Executing profiles pull command for profile: {profileId}");
+            _logger?.LogDebug("Executing profiles pull command for profile: {profileId}", profileId);
 
-            var localStore = new LocalProfileStore();
-            var serviceClient = new ProfilesServiceClient();
+            var localStore = new LocalProfileStore(null);
+            using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var serviceClient = new ProfilesServiceClient(httpClient, null);
 
             if (localStore.ProfileExists(profileId))
             {
                 var message = $"Profile {profileId} already exists locally.";
-                Console.WriteLine($"[DEBUG] {message}");
+                _logger?.LogDebug("{message}", message);
 
                 if (!context.JsonOutput)
                 {
@@ -241,35 +286,43 @@ public class ProfilesPullCommand
                 return CommandResult.Success();
             }
 
-            var profile = await serviceClient.GetProfileAsync(profileId);
-            if (profile == null)
+            var profileResult = await serviceClient.GetProfileAsync(profileId);
+            if (!profileResult.Success)
             {
-                var errorMsg = $"Profile {profileId} not found on service";
-                Console.WriteLine($"[DEBUG] {errorMsg}");
+                var errorMsg = profileResult.Error ?? $"Profile {profileId} not found";
+                _logger?.LogDebug("{errorMsg}", errorMsg);
                 return CommandResult.Failure(errorMsg);
             }
 
-            Console.WriteLine($"[DEBUG] Validating profile {profileId}");
+            var profile = profileResult.Data;
+            if (profile == null)
+            {
+                var errorMsg = $"Profile {profileId} is invalid";
+                _logger?.LogDebug("{errorMsg}", errorMsg);
+                return CommandResult.Failure(errorMsg);
+            }
+
+            _logger?.LogDebug("Validating profile {profileId}", profileId);
             var validator = new ProfileValidator();
             var validationResult = validator.ValidateForLocalUse(profile);
             if (!validationResult.IsValid)
             {
                 var errorMsg = $"Profile validation failed: {string.Join("; ", validationResult.Errors)}";
-                Console.WriteLine($"[DEBUG] {errorMsg}");
+                _logger?.LogDebug("{errorMsg}", errorMsg);
                 return CommandResult.Failure(errorMsg);
             }
 
-            Console.WriteLine($"[DEBUG] Saving profile {profileId} to local store");
-            var saved = await localStore.SaveProfileAsync(profile);
-            if (!saved)
+            _logger?.LogDebug("Saving profile {profileId} to local store", profileId);
+            var saveResult = await localStore.SaveProfileAsync(profile);
+            if (!saveResult.Success)
             {
-                var errorMsg = $"Failed to save profile {profileId} to local store";
-                Console.WriteLine($"[DEBUG] {errorMsg}");
+                var errorMsg = saveResult.Error ?? $"Failed to save profile {profileId}";
+                _logger?.LogDebug("{errorMsg}", errorMsg);
                 return CommandResult.Failure(errorMsg);
             }
 
             var successMsg = $"Profile {profileId} pulled successfully";
-            Console.WriteLine($"[DEBUG] {successMsg}");
+            _logger?.LogDebug("{successMsg}", successMsg);
 
             if (context.JsonOutput)
             {
@@ -295,7 +348,7 @@ public class ProfilesPullCommand
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Error in profiles pull: {ex.Message}");
+            _logger?.LogDebug(ex, "Error in profiles pull");
             return CommandResult.Failure($"Failed to pull profile: {ex.Message}");
         }
     }
