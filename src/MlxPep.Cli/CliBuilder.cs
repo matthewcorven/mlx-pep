@@ -82,28 +82,26 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep models [list|get]");
+            return PrintErrorAndReturn1("Usage: mlx-pep models [list|get|status]");
         }
 
         string subcommand = args[0].ToLowerInvariant();
+        var context = new CommandContext(isJson);
         CommandResult result = subcommand switch
         {
-            "list" => await new ModelsListCommand().ExecuteAsync(new CommandContext(isJson)),
+            "list" => await new ModelsListCommand().ExecuteAsync(context),
             "get" => args.Length > 1
-                ? await new ModelsGetCommand().ExecuteAsync(args[1], new CommandContext(isJson))
+                ? await new ModelsGetCommand().ExecuteAsync(args[1], context, waitForCompletion: !args.Contains("--no-wait"), loadAfterDownload: args.Contains("--load"))
                 : new CommandResult(1, "Usage: mlx-pep models get <hf_id>"),
+            "status" => await new ModelsStatusCommand().ExecuteAsync(context),
             _ => new CommandResult(1, $"Unknown models subcommand: {subcommand}")
         };
 
-        if (isJson)
-        {
-            var json = new { message = result.Message, exit_code = result.ExitCode };
-            Console.WriteLine(JsonSerializer.Serialize(json));
-        }
-        else
+        if (!isJson && !string.IsNullOrWhiteSpace(result.Message))
         {
             Console.WriteLine(result.Message);
         }
+
         return result.ExitCode;
     }
 

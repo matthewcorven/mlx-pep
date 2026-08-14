@@ -45,6 +45,33 @@ dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
 
 ## Core workflow
 
+### Inspect and download models
+
+List the shared Hugging Face cache entries that mlx-pep can already see:
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- models list
+```
+
+Start a model download through the live oMLX admin API and return immediately with the visible task id:
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- models get <hf-model-id> --no-wait
+```
+
+Poll current download tasks and model load state:
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- models status
+```
+
+Wait for a download to finish and optionally load it into memory once it lands in the shared oMLX store:
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- models get <hf-model-id>
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- models get <hf-model-id> --load
+```
+
 ### Assess a model
 
 ```bash
