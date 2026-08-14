@@ -110,13 +110,13 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep profiles [list|search|pull]");
+            return PrintErrorAndReturn1("Usage: mlx-pep profiles [list|search|pull] [--local]");
         }
 
         string subcommand = args[0].ToLowerInvariant();
         CommandResult result = subcommand switch
         {
-            "list" => await new ProfilesListCommand().ExecuteAsync(new CommandContext(isJson)),
+            "list" => await new ProfilesListCommand().ExecuteAsync(new CommandContext(isJson), args.Contains("--local")),
             "search" => args.Length > 1
                 ? await new ProfilesSearchCommand().ExecuteAsync(args[1], new CommandContext(isJson))
                 : new CommandResult(1, "Usage: mlx-pep profiles search <query>"),
@@ -131,7 +131,7 @@ public static class CliBuilder
             var json = new { message = result.Message, exit_code = result.ExitCode };
             Console.WriteLine(JsonSerializer.Serialize(json));
         }
-        else
+        else if (result.ExitCode != 0)
         {
             Console.WriteLine(result.Message);
         }
