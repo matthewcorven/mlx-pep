@@ -163,6 +163,33 @@ public class AssessCommandTests
     }
 
     [Fact]
+    public async Task AssessCommand_ExecuteAsync_WithPublishFlag_WithoutJsonFlag_OutputsTableFormat()
+    {
+        // Arrange
+        var command = new AssessCommand();
+        var context = new CommandContext(jsonOutput: false);
+        var hfId = "stabilityai/stablelm-2-zephyr";
+
+        var oldOutput = Console.Out;
+        using (var writer = new StringWriter())
+        {
+            Console.SetOut(writer);
+
+            // Act
+            var result = await command.ExecuteAsync(hfId, publish: true, context);
+            Console.SetOut(oldOutput);
+
+            var output = writer.ToString();
+
+            // Assert
+            Assert.Equal(0, result.ExitCode);
+            Assert.Contains(hfId, output);
+            Assert.Contains("Generated 3 profiles", output);
+            Assert.Contains("profiles valid", output);
+        }
+    }
+
+    [Fact]
     public async Task AssessCommand_ExecuteAsync_WithoutPublishFlag_OmitsValidation()
     {
         // Arrange

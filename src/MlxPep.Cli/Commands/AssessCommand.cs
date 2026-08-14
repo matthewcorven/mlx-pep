@@ -97,7 +97,7 @@ public class AssessCommand
     private List<Profile> CreateProfilesForModel(string hfId)
     {
         var profiles = new List<Profile>();
-        var tiers = new[] { "high-performance", "balanced", "efficient" };
+        var tiers = new[] { "high", "balanced", "efficient" };
 
         foreach (var tier in tiers)
         {
