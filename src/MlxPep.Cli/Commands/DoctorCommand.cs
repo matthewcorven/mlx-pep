@@ -39,20 +39,33 @@ public class DoctorCommand
 
     private string FormatAsJson(DependencyReport report)
     {
-        var result = new
+        // Build dependencies object manually to ensure correct JSON structure
+        var dependencies = new Dictionary<string, object>();
+        foreach (var kvp in report.Tools)
         {
-            command = "doctor",
-            timestamp = DateTime.UtcNow.ToString("O"),
-            dependencies = report.Tools.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new
-                {
-                    installed = kvp.Value.Installed,
-                    version = kvp.Value.Version,
-                    message = kvp.Value.Installed ? $"v{kvp.Value.Version}" : kvp.Value.Message,
-                    install = DependencyInstallationGuidance.GetGuidance(kvp.Key)
-                }
-            )
+            var toolDep = new Dictionary<string, object?>
+            {
+                { "installed", kvp.Value.Installed }
+            };
+            
+            if (kvp.Value.Version != null)
+            {
+                toolDep["version"] = kvp.Value.Version;
+            }
+            
+            if (!kvp.Value.Installed && kvp.Value.Message != null)
+            {
+                toolDep["message"] = kvp.Value.Message;
+            }
+            
+            dependencies[kvp.Key] = toolDep;
+        }
+
+        var result = new Dictionary<string, object>
+        {
+            { "command", "doctor" },
+            { "timestamp", DateTime.UtcNow.ToString("O") },
+            { "dependencies", dependencies }
         };
 
         var options = new JsonSerializerOptions
