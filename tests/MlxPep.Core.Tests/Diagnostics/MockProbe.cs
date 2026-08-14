@@ -34,11 +34,11 @@ public class MockProbe : IDependencyProbe
     {
         if (_versionParser != null)
             return _versionParser(rawOutput);
-        
+
         // Default: extract semantic version using regex (like real probes)
         if (string.IsNullOrWhiteSpace(rawOutput))
             return null;
-        
+
         var match = System.Text.RegularExpressions.Regex.Match(rawOutput, @"(\d+\.\d+\.\d+)");
         return match.Success ? match.Groups[1].Value : null;
     }

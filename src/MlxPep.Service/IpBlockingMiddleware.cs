@@ -21,7 +21,7 @@ public class IpBlockingMiddleware
         _next = next;
         _logger = logger;
         _optionsMonitor = optionsMonitor;
-        
+
         // Validate configuration on startup
         ValidateConfiguration(optionsMonitor.CurrentValue);
     }
@@ -67,7 +67,7 @@ public class IpBlockingMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var config = _optionsMonitor.CurrentValue;
-        
+
         // Early exit if all blocking types are disabled
         if (!config.EnableIpBlocking && !config.EnableCidrBlocking && !config.EnableHostnameBlocking)
         {

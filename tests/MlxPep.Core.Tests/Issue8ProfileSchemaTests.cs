@@ -433,7 +433,7 @@ public class Issue8ProfileSchemaTests
     {
         // This test directly exercises ProfileJsonSerializerContext (source-gen context)
         // to verify that the source-generated serialization metadata works correctly.
-        
+
         // Arrange
         var profile = CreateTestProfile("source-gen-test-profile", "high", "omlx");
         var context = new ProfileJsonSerializerContext();
@@ -445,7 +445,7 @@ public class Issue8ProfileSchemaTests
         Assert.NotEmpty(serialized);
         var doc = JsonDocument.Parse(serialized);
         var root = doc.RootElement;
-        
+
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
         Assert.Equal("source-gen-test-profile", root.GetProperty("id").GetString());
         Assert.Equal("model/test", root.GetProperty("modelHfId").GetString());
