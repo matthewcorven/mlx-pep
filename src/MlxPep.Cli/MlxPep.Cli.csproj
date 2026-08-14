@@ -11,4 +11,21 @@
     <PackageReference Include="System.CommandLine" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="../../.env" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Copy model-assessor directory and .env to output for runtime access -->
+  <Target Name="CopyRuntimeArtifacts" AfterTargets="Build">
+    <!-- Copy .env explicitly -->
+    <Copy SourceFiles="../../.env" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('../../.env')" />
+    
+    <!-- Copy model-assessor directory -->
+    <ItemGroup>
+      <ModelAssessorFiles Include="../../src/model-assessor/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModelAssessorFiles)" 
+          DestinationFiles="@(ModelAssessorFiles->'$(OutputPath)model-assessor/%(RecursiveDir)%(Filename)%(Extension)')" 
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>

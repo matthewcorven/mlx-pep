@@ -30,7 +30,10 @@ public class EmitterTests
                     {
                         { "maxInputTokens", 64000 },
                         { "maxOutputTokens", 16000 },
-                        { "modelId", "claude-3-5-sonnet-20241022" },
+                        { "modelId", "mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit" },
+                        { "displayName", "Nemotron Balanced" },
+                        { "baseUrl", "http://127.0.0.1:8000/v1" },
+                        { "apiKeyEnv", "OMLX_API_KEY" },
                         { "temperature", 0.7 }
                     }
                 }
@@ -67,7 +70,9 @@ public class EmitterTests
 
         // Assert
         Assert.NotNull(configJson);
-        Assert.Contains("claude", configJson.ToLowerInvariant());
+        Assert.Contains("mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit", configJson);
+        Assert.Contains("ANTHROPIC_BASE_URL", configJson);
+        Assert.Contains("http://127.0.0.1:8000/v1", configJson);
     }
 
     [Fact]
@@ -81,6 +86,13 @@ public class EmitterTests
             {
                 { "opencode", new Dictionary<string, object>
                     {
+                        { "maxInputTokens", 64000 },
+                        { "maxOutputTokens", 16000 },
+                        { "modelId", "mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit" },
+                        { "displayName", "Nemotron Balanced" },
+                        { "providerId", "omlx-local" },
+                        { "baseUrl", "http://127.0.0.1:8000/v1" },
+                        { "apiKeyEnv", "OMLX_API_KEY" },
                         { "temperature", 0.7 }
                     }
                 }
@@ -93,5 +105,8 @@ public class EmitterTests
         // Assert
         Assert.NotNull(configJson);
         Assert.NotEmpty(configJson);
+        Assert.Contains("@ai-sdk/openai-compatible", configJson);
+        Assert.Contains("mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit", configJson);
+        Assert.Contains("http://127.0.0.1:8000/v1", configJson);
     }
 }

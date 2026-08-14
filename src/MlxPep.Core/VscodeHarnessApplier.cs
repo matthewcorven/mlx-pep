@@ -212,7 +212,7 @@ public class VscodeHarnessApplier : IHarnessApplier
         var customSettingsDictConverted = new Dictionary<string, object>();
         foreach (var kvp in customSettings)
         {
-            customSettingsDictConverted[kvp.Key] = ConvertJsonElementToObject(kvp.Value);
+            customSettingsDictConverted[kvp.Key] = JsonValueConverter.ConvertToObject(kvp.Value) ?? new Dictionary<string, object>();
         }
 
         HarnessUtilities.DeepMerge(settings, customSettingsDictConverted);
@@ -265,7 +265,7 @@ public class VscodeHarnessApplier : IHarnessApplier
         var chatModelsDictConverted = new Dictionary<string, object>();
         foreach (var kvp in chatModels)
         {
-            chatModelsDictConverted[kvp.Key] = ConvertJsonElementToObject(kvp.Value);
+            chatModelsDictConverted[kvp.Key] = JsonValueConverter.ConvertToObject(kvp.Value) ?? new Dictionary<string, object>();
         }
 
         HarnessUtilities.DeepMerge(models, chatModelsDictConverted);
@@ -390,38 +390,5 @@ public class VscodeHarnessApplier : IHarnessApplier
         }
 
         return null;
-    }
-
-    private static object ConvertJsonElementToObject(object? value)
-    {
-        if (value is JsonElement elem)
-        {
-            return elem.ValueKind switch
-            {
-                JsonValueKind.Object => ConvertToDict(elem) ?? new Dictionary<string, object>(),
-                JsonValueKind.Array => ConvertToList(elem) ?? new List<object>(),
-                JsonValueKind.String => elem.GetString() ?? "",
-                JsonValueKind.Number => elem.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null!,
-                _ => value!
-            };
-        }
-
-        return value ?? new();
-    }
-
-    private static List<object>? ConvertToList(JsonElement elem)
-    {
-        if (elem.ValueKind != JsonValueKind.Array)
-            return null;
-
-        var list = new List<object>();
-        foreach (var item in elem.EnumerateArray())
-        {
-            list.Add(ConvertJsonElementToObject(item));
-        }
-        return list;
     }
 }

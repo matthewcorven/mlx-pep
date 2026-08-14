@@ -134,6 +134,7 @@ public class RecommendationMapperTests
         var highProfile = profiles.First(p => p.Tier == "high");
         Assert.NotNull(highProfile.Sampler);
         Assert.Equal(0.7, highProfile.Sampler!.Temperature);
+        Assert.Equal(16384, highProfile.Sampler.ContextTokens);
     }
 
     [Fact]
@@ -161,7 +162,7 @@ public class RecommendationMapperTests
         // Assert
         Assert.True(profiles.All(p => p.Provenance != null));
         Assert.True(profiles.All(p => p.Provenance.Author == "model-assessor"));
-        Assert.True(profiles.All(p => p.Provenance.Source == "assess-command"));
+        Assert.True(profiles.All(p => p.Provenance.Source == "assess-command:workload-winner-collapse"));
     }
 
     [Fact]
@@ -236,19 +237,19 @@ public class RecommendationMapperTests
                     System: new Dictionary<string, object> { { "os", "macOS" } },
                     Omlx: new Dictionary<string, object> { { "compute_units", "ALL" } },
                     Harness: new Dictionary<string, object> { { "framework", "vscode" } },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } }),
+                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 }, { "contextTokens", 16384 } }),
                 ["balanced"] = new TierRecommendation(
                     Tier: "balanced",
                     System: new Dictionary<string, object> { { "os", "macOS" } },
                     Omlx: new Dictionary<string, object> { { "compute_units", "GPU" } },
                     Harness: new Dictionary<string, object> { { "framework", "vscode" } },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } }),
+                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 }, { "contextTokens", 8192 } }),
                 ["efficient"] = new TierRecommendation(
                     Tier: "efficient",
                     System: new Dictionary<string, object> { { "os", "macOS" } },
                     Omlx: new Dictionary<string, object> { { "compute_units", "CPU" } },
                     Harness: new Dictionary<string, object> { { "framework", "vscode" } },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } })
+                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 }, { "contextTokens", 4096 } })
             },
             Hardware: new HardwareAssessment("Apple M1", 16, "MacBook"));
     }

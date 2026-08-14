@@ -46,11 +46,23 @@ public class OpenCodeEmitter : IHarnessEmitter
 
     private JsonObject BuildOpenCodeConfig(Profile profile)
     {
+        var harnessConfig = profile.Harness?.TryGetValue("opencode", out var harnessObj) == true &&
+            JsonValueConverter.AsDictionary(harnessObj) is Dictionary<string, object> harnessDict
+            ? harnessDict
+            : new Dictionary<string, object>();
+
+        var providerId = GetStringValue(harnessConfig, "providerId") ?? "omlx-local";
+        var modelId = GetStringValue(harnessConfig, "modelId") ?? profile.ModelHfId;
+        var displayName = GetStringValue(harnessConfig, "displayName") ?? profile.Id;
+        var baseUrl = GetStringValue(harnessConfig, "baseUrl") ?? string.Empty;
+        var apiKeyEnv = GetStringValue(harnessConfig, "apiKeyEnv") ?? "OMLX_API_KEY";
+
         var metadata = new JsonObject
         {
             ["generatedFrom"] = profile.Id,
             ["tier"] = profile.Tier,
-            ["generatedAt"] = DateTime.UtcNow.ToString("O")
+            ["generatedAt"] = DateTime.UtcNow.ToString("O"),
+            ["modelId"] = modelId
         };
 
         if (profile.Hardware != null)
@@ -61,23 +73,59 @@ public class OpenCodeEmitter : IHarnessEmitter
         var config = new JsonObject
         {
             ["$schema"] = "https://opencode.ai/config.json",
-            ["model"] = GetModelForTier(profile.Tier),
+            ["model"] = $"{providerId}/{profile.Id}",
+            ["small_model"] = $"{providerId}/{profile.Id}",
             ["metadata"] = metadata
         };
 
+        var providerConfig = new JsonObject
+        {
+            [providerId] = new JsonObject
+            {
+                ["npm"] = "@ai-sdk/openai-compatible",
+                ["name"] = "oMLX Local",
+                ["options"] = new JsonObject
+                {
+                    ["baseURL"] = baseUrl,
+                    ["apiKey"] = $"{{env:{apiKeyEnv}}}"
+                },
+                ["models"] = new JsonObject
+                {
+                    [profile.Id] = new JsonObject
+                    {
+                        ["name"] = displayName,
+                        ["limit"] = new JsonObject
+                        {
+                            ["context"] = GetIntValue(harnessConfig, "maxInputTokens"),
+                            ["output"] = GetIntValue(harnessConfig, "maxOutputTokens")
+                        },
+                        ["metadata"] = new JsonObject
+                        {
+                            ["modelId"] = modelId
+                        }
+                    }
+                }
+            }
+        };
+
+        config["provider"] = providerConfig;
+
         // Extract opencode settings
         if (profile.Harness?.TryGetValue("opencode", out var opencodeObj) == true &&
-            opencodeObj is Dictionary<string, object> opencode)
+            JsonValueConverter.AsDictionary(opencodeObj) is Dictionary<string, object> opencode)
         {
             var opencodeConfig = new JsonObject();
 
-            if (opencode.TryGetValue("maxInputTokens", out var maxInput))
-                opencodeConfig["maxTokens"] = Convert.ToInt32(maxInput);
+            var maxInputTokens = GetIntValue(opencode, "maxInputTokens");
+            var maxOutputTokens = GetIntValue(opencode, "maxOutputTokens");
 
-            if (opencode.TryGetValue("maxOutputTokens", out var maxOutput))
-                opencodeConfig["maxOutputTokens"] = Convert.ToInt32(maxOutput);
+            if (maxInputTokens > 0)
+                opencodeConfig["maxTokens"] = maxInputTokens;
 
-            config["vscode"] = opencodeConfig;
+            if (maxOutputTokens > 0)
+                opencodeConfig["maxOutputTokens"] = maxOutputTokens;
+
+            config["options"] = opencodeConfig;
         }
 
         // Extract sampler settings
@@ -98,14 +146,19 @@ public class OpenCodeEmitter : IHarnessEmitter
         return config;
     }
 
-    private string GetModelForTier(string tier)
+    private static int GetIntValue(Dictionary<string, object> config, string key)
     {
-        return tier.ToLower() switch
-        {
-            "efficient" => "anthropic/claude-haiku-4",
-            "balanced" => "anthropic/claude-sonnet-4",
-            "high" => "anthropic/claude-sonnet-4",
-            _ => "anthropic/claude-sonnet-4"
-        };
+        if (!config.TryGetValue(key, out var value) || value == null)
+            return 0;
+
+        return JsonValueConverter.AsInt(value) ?? 0;
+    }
+
+    private static string? GetStringValue(Dictionary<string, object> config, string key)
+    {
+        if (!config.TryGetValue(key, out var value) || value == null)
+            return null;
+
+        return JsonValueConverter.AsString(value);
     }
 }

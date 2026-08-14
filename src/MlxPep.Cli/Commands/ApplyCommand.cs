@@ -57,7 +57,7 @@ public class ApplyCommand
                 return CommandResult.Failure(err, 1);
             }
 
-            var profile = profiles[0]; // Use the first profile
+            var profile = HarnessProfileSetBuilder.BuildApplyProfile(profiles, harness);
 
             // Select applier based on harness type
             IHarnessApplier applier = harness switch

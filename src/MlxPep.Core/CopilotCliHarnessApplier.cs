@@ -152,17 +152,43 @@ public class CopilotCliHarnessApplier : IHarnessApplier
         var profilesData = JsonSerializer.Deserialize<Dictionary<string, object>>(existingContent, JsonOptions)
             ?? new Dictionary<string, object> { { "profiles", new Dictionary<string, object>() } };
 
-        if (!profilesData.ContainsKey("profiles") || profilesData["profiles"] is not Dictionary<string, object> profilesDict)
+        Dictionary<string, object>? profilesDict = null;
+        if (profilesData.TryGetValue("profiles", out var existingProfilesObj))
         {
-            profilesDict = new Dictionary<string, object>();
-            profilesData["profiles"] = profilesDict;
+            profilesDict = ConvertToDict(existingProfilesObj);
         }
 
-        // Create or update the profile entry with the given ID
-        var profileEntry = new Dictionary<string, object>(copilotConfig);
-        profileEntry["appliedAt"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        if (profilesDict == null)
+        {
+            profilesDict = new Dictionary<string, object>();
+        }
 
-        profilesDict[profileId] = profileEntry;
+        profilesData["profiles"] = profilesDict;
+
+        if (copilotConfig.TryGetValue("profiles", out var profilesObj) &&
+            ConvertToDict(profilesObj) is Dictionary<string, object> configuredProfiles)
+        {
+            foreach (var (configuredProfileId, configuredProfileObj) in configuredProfiles)
+            {
+                if (ConvertToDict(configuredProfileObj) is Dictionary<string, object> configuredProfile)
+                {
+                    configuredProfile = configuredProfile.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => JsonValueConverter.ConvertToObject(kvp.Value) ?? string.Empty,
+                        StringComparer.OrdinalIgnoreCase);
+                    configuredProfile["appliedAt"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                    profilesDict[configuredProfileId] = configuredProfile;
+                }
+            }
+        }
+        else
+        {
+            // Create or update the profile entry with the given ID
+            var profileEntry = new Dictionary<string, object>(copilotConfig);
+            profileEntry["appliedAt"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            profilesDict[profileId] = profileEntry;
+        }
 
         var proposedContent = JsonSerializer.Serialize(profilesData, JsonOptions);
         var status = existingContent == proposedContent ? "unchanged" : (File.Exists(profilesPath) ? "modified" : "new");

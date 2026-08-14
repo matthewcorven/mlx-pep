@@ -11,9 +11,9 @@ artifacts/
 .DS_Store
 *.log
 
-## Local runtime state
-.mlx-pep/
-results/
+## Local development
+.env
+src/model-assessor/
 
 ## Python prototype
 __pycache__/

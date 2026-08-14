@@ -46,13 +46,24 @@ public class ClaudeCodeEmitter : IHarnessEmitter
 
     private JsonObject BuildClaudeCodeConfig(Profile profile)
     {
+        var harnessConfig = profile.Harness?.TryGetValue("claude-code", out var harnessObj) == true &&
+            JsonValueConverter.AsDictionary(harnessObj) is Dictionary<string, object> harnessDict
+            ? harnessDict
+            : new Dictionary<string, object>();
+
+        var modelId = GetStringValue(harnessConfig, "modelId") ?? profile.ModelHfId;
+        var displayName = GetStringValue(harnessConfig, "displayName") ?? profile.Id;
+        var baseUrl = GetStringValue(harnessConfig, "baseUrl") ?? string.Empty;
+        var apiKeyEnv = GetStringValue(harnessConfig, "apiKeyEnv") ?? "OMLX_API_KEY";
+
         var config = new JsonObject
         {
-            ["model"] = GetModelForTier(profile.Tier),
+            ["model"] = modelId,
             ["metadata"] = new JsonObject
             {
                 ["generatedFrom"] = profile.Id,
-                ["modelId"] = profile.ModelHfId,
+                ["modelId"] = modelId,
+                ["displayName"] = displayName,
                 ["tier"] = profile.Tier,
                 ["engine"] = profile.Engine,
                 ["generatedAt"] = profile.Provenance?.CreatedAt ?? DateTime.UtcNow.ToString("O")
@@ -98,23 +109,15 @@ public class ClaudeCodeEmitter : IHarnessEmitter
         {
             ["CLAUDE_CODE_TIER"] = profile.Tier,
             ["CLAUDE_CODE_PROFILE_ID"] = profile.Id,
-            ["CLAUDE_CODE_HARDWARE"] = FormatHardwareString(profile.Hardware)
+            ["CLAUDE_CODE_HARDWARE"] = FormatHardwareString(profile.Hardware),
+            ["ANTHROPIC_MODEL"] = modelId,
+            ["ANTHROPIC_BASE_URL"] = baseUrl,
+            ["ANTHROPIC_API_KEY"] = $"{{env:{apiKeyEnv}}}"
         };
 
         config["env"] = env;
 
         return config;
-    }
-
-    private string GetModelForTier(string tier)
-    {
-        return tier.ToLower() switch
-        {
-            "efficient" => "claude-haiku-4-5",
-            "balanced" => "claude-sonnet-4-6",
-            "high" => "claude-sonnet-4-6",
-            _ => "claude-sonnet-4-6"
-        };
     }
 
     private string FormatHardwareString(HardwareFingerprint hardware)
@@ -123,5 +126,13 @@ public class ClaudeCodeEmitter : IHarnessEmitter
             return "unknown";
 
         return $"chip:{hardware.Chip},mem:{hardware.MemoryGb}GB";
+    }
+
+    private static string? GetStringValue(Dictionary<string, object> config, string key)
+    {
+        if (!config.TryGetValue(key, out var value) || value == null)
+            return null;
+
+        return JsonValueConverter.AsString(value);
     }
 }

@@ -43,31 +43,24 @@ public class AssessCommand
         {
             List<Profile> profiles;
 
-            // Try to run model-assessor subprocess
+            // Run the real model-assessor pipeline and fail closed if it is unavailable.
             if (await _profilingRunner.IsAvailableAsync())
             {
                 System.Diagnostics.Debug.WriteLine("[AssessCommand] Model-assessor available, running profiling");
                 
-                try
-                {
-                    var manifest = await _profilingRunner.RunProfilingAsync(
-                        hfId,
-                        assistantModelId,
-                        suite);
+                var manifest = await _profilingRunner.RunProfilingAsync(
+                    hfId,
+                    assistantModelId,
+                    suite);
 
-                    profiles = _mapper.MapToProfiles(manifest);
-                    System.Diagnostics.Debug.WriteLine($"[AssessCommand] Successfully generated {profiles.Count} profiles from manifest");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[AssessCommand] Model-assessor failed: {ex.Message}, using fixture fallback");
-                    profiles = CreateFixtureProfiles(hfId);
-                }
+                profiles = _mapper.MapToProfiles(manifest);
+                System.Diagnostics.Debug.WriteLine($"[AssessCommand] Successfully generated {profiles.Count} profiles from manifest");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[AssessCommand] Model-assessor unavailable, using fixture fallback");
-                profiles = CreateFixtureProfiles(hfId);
+                System.Diagnostics.Debug.WriteLine("[AssessCommand] Model-assessor unavailable, failing assess command");
+                return CommandResult.Failure(
+                    "Model assessment tooling is unavailable. Verify python3 and src/model-assessor/scripts/next_phase are present.");
             }
 
             // Save profiles to local storage
@@ -169,68 +162,5 @@ public class AssessCommand
             System.Diagnostics.Debug.WriteLine($"[AssessCommand] Exception: {ex.GetType().Name}: {ex.Message}");
             return CommandResult.Failure($"Failed to assess model: {ex.Message}");
         }
-    }
-
-    private List<Profile> CreateFixtureProfiles(string hfId)
-    {
-        System.Diagnostics.Debug.WriteLine($"[AssessCommand] Creating fixture profiles for {hfId}");
-
-        // Create a fixture RecommendationManifest for testing when model-assessor is unavailable
-        var manifest = new RecommendationManifest(
-            ModelHfId: hfId,
-            AssessmentVersion: "1.0.0",
-            Timestamp: DateTime.UtcNow.ToString("O"),
-            Recommendations: new Dictionary<string, TierRecommendation>
-            {
-                ["high"] = new TierRecommendation(
-                    Tier: "high",
-                    System: new Dictionary<string, object> { { "os", "macOS" } },
-                    Omlx: new Dictionary<string, object> { { "compute_units", "ALL" } },
-                    Harness: new Dictionary<string, object>
-                    {
-                        { "vscode", new Dictionary<string, object>
-                            {
-                                { "maxInputTokens", 128000 },
-                                { "maxOutputTokens", 8000 }
-                            }
-                        }
-                    },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } }),
-
-                ["balanced"] = new TierRecommendation(
-                    Tier: "balanced",
-                    System: new Dictionary<string, object> { { "os", "macOS" } },
-                    Omlx: new Dictionary<string, object> { { "compute_units", "GPU" } },
-                    Harness: new Dictionary<string, object>
-                    {
-                        { "vscode", new Dictionary<string, object>
-                            {
-                                { "maxInputTokens", 64000 },
-                                { "maxOutputTokens", 4000 }
-                            }
-                        }
-                    },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } }),
-
-                ["efficient"] = new TierRecommendation(
-                    Tier: "efficient",
-                    System: new Dictionary<string, object> { { "os", "macOS" } },
-                    Omlx: new Dictionary<string, object> { { "compute_units", "CPU" } },
-                    Harness: new Dictionary<string, object>
-                    {
-                        { "vscode", new Dictionary<string, object>
-                            {
-                                { "maxInputTokens", 32000 },
-                                { "maxOutputTokens", 2000 }
-                            }
-                        }
-                    },
-                    Sampler: new Dictionary<string, object> { { "temperature", 0.7 } })
-            },
-            Hardware: new HardwareAssessment("Apple M1", 16, "MacBook"));
-
-        var profiles = _mapper.MapToProfiles(manifest);
-        System.Diagnostics.Debug.WriteLine($"[AssessCommand] Created {profiles.Count} fixture profiles");
-        return profiles;
     }
 }

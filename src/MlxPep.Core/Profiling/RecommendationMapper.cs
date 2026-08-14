@@ -88,6 +88,7 @@ public class RecommendationMapper
             double? topP = null;
             int? topK = null;
             double? repPenalty = null;
+            int? contextTokens = null;
 
             if (tierRec.Sampler.ContainsKey("temperature") && tierRec.Sampler["temperature"] is double tempVal)
                 temperature = tempVal;
@@ -97,8 +98,10 @@ public class RecommendationMapper
                 topK = topKVal;
             if (tierRec.Sampler.ContainsKey("repetitionPenalty") && tierRec.Sampler["repetitionPenalty"] is double repVal)
                 repPenalty = repVal;
+            if (tierRec.Sampler.ContainsKey("contextTokens") && tierRec.Sampler["contextTokens"] is int contextTokenValue)
+                contextTokens = contextTokenValue;
 
-            sampler = new SamplerSettings(temperature, topP, topK, repPenalty);
+            sampler = new SamplerSettings(temperature, topP, topK, repPenalty, contextTokens);
         }
 
         // Build hardware fingerprint
@@ -119,7 +122,7 @@ public class RecommendationMapper
             Provenance: new ProfileProvenance(
                 Author: "model-assessor",
                 CreatedAt: DateTime.UtcNow.ToString("O"),
-                Source: "assess-command"),
+                Source: "assess-command:workload-winner-collapse"),
             Hardware: hardware,
             Sampler: sampler);
 

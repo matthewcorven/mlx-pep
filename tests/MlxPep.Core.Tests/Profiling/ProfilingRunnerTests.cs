@@ -10,13 +10,13 @@ public class ProfilingRunnerTests
     private readonly ProfilingRunner _runner = new();
 
     [Fact]
-    public async Task IsAvailableAsync_ReturnsFalseWhenPythonNotAvailable()
+    public async Task IsAvailableAsync_ReturnsTrueWhenAssessmentScriptsAreAvailable()
     {
         // Act
         var available = await _runner.IsAvailableAsync();
 
-        // Assert - in test environment, model-assessor won't be available
-        Assert.False(available);
+        // Assert - the adjacent model-assessor scripts should be discoverable in this repo.
+        Assert.True(available);
     }
 
     [Fact]
