@@ -27,6 +27,7 @@ public static class CliBuilder
                 "doctor" => HandleDoctor(isJson),
                 "models" => HandleModels(args.Skip(1).ToArray(), isJson),
                 "profiles" => HandleProfiles(args.Skip(1).ToArray(), isJson),
+                "results" => HandleResults(args.Skip(1).ToArray(), isJson),
                 "apply" => HandleApply(args.Skip(1).ToArray(), isJson),
                 "assess" => HandleAssess(args.Skip(1).ToArray(), isJson),
                 "tui" => HandleTui(isJson),
@@ -191,6 +192,44 @@ public static class CliBuilder
         return result.ExitCode;
     }
 
+    private static async Task<int> HandleResults(string[] args, bool isJson)
+    {
+        var context = new CommandContext(isJson);
+        var subcommand = args.Length == 0 ? "list" : args[0].ToLowerInvariant();
+        var remainingArgs = args.Length == 0 ? Array.Empty<string>() : args.Skip(1).ToArray();
+
+        var result = await (subcommand switch
+        {
+            "list" => new ResultsListCommand().ExecuteAsync(
+                context,
+                includeIncomplete: remainingArgs.Contains("--all"),
+                modelId: GetOptionValue(remainingArgs, "--model")),
+
+            "show" => new ResultsShowCommand().ExecuteAsync(
+                context,
+                runId: GetFirstPositionalArg(remainingArgs, "--model"),
+                modelId: GetOptionValue(remainingArgs, "--model"),
+                includeIncomplete: remainingArgs.Contains("--all")),
+
+            "export" => new ResultsExportCommand().ExecuteAsync(
+                context,
+                outputPath: GetOptionValue(remainingArgs, "--output") ?? string.Empty,
+                runId: GetFirstPositionalArg(remainingArgs, "--model", "--output", "--format"),
+                modelId: GetOptionValue(remainingArgs, "--model"),
+                format: GetOptionValue(remainingArgs, "--format") ?? "markdown",
+                includeIncomplete: remainingArgs.Contains("--all")),
+
+            _ => Task.FromResult(CommandResult.Failure("Usage: mlx-pep results [list|show|export] [options]"))
+        });
+
+        if (!isJson && result.ExitCode != 0 && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            Console.WriteLine(result.Message);
+        }
+
+        return result.ExitCode;
+    }
+
     private static async Task<int> HandleTui(bool isJson)
     {
         var handler = new TuiCommand();
@@ -224,6 +263,9 @@ COMMANDS:
     profiles list       List all profiles
     profiles search <q> Search profiles by query
     profiles pull <id>  Pull profile from registry
+    results list        List local assessment runs (verified complete by default)
+    results show        Show a local assessment run summary (latest or by run id)
+    results export      Save a local assessment run summary as markdown or json
     apply <file>        Apply profile to harness (--dry-run, --harness)
     assess <hf_id>      Assess model performance (--assistant-model-id, --suite, --publish)
     tui                 Start terminal UI
@@ -237,6 +279,10 @@ OPTIONS:
     --assistant-model-id <id> (assess) Optional assistant model HF ID
     --suite <suite>           (assess) Assessment suite (smoke or full, default: full)
     --publish                 (assess) Publish results to service
+    --model <hf_id>           (results) Filter or select latest run by model id
+    --all                     (results) Include incomplete local runs
+    --output <path>           (results export) Output file path
+    --format <fmt>            (results export) markdown or json
     --help, -h                Show this help
  
 EXAMPLES:
@@ -244,6 +290,9 @@ EXAMPLES:
     mlx-pep models list --json
     mlx-pep apply my-profile.jsonl --harness copilot-cli
     mlx-pep assess meta-llama/Llama-2-7b
+    mlx-pep results list
+    mlx-pep results show --model mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit
+    mlx-pep results export 20260814-122505-nvidia-nemotron-3-5-lightning-30b-a3b-4bit-smoke --output ./nemotron.md --format markdown
     mlx-pep assess meta-llama/Llama-2-7b --suite smoke --publish
     mlx-pep assess meta-llama/Llama-2-7b --assistant-model-id mistral/mistral-7b-v0.1
 ");
@@ -256,6 +305,28 @@ EXAMPLES:
         {
             return args[index + 1];
         }
+        return null;
+    }
+
+    private static string? GetFirstPositionalArg(string[] args, params string[] optionsWithValues)
+    {
+        var optionSet = new HashSet<string>(optionsWithValues, StringComparer.Ordinal);
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (arg.StartsWith("--", StringComparison.Ordinal))
+            {
+                if (optionSet.Contains(arg))
+                {
+                    index++;
+                }
+
+                continue;
+            }
+
+            return arg;
+        }
+
         return null;
     }
 }

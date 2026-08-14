@@ -1,8 +1,10 @@
 namespace MlxPep.Cli.Commands;
 
+using MlxPep.Core;
+
 /// <summary>
 /// Handler for `mlx-pep tui` command.
-/// Launches the Terminal.Gui interactive interface.
+/// Launches a terminal-based results and assessment browser.
 /// </summary>
 public class TuiCommand
 {
@@ -22,8 +24,7 @@ public class TuiCommand
                 return CommandResult.Failure("TUI cannot be used with --json output", 1);
             }
 
-            Console.WriteLine("Launching Terminal.Gui interface...");
-            // TODO: Launch Terminal.Gui interface
+            InteractiveResultsBrowser.Run();
 
             return CommandResult.Success();
         }
