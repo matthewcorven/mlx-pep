@@ -1,0 +1,93 @@
+{
+  "model_id": "meta-llama/Llama-2-7b",
+  "hardware_fingerprint": {
+    "chip": "Apple M3 Pro",
+    "memory_gb": 18,
+    "model_identifier": "MacBookPro18,1"
+  },
+  "assessment_results": {
+    "suite": "full",
+    "duration_seconds": 45,
+    "timestamp": "2026-08-13T00:00:00Z"
+  },
+  "tier_recommendations": {
+    "high": {
+      "reason": "Maximum performance for typical workloads",
+      "system": {
+        "iogpu.wired_limit_mb": 6144
+      },
+      "omlx": {
+        "memory_guard_tier": "high",
+        "memory_guard_ceiling_gb": 16
+      },
+      "harness": {
+        "vscode": {
+          "maxInputTokens": 64000,
+          "maxOutputTokens": 3072
+        },
+        "copilotCli": {
+          "maxPromptTokens": 64000
+        }
+      },
+      "sampler": {
+        "temperature": 0.7,
+        "topP": 0.95,
+        "topK": 20,
+        "repetitionPenalty": 1.02,
+        "contextTokens": 4096
+      }
+    },
+    "balanced": {
+      "reason": "Recommended for most users; balanced performance and resource usage",
+      "system": {
+        "iogpu.wired_limit_mb": 4096
+      },
+      "omlx": {
+        "memory_guard_tier": "balanced",
+        "memory_guard_ceiling_gb": 12
+      },
+      "harness": {
+        "vscode": {
+          "maxInputTokens": 32000,
+          "maxOutputTokens": 2048
+        },
+        "copilotCli": {
+          "maxPromptTokens": 32000
+        }
+      },
+      "sampler": {
+        "temperature": 0.7,
+        "topP": 0.95,
+        "topK": 20,
+        "repetitionPenalty": 1.02,
+        "contextTokens": 2048
+      }
+    },
+    "efficient": {
+      "reason": "Minimum resource footprint; suitable for resource-constrained scenarios",
+      "system": {
+        "iogpu.wired_limit_mb": 2048
+      },
+      "omlx": {
+        "memory_guard_tier": "efficient",
+        "memory_guard_ceiling_gb": 8
+      },
+      "harness": {
+        "vscode": {
+          "maxInputTokens": 16000,
+          "maxOutputTokens": 1024
+        },
+        "copilotCli": {
+          "maxPromptTokens": 16000
+        }
+      },
+      "sampler": {
+        "temperature": 0.7,
+        "topP": 0.95,
+        "topK": 20,
+        "repetitionPenalty": 1.02,
+        "contextTokens": 1024
+      }
+    }
+  }
+}
