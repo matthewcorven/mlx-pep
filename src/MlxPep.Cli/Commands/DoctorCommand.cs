@@ -3,9 +3,6 @@ using MlxPep.Core.Diagnostics;
 
 namespace MlxPep.Cli.Commands;
 
-using MlxPep.Core.Diagnostics;
-using System.Text.Json.Serialization;
-
 /// <summary>
 /// Handler for `mlx-pep doctor` command.
 /// Detects system dependencies using the DependencyDetectionService
@@ -49,16 +46,15 @@ public class DoctorCommand
         {
             status = report.Status.ToString(),
             generatedAt = report.GeneratedAt,
-            tools = report.Tools.Select(t => new
+            tools = report.Tools.Select(kvp => new
             {
-                name = t.ToolName,
-                installed = t.Installed,
-                version = t.Version,
-                scope = t.Scope,
-                detectionMethod = t.DetectionMethod,
-                installGuidance = t.InstallGuidance,
-                message = t.Message,
-                detectedAt = t.DetectedAt
+                name = kvp.Key,
+                displayName = kvp.Value.DisplayName,
+                installed = kvp.Value.Installed,
+                version = kvp.Value.Version,
+                scope = kvp.Value.Scope,
+                installGuidance = kvp.Value.InstallGuidance,
+                message = kvp.Value.Message
             })
         };
 
@@ -72,14 +68,23 @@ public class DoctorCommand
         Console.WriteLine("==================================");
         Console.WriteLine();
 
-        foreach (var tool in report.Tools)
+        var installed = 0;
+        var missing = 0;
+
+        foreach (var kvp in report.Tools.OrderBy(t => t.Value.DisplayName))
         {
+            var tool = kvp.Value;
             var statusIcon = tool.Installed ? "✓" : "✗";
             var statusText = tool.Installed 
                 ? $"Installed (v{tool.Version})" 
                 : "Not installed";
             
-            Console.WriteLine($"{statusIcon} {tool.ToolName,-20} {statusText}");
+            Console.WriteLine($"{statusIcon} {tool.DisplayName,-20} {statusText}");
+            
+            if (tool.Installed)
+                installed++;
+            else
+                missing++;
             
             if (!string.IsNullOrEmpty(tool.InstallGuidance) && !tool.Installed)
             {
@@ -88,16 +93,6 @@ public class DoctorCommand
         }
 
         Console.WriteLine();
-        Console.WriteLine($"Overall status: {report.Status}");
+        Console.WriteLine($"Summary: {installed} installed, {missing} missing");
     }
-}
-
-/// <summary>
-/// Status of a single dependency (deprecated - use DependencyReport instead).
-/// </summary>
-public class DependencyStatus
-{
-    public bool Installed { get; set; }
-    public string? Version { get; set; }
-    public string? Message { get; set; }
 }
