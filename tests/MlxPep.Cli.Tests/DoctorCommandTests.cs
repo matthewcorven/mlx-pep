@@ -11,7 +11,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = true };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -20,7 +20,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -41,7 +41,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = false };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -50,7 +50,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -84,7 +84,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = true };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -93,7 +93,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -115,7 +115,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = false };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -124,7 +124,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -146,7 +146,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = false };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -155,7 +155,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -174,7 +174,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = true };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -183,7 +183,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -202,7 +202,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = true };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -211,7 +211,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert
@@ -219,7 +219,7 @@ public class DoctorCommandTests
             var root = json.RootElement;
             var deps = root.GetProperty("dependencies");
             var dotnet = deps.GetProperty("dotnet");
-            
+
             Assert.True(dotnet.TryGetProperty("installed", out _));
             // version and message are optional
         }
@@ -231,7 +231,7 @@ public class DoctorCommandTests
         // Arrange
         var command = new DoctorCommand();
         var context = new CommandContext { JsonOutput = false };
-        
+
         var oldOutput = Console.Out;
         using (var writer = new StringWriter())
         {
@@ -240,7 +240,7 @@ public class DoctorCommandTests
             // Act
             var result = await command.ExecuteAsync(context);
             Console.SetOut(oldOutput);
-            
+
             var output = writer.ToString();
 
             // Assert

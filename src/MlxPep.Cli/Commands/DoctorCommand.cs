@@ -1,7 +1,7 @@
 namespace MlxPep.Cli.Commands;
 
-using MlxPep.Core.Diagnostics;
 using System.Text.Json.Serialization;
+using MlxPep.Core.Diagnostics;
 
 /// <summary>
 /// Handler for `mlx-pep doctor` command.
