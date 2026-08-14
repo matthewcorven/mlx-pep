@@ -1,7 +1,8 @@
-namespace MlxPep.Cli.Commands;
-
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using MlxPep.Core.Diagnostics;
+
+namespace MlxPep.Cli.Commands;
 
 /// <summary>
 /// Handler for `mlx-pep doctor` command.
@@ -38,29 +39,42 @@ public class DoctorCommand
 
     private string FormatAsJson(DependencyReport report)
     {
-        var result = new
+        // Build dependencies object manually to ensure correct JSON structure
+        var dependencies = new Dictionary<string, object>();
+        foreach (var kvp in report.Tools)
         {
-            command = "doctor",
-            timestamp = DateTime.UtcNow.ToString("O"),
-            dependencies = report.Tools.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new
-                {
-                    installed = kvp.Value.Installed,
-                    version = kvp.Value.Version,
-                    message = kvp.Value.Installed ? $"v{kvp.Value.Version}" : kvp.Value.Message,
-                    install = DependencyInstallationGuidance.GetGuidance(kvp.Key)
-                }
-            )
+            var toolDep = new Dictionary<string, object?>
+            {
+                { "installed", kvp.Value.Installed }
+            };
+
+            if (kvp.Value.Version != null)
+            {
+                toolDep["version"] = kvp.Value.Version;
+            }
+
+            if (!kvp.Value.Installed && kvp.Value.Message != null)
+            {
+                toolDep["message"] = kvp.Value.Message;
+            }
+
+            dependencies[kvp.Key] = toolDep;
+        }
+
+        var result = new Dictionary<string, object>
+        {
+            { "command", "doctor" },
+            { "timestamp", DateTime.UtcNow.ToString("O") },
+            { "dependencies", dependencies }
         };
 
-        var options = new System.Text.Json.JsonSerializerOptions
+        var options = new JsonSerializerOptions
         {
             WriteIndented = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        return System.Text.Json.JsonSerializer.Serialize(result, options);
+        return JsonSerializer.Serialize(result, options);
     }
 
     private string FormatAsTable(DependencyReport report)
