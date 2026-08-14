@@ -1032,7 +1032,7 @@ public class BlockingMiddlewareIntegrationTests
         // Assert
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
         Assert.Contains("application/json", context.Response.ContentType);
-        
+
         // Verify response body contains "message" field
         context.Response.Body.Seek(0, System.IO.SeekOrigin.Begin);
         using var reader = new System.IO.StreamReader(context.Response.Body);

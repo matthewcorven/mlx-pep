@@ -274,7 +274,7 @@ public class HFCacheReader : IHFCacheReader
         {
             // Get the full canonical path to detect cycles
             var fullPath = Path.GetFullPath(directory);
-            
+
             // Check if this path is already being visited (cycle detected)
             if (visitedPaths.Contains(fullPath))
             {
@@ -335,15 +335,15 @@ public class HFCacheReader : IHFCacheReader
         {
             var fullCachePath = Path.GetFullPath(_cacheDir);
             var fullPath = Path.GetFullPath(path);
-            
+
             // Ensure resolved path is within cache directory
-            if (!fullPath.StartsWith(fullCachePath + Path.DirectorySeparatorChar) && 
+            if (!fullPath.StartsWith(fullCachePath + Path.DirectorySeparatorChar) &&
                 fullPath != fullCachePath)
             {
                 System.Diagnostics.Debug.WriteLine($"[HFCacheReader] IsPathWithinCache: path {path} resolves outside cache (full: {fullPath}, cache: {fullCachePath})");
                 return false;
             }
-            
+
             System.Diagnostics.Debug.WriteLine($"[HFCacheReader] IsPathWithinCache: path {path} is valid within cache");
             return true;
         }

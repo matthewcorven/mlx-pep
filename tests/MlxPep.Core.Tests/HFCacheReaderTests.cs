@@ -297,11 +297,11 @@ public class HFCacheReaderTests : IDisposable
     {
         // Arrange
         CreateModelFixture("test", "model", "rev1", fileSize: 1024);
-        
+
         // Create a circular symlink
         var revisionDir = Path.Combine(_tempCacheDir, "models--test--model", "snapshots", "rev1");
         var circularLink = Path.Combine(revisionDir, "loop");
-        
+
         try
         {
             File.CreateSymbolicLink(circularLink, Path.Combine(_tempCacheDir, "models--test--model", "snapshots"));
@@ -314,7 +314,7 @@ public class HFCacheReaderTests : IDisposable
 
         var reader = new HFCacheReader(_tempCacheDir);
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        
+
         // Act - should complete without hanging
         var models = await reader.ListModelsAsync();
 
@@ -333,14 +333,14 @@ public class HFCacheReaderTests : IDisposable
     {
         // This test validates that IsPathWithinCache() correctly identifies and rejects paths outside the cache.
         // On most systems, the security boundary is enforced. On systems with symlink limitations, this test skips.
-        
+
         // Arrange
         CreateModelFixture("test", "model", "rev1", fileSize: 1024);
-        
+
         // Create a model directory with a suspicious structure
         var modelDir = Path.Combine(_tempCacheDir, "models--test--model");
         var snapshotsDir = Path.Combine(modelDir, "snapshots");
-        
+
         // Try to create a symlink pointing outside - if this fails, symlinks aren't supported, so skip
         var escapeLink = Path.Combine(snapshotsDir, "escape");
         var parentDir = Path.GetDirectoryName(_tempCacheDir);
@@ -348,7 +348,7 @@ public class HFCacheReaderTests : IDisposable
         {
             return; // Can't get parent directory, skip test
         }
-        
+
         try
         {
             // Try to create a symlink to the parent directory (one level outside cache)
@@ -361,7 +361,7 @@ public class HFCacheReaderTests : IDisposable
         }
 
         var reader = new HFCacheReader(_tempCacheDir);
-        
+
         // Act - should complete without error even with escape symlink present
         var models = await reader.ListModelsAsync();
 
@@ -380,11 +380,11 @@ public class HFCacheReaderTests : IDisposable
         // Arrange
         CreateModelFixture("test", "model", "rev1", fileSize: 1024);
         CreateModelFixture("test", "model2", "rev1", fileSize: 1024);
-        
+
         // Make one revision directory unreadable (chmod 000)
         var lockedDir = Path.Combine(_tempCacheDir, "models--test--model2", "snapshots", "rev1");
         var currentPermissions = File.GetAttributes(lockedDir);
-        
+
         try
         {
             // On macOS/Linux, we can restrict permissions
@@ -398,14 +398,14 @@ public class HFCacheReaderTests : IDisposable
         }
 
         var reader = new HFCacheReader(_tempCacheDir);
-        
+
         // Act - should continue processing despite permission error
         var models = await reader.ListModelsAsync();
 
         // Assert - should find at least the readable model
         Assert.True(models.Count() >= 1);
         Assert.Contains(models, m => m.RepoId == "test/model");
-        
+
         // Cleanup
         try { File.SetAttributes(lockedDir, currentPermissions); } catch { }
     }
@@ -419,16 +419,16 @@ public class HFCacheReaderTests : IDisposable
     {
         // Arrange
         CreateModelFixture("test", "model", "rev1", fileSize: 1024);
-        
+
         // Create a .git directory with files inside
         var revisionDir = Path.Combine(_tempCacheDir, "models--test--model", "snapshots", "rev1");
         var gitDir = Path.Combine(revisionDir, ".git");
         Directory.CreateDirectory(gitDir);
         File.WriteAllBytes(Path.Combine(gitDir, "HEAD"), new byte[1024]);
         File.WriteAllBytes(Path.Combine(gitDir, "config"), new byte[1024]);
-        
+
         var reader = new HFCacheReader(_tempCacheDir);
-        
+
         // Act
         var models = await reader.ListModelsAsync();
 
@@ -471,7 +471,7 @@ public class HFCacheReaderTests : IDisposable
         Directory.CreateDirectory(hfHomeDir);
         var hubDir = Path.Combine(hfHomeDir, "hub");
         Directory.CreateDirectory(hubDir);
-        
+
         // Create model in the hub subdirectory
         var modelDir = Path.Combine(hubDir, "models--test--model");
         var snapshotsDir = Path.Combine(modelDir, "snapshots", "rev1");
@@ -503,7 +503,7 @@ public class HFCacheReaderTests : IDisposable
     {
         // Arrange
         CreateModelFixture("test", "model1", "rev1");
-        
+
         var hfHomeDir = Path.Combine(_tempCacheDir, "hf_home");
         Directory.CreateDirectory(hfHomeDir);
         var hubDir = Path.Combine(hfHomeDir, "hub");

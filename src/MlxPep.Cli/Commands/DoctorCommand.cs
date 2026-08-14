@@ -47,17 +47,17 @@ public class DoctorCommand
             {
                 { "installed", kvp.Value.Installed }
             };
-            
+
             if (kvp.Value.Version != null)
             {
                 toolDep["version"] = kvp.Value.Version;
             }
-            
+
             if (!kvp.Value.Installed && kvp.Value.Message != null)
             {
                 toolDep["message"] = kvp.Value.Message;
             }
-            
+
             dependencies[kvp.Key] = toolDep;
         }
 
