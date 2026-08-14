@@ -3,9 +3,13 @@ using MlxPep.Core.Diagnostics;
 
 namespace MlxPep.Cli.Commands;
 
+using MlxPep.Core.Diagnostics;
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Handler for `mlx-pep doctor` command.
-/// Detects system dependencies and provides installation guidance.
+/// Detects system dependencies using the DependencyDetectionService
+/// and provides installation guidance.
 /// </summary>
 public class DoctorCommand
 {
