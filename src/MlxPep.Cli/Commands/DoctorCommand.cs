@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using MlxPep.Core.Diagnostics;
 
 namespace MlxPep.Cli.Commands;
@@ -10,26 +11,22 @@ namespace MlxPep.Cli.Commands;
 /// </summary>
 public class DoctorCommand
 {
-    private readonly DependencyDetectionService _detector;
-
-    public DoctorCommand(DependencyDetectionService? detector = null)
-    {
-        _detector = detector ?? new DependencyDetectionService();
-    }
-
     public async Task<CommandResult> ExecuteAsync(CommandContext context)
     {
         try
         {
-            var report = await _detector.DetectAsync();
+            var detector = new DependencyDetectionService();
+            var report = await detector.DetectAsync();
 
             if (context.JsonOutput)
             {
-                OutputJson(report);
+                var json = FormatAsJson(report);
+                Console.WriteLine(json);
             }
             else
             {
-                OutputTable(report);
+                var table = FormatAsTable(report);
+                Console.WriteLine(table);
             }
 
             return CommandResult.Success();
@@ -40,59 +37,73 @@ public class DoctorCommand
         }
     }
 
-    private void OutputJson(DependencyReport report)
+    private string FormatAsJson(DependencyReport report)
     {
-        var output = new
+        var result = new
         {
-            status = report.Status.ToString(),
-            generatedAt = report.GeneratedAt,
-            tools = report.Tools.Select(kvp => new
-            {
-                name = kvp.Key,
-                displayName = kvp.Value.DisplayName,
-                installed = kvp.Value.Installed,
-                version = kvp.Value.Version,
-                scope = kvp.Value.Scope,
-                installGuidance = kvp.Value.InstallGuidance,
-                message = kvp.Value.Message
-            })
+            command = "doctor",
+            timestamp = DateTime.UtcNow.ToString("O"),
+            dependencies = report.Tools.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new
+                {
+                    installed = kvp.Value.Installed,
+                    version = kvp.Value.Version,
+                    message = kvp.Value.Installed ? $"v{kvp.Value.Version}" : kvp.Value.Message,
+                    install = DependencyInstallationGuidance.GetGuidance(kvp.Key)
+                }
+            )
         };
 
-        var json = JsonSerializer.Serialize(output, new JsonSerializerOptions { WriteIndented = true });
-        Console.WriteLine(json);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+
+        return JsonSerializer.Serialize(result, options);
     }
 
-    private void OutputTable(DependencyReport report)
+    private string FormatAsTable(DependencyReport report)
     {
-        Console.WriteLine("mlx-pep doctor - Dependency Check");
-        Console.WriteLine("==================================");
-        Console.WriteLine();
+        var lines = new List<string>();
+        lines.Add("mlx-pep doctor - Dependency Check");
+        lines.Add("");
 
         var installed = 0;
         var missing = 0;
 
-        foreach (var kvp in report.Tools.OrderBy(t => t.Value.DisplayName))
+        foreach (var tool in report.Tools.Values.OrderBy(t => t.Name))
         {
-            var tool = kvp.Value;
-            var statusIcon = tool.Installed ? "✓" : "✗";
-            var statusText = tool.Installed 
-                ? $"Installed (v{tool.Version})" 
-                : "Not installed";
-            
-            Console.WriteLine($"{statusIcon} {tool.DisplayName,-20} {statusText}");
-            
+            var displayName = tool.DisplayName;
+            var statusSymbol = tool.Installed ? "✓" : "✗";
+
             if (tool.Installed)
-                installed++;
-            else
-                missing++;
-            
-            if (!string.IsNullOrEmpty(tool.InstallGuidance) && !tool.Installed)
             {
-                Console.WriteLine($"  → {tool.InstallGuidance}");
+                var version = tool.Version ?? "unknown";
+                lines.Add($"{statusSymbol} {displayName,-20} v{version}");
+                installed++;
+            }
+            else
+            {
+                lines.Add($"{statusSymbol} {displayName,-20} not installed");
+                var guidance = DependencyInstallationGuidance.GetGuidance(tool.Name);
+                if (!string.IsNullOrEmpty(guidance))
+                {
+                    lines.Add($"  ℹ️  {guidance}");
+                }
+                missing++;
             }
         }
 
-        Console.WriteLine();
-        Console.WriteLine($"Summary: {installed} installed, {missing} missing");
+        lines.Add("");
+        lines.Add($"Summary: {installed} installed, {missing} missing");
+
+        if (missing > 0)
+        {
+            lines.Add("Run `mlx-pep doctor --json` for detailed installation guidance.");
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 }
