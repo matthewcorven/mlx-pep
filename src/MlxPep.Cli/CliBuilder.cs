@@ -11,26 +11,31 @@ public static class CliBuilder
 {
     public static async Task<int> RunAsync(string[] args)
     {
-        if (args.Length == 0)
+        var invocation = CliRuntime.ParseInvocation(args);
+        var commandArgs = invocation.CommandArgs;
+        var context = invocation.Context;
+
+        if (args.Length == 0 || commandArgs.Length == 0)
         {
+            context.Verbose("CliBuilder", "No command arguments remained after parsing global options; printing help.");
             PrintHelp();
             return 0;
         }
 
-        bool isJson = args.Contains("--json");
-        string command = args[0].ToLowerInvariant();
+        string command = commandArgs[0].ToLowerInvariant();
+        context.Verbose("CliBuilder", $"Parsed command '{command}' with json={context.JsonOutput}, verbose={context.VerboseOutput}, progress={context.ProgressOutput}.");
 
         try
         {
             return await (command switch
             {
-                "doctor" => HandleDoctor(isJson),
-                "models" => HandleModels(args.Skip(1).ToArray(), isJson),
-                "profiles" => HandleProfiles(args.Skip(1).ToArray(), isJson),
-                "results" => HandleResults(args.Skip(1).ToArray(), isJson),
-                "apply" => HandleApply(args.Skip(1).ToArray(), isJson),
-                "assess" => HandleAssess(args.Skip(1).ToArray(), isJson),
-                "tui" => HandleTui(isJson),
+                "doctor" => HandleDoctor(context),
+                "models" => HandleModels(commandArgs.Skip(1).ToArray(), context),
+                "profiles" => HandleProfiles(commandArgs.Skip(1).ToArray(), context),
+                "results" => HandleResults(commandArgs.Skip(1).ToArray(), context),
+                "apply" => HandleApply(commandArgs.Skip(1).ToArray(), context),
+                "assess" => HandleAssess(commandArgs.Skip(1).ToArray(), context),
+                "tui" => HandleTui(context),
                 "--help" or "-h" or "help" => Task.FromResult(PrintHelpAndReturn0()),
                 "--version" or "-v" or "version" => Task.FromResult(PrintVersionAndReturn0()),
                 _ => Task.FromResult(PrintErrorAndReturn1($"Unknown command: {command}"))
@@ -38,7 +43,8 @@ public static class CliBuilder
         }
         catch (Exception ex)
         {
-            if (isJson)
+            context.Verbose("CliBuilder", $"Unhandled exception while routing command '{command}': {ex.GetType().Name}: {ex.Message}");
+            if (context.JsonOutput)
             {
                 var errorJson = new { error = ex.Message, exit_code = 1 };
                 Console.WriteLine(JsonSerializer.Serialize(errorJson));
@@ -69,16 +75,15 @@ public static class CliBuilder
         return 1;
     }
 
-    private static async Task<int> HandleDoctor(bool isJson)
+    private static async Task<int> HandleDoctor(CommandContext context)
     {
         var handler = new DoctorCommand();
-        var context = new CommandContext(isJson);
         var result = await handler.ExecuteAsync(context);
 
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleModels(string[] args, bool isJson)
+    private static async Task<int> HandleModels(string[] args, CommandContext context)
     {
         if (args.Length == 0)
         {
@@ -86,7 +91,6 @@ public static class CliBuilder
         }
 
         string subcommand = args[0].ToLowerInvariant();
-        var context = new CommandContext(isJson);
         CommandResult result = subcommand switch
         {
             "list" => await new ModelsListCommand().ExecuteAsync(context),
@@ -97,7 +101,7 @@ public static class CliBuilder
             _ => new CommandResult(1, $"Unknown models subcommand: {subcommand}")
         };
 
-        if (!isJson && !string.IsNullOrWhiteSpace(result.Message))
+        if (!context.JsonOutput && !string.IsNullOrWhiteSpace(result.Message))
         {
             Console.WriteLine(result.Message);
         }
@@ -105,7 +109,7 @@ public static class CliBuilder
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleProfiles(string[] args, bool isJson)
+    private static async Task<int> HandleProfiles(string[] args, CommandContext context)
     {
         if (args.Length == 0)
         {
@@ -115,17 +119,17 @@ public static class CliBuilder
         string subcommand = args[0].ToLowerInvariant();
         CommandResult result = subcommand switch
         {
-            "list" => await new ProfilesListCommand().ExecuteAsync(new CommandContext(isJson), args.Contains("--local")),
+            "list" => await new ProfilesListCommand().ExecuteAsync(context, args.Contains("--local")),
             "search" => args.Length > 1
-                ? await new ProfilesSearchCommand().ExecuteAsync(args[1], new CommandContext(isJson))
+                ? await new ProfilesSearchCommand().ExecuteAsync(args[1], context)
                 : new CommandResult(1, "Usage: mlx-pep profiles search <query>"),
             "pull" => args.Length > 1
-                ? await new ProfilesPullCommand().ExecuteAsync(args[1], new CommandContext(isJson))
+                ? await new ProfilesPullCommand().ExecuteAsync(args[1], context)
                 : new CommandResult(1, "Usage: mlx-pep profiles pull <profile_id>"),
             _ => new CommandResult(1, $"Unknown profiles subcommand: {subcommand}")
         };
 
-        if (isJson)
+        if (context.JsonOutput)
         {
             var json = new { message = result.Message, exit_code = result.ExitCode };
             Console.WriteLine(JsonSerializer.Serialize(json));
@@ -137,7 +141,7 @@ public static class CliBuilder
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleApply(string[] args, bool isJson)
+    private static async Task<int> HandleApply(string[] args, CommandContext context)
     {
         if (args.Length == 0)
         {
@@ -153,13 +157,12 @@ public static class CliBuilder
         bool insiders = args.Contains("--insiders");
 
         var handler = new ApplyCommand();
-        var context = new CommandContext(isJson);
         var result = await handler.ExecuteAsync(profile, harness, output, dryRun, backup, noConfirm, insiders, context);
 
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleAssess(string[] args, bool isJson)
+    private static async Task<int> HandleAssess(string[] args, CommandContext context)
     {
         if (args.Length == 0)
         {
@@ -178,11 +181,10 @@ public static class CliBuilder
         }
 
         var handler = new AssessCommand();
-        var context = new CommandContext(isJson);
         var result = await handler.ExecuteAsync(hfId, assistantModelId, suite, publish, context);
 
         // AssessCommand handles its own JSON output; don't double-output
-        if (!isJson && result.ExitCode != 0)
+        if (!context.JsonOutput && result.ExitCode != 0)
         {
             Console.WriteLine(result.Message);
         }
@@ -190,9 +192,8 @@ public static class CliBuilder
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleResults(string[] args, bool isJson)
+    private static async Task<int> HandleResults(string[] args, CommandContext context)
     {
-        var context = new CommandContext(isJson);
         var subcommand = args.Length == 0 ? "list" : args[0].ToLowerInvariant();
         var remainingArgs = args.Length == 0 ? Array.Empty<string>() : args.Skip(1).ToArray();
 
@@ -220,7 +221,7 @@ public static class CliBuilder
             _ => Task.FromResult(CommandResult.Failure("Usage: mlx-pep results [list|show|export] [options]"))
         });
 
-        if (!isJson && result.ExitCode != 0 && !string.IsNullOrWhiteSpace(result.Message))
+        if (!context.JsonOutput && result.ExitCode != 0 && !string.IsNullOrWhiteSpace(result.Message))
         {
             Console.WriteLine(result.Message);
         }
@@ -228,13 +229,12 @@ public static class CliBuilder
         return result.ExitCode;
     }
 
-    private static async Task<int> HandleTui(bool isJson)
+    private static async Task<int> HandleTui(CommandContext context)
     {
         var handler = new TuiCommand();
-        var context = new CommandContext(isJson);
         var result = await handler.ExecuteAsync(context);
 
-        if (isJson)
+        if (context.JsonOutput)
         {
             var json = new { message = result.Message, exit_code = result.ExitCode };
             Console.WriteLine(JsonSerializer.Serialize(json));
@@ -252,12 +252,13 @@ public static class CliBuilder
 mlx-pep — MLX Performance Evaluation Platform
  
 USAGE:
-    mlx-pep <COMMAND> [OPTIONS] [--json]
+    mlx-pep [--json] [--progress] [--verbose] <COMMAND> [OPTIONS]
  
 COMMANDS:
     doctor              Diagnose system and environment
-    models list         List available HF models
-    models get <id>     Get model info by HF ID
+    models list         List available HF cache models
+    models get <id>     Download a model through the oMLX admin API
+    models status       Show oMLX download tasks and model load state
     profiles list       List all profiles
     profiles search <q> Search profiles by query
     profiles pull <id>  Pull profile from registry
@@ -272,6 +273,8 @@ COMMANDS:
  
 OPTIONS:
     --json                    Output JSON (available on all commands)
+    --progress                Write stderr progress updates with work and overall percentages
+    --verbose                 Write very chatty stderr diagnostics and Debug/Trace output
     --dry-run                 (apply) Show changes without applying
     --harness <name>          (apply) Target harness (vscode, copilot-cli)
     --assistant-model-id <id> (assess) Optional assistant model HF ID
@@ -285,6 +288,7 @@ OPTIONS:
  
 EXAMPLES:
     mlx-pep doctor
+    mlx-pep --verbose --progress models get mlx-community/Qwen3-0.6B-4bit --no-wait
     mlx-pep models list --json
     mlx-pep apply my-profile.jsonl --harness copilot-cli
     mlx-pep assess meta-llama/Llama-2-7b

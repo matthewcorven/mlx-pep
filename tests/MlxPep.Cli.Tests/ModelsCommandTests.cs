@@ -132,6 +132,30 @@ public class ModelsGetCommandTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WithVerboseAndProgress_WritesChattyStderr()
+    {
+        var service = new FakeModelsService
+        {
+            DownloadResult = new ModelDownloadResult(
+                "mlx-community/test-model",
+                "task-123",
+                "started",
+                WaitedForCompletion: false,
+                LoadedIntoMemory: false,
+                ModelStatus: null,
+                Detail: null)
+        };
+        var command = new ModelsGetCommand(service);
+        var context = new CommandContext(jsonOutput: false, verboseOutput: true, progressOutput: true);
+
+        var (result, errorOutput) = await ModelsCommandTestHelpers.CaptureErrorAsync(() => command.ExecuteAsync("mlx-community/test-model", context, waitForCompletion: false));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("[verbose][ModelsGetCommand]", errorOutput);
+        Assert.Contains("[progress][models get]", errorOutput);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WhenServiceThrows_ReturnsFailure()
     {
         var service = new FakeModelsService
@@ -245,6 +269,23 @@ internal static class ModelsCommandTestHelpers
         finally
         {
             Console.SetOut(oldOutput);
+        }
+    }
+
+    public static async Task<(CommandResult Result, string ErrorOutput)> CaptureErrorAsync(Func<Task<CommandResult>> action)
+    {
+        var oldError = Console.Error;
+        using var writer = new StringWriter();
+        Console.SetError(writer);
+
+        try
+        {
+            var result = await action();
+            return (result, writer.ToString());
+        }
+        finally
+        {
+            Console.SetError(oldError);
         }
     }
 }

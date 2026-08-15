@@ -13,27 +13,41 @@ public class DoctorCommand
 {
     public async Task<CommandResult> ExecuteAsync(CommandContext context)
     {
+        using var progress = context.CreateProgressScope("doctor", 2);
         try
         {
+            context.Verbose("DoctorCommand", "Starting dependency detection scan.");
             var detector = new DependencyDetectionService();
+            progress.StartStep("detect dependency status");
             var report = await detector.DetectAsync();
+            progress.CompleteStep($"detected {report.Tools.Count} dependency entries");
 
+            progress.StartStep("render doctor output");
             if (context.JsonOutput)
             {
+                context.Verbose("DoctorCommand", "JSON output branch selected for doctor command.");
                 var json = FormatAsJson(report);
                 Console.WriteLine(json);
             }
             else
             {
+                context.Verbose("DoctorCommand", "Text output branch selected for doctor command.");
                 var table = FormatAsTable(report);
                 Console.WriteLine(table);
             }
+
+            progress.CompleteStep("doctor output rendered");
 
             return CommandResult.Success();
         }
         catch (Exception ex)
         {
+            context.Verbose("DoctorCommand", $"Doctor command failed with {ex.GetType().Name}: {ex.Message}");
             return CommandResult.Failure($"Doctor check failed: {ex.Message}");
+        }
+        finally
+        {
+            context.Verbose("DoctorCommand", "Doctor command finished execution path.");
         }
     }
 

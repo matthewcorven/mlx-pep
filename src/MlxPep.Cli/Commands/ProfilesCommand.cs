@@ -27,18 +27,26 @@ public class ProfilesListCommand
         try
         {
             _logger?.LogDebug("Executing profiles list command");
+            context.Verbose("ProfilesListCommand", $"Profiles list invoked with listLocal={listLocal}.");
 
             if (listLocal)
             {
+                context.Verbose("ProfilesListCommand", "Local list branch selected.");
                 return await ExecuteLocalAsync(context);
             }
 
+            context.Verbose("ProfilesListCommand", "Remote list branch selected.");
             return await ExecuteRemoteAsync(context);
         }
         catch (Exception ex)
         {
             _logger?.LogDebug(ex, "Error in profiles list");
+            context.Verbose("ProfilesListCommand", $"Profiles list failed with {ex.GetType().Name}: {ex.Message}");
             return CommandResult.Failure($"Failed to list profiles: {ex.Message}");
+        }
+        finally
+        {
+            context.Verbose("ProfilesListCommand", "Profiles list command finished execution path.");
         }
     }
 
@@ -171,6 +179,7 @@ public class ProfilesSearchCommand
         try
         {
             _logger?.LogDebug("Executing profiles search command with query: {query}", query);
+            context.Verbose("ProfilesSearchCommand", $"Profiles search invoked with query '{query}'.");
 
             using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var serviceClient = new ProfilesServiceClient(httpClient, null);
@@ -178,6 +187,7 @@ public class ProfilesSearchCommand
 
             if (!profilesResult.Success)
             {
+                context.Verbose("ProfilesSearchCommand", "Remote profile list lookup failed during search.");
                 return CommandResult.Failure(profilesResult.Error ?? "Failed to fetch profiles");
             }
 
@@ -191,6 +201,7 @@ public class ProfilesSearchCommand
 
             if (context.JsonOutput)
             {
+                context.Verbose("ProfilesSearchCommand", "JSON output branch selected for profiles search.");
                 var result = new
                 {
                     command = "profiles search",
@@ -209,10 +220,12 @@ public class ProfilesSearchCommand
             }
             else
             {
+                context.Verbose("ProfilesSearchCommand", $"Text output branch selected for profiles search with {results.Count} results.");
                 Console.WriteLine($"Search Results for: '{query}'");
 
                 if (results.Count == 0)
                 {
+                    context.Verbose("ProfilesSearchCommand", "Search returned zero matching profiles.");
                     Console.WriteLine("No profiles found matching the search query.");
                     return CommandResult.Success();
                 }
@@ -236,7 +249,12 @@ public class ProfilesSearchCommand
         catch (Exception ex)
         {
             _logger?.LogDebug(ex, "Error in profiles search");
+            context.Verbose("ProfilesSearchCommand", $"Profiles search failed with {ex.GetType().Name}: {ex.Message}");
             return CommandResult.Failure($"Failed to search profiles: {ex.Message}");
+        }
+        finally
+        {
+            context.Verbose("ProfilesSearchCommand", "Profiles search command finished execution path.");
         }
     }
 }
@@ -252,10 +270,13 @@ public class ProfilesPullCommand
 
     public async Task<CommandResult> ExecuteAsync(string profileId, CommandContext context)
     {
+        using var progress = context.CreateProgressScope("profiles pull", 4);
         try
         {
             _logger?.LogDebug("Executing profiles pull command for profile: {profileId}", profileId);
+            context.Verbose("ProfilesPullCommand", $"Profiles pull invoked for '{profileId}'.");
 
+            progress.StartStep("check local profile cache");
             var localStore = new LocalProfileStore(null);
             using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
             var serviceClient = new ProfilesServiceClient(httpClient, null);
@@ -264,6 +285,8 @@ public class ProfilesPullCommand
             {
                 var message = $"Profile {profileId} already exists locally.";
                 _logger?.LogDebug("{message}", message);
+                context.Verbose("ProfilesPullCommand", "Profile already existed locally; skipping remote fetch.");
+                progress.CompleteStep("profile already existed locally");
 
                 if (!context.JsonOutput)
                 {
@@ -285,30 +308,39 @@ public class ProfilesPullCommand
 
                 return CommandResult.Success();
             }
+            progress.CompleteStep("profile not present locally");
 
+            progress.StartStep("fetch remote profile");
             var profileResult = await serviceClient.GetProfileAsync(profileId);
             if (!profileResult.Success)
             {
                 var errorMsg = profileResult.Error ?? $"Profile {profileId} not found";
                 _logger?.LogDebug("{errorMsg}", errorMsg);
+                context.Verbose("ProfilesPullCommand", "Remote profile fetch failed.");
+                progress.CompleteStep("remote profile fetch failed");
                 return CommandResult.Failure(errorMsg);
             }
+            progress.CompleteStep("remote profile fetched");
 
             var profile = profileResult.Data;
             if (profile == null)
             {
                 var errorMsg = $"Profile {profileId} is invalid";
                 _logger?.LogDebug("{errorMsg}", errorMsg);
+                context.Verbose("ProfilesPullCommand", "Remote profile payload was null.");
                 return CommandResult.Failure(errorMsg);
             }
 
             _logger?.LogDebug("Validating profile {profileId}", profileId);
+            progress.StartStep("validate and save profile");
             var validator = new ProfileValidator();
             var validationResult = validator.ValidateForLocalUse(profile);
             if (!validationResult.IsValid)
             {
                 var errorMsg = $"Profile validation failed: {string.Join("; ", validationResult.Errors)}";
                 _logger?.LogDebug("{errorMsg}", errorMsg);
+                context.Verbose("ProfilesPullCommand", $"Profile validation failed with {validationResult.Errors.Count} errors.");
+                progress.CompleteStep("profile validation failed");
                 return CommandResult.Failure(errorMsg);
             }
 
@@ -318,12 +350,17 @@ public class ProfilesPullCommand
             {
                 var errorMsg = saveResult.Error ?? $"Failed to save profile {profileId}";
                 _logger?.LogDebug("{errorMsg}", errorMsg);
+                context.Verbose("ProfilesPullCommand", "Saving the pulled profile to the local store failed.");
+                progress.CompleteStep("profile save failed");
                 return CommandResult.Failure(errorMsg);
             }
+            progress.CompleteStep("profile validated and saved");
 
             var successMsg = $"Profile {profileId} pulled successfully";
             _logger?.LogDebug("{successMsg}", successMsg);
+            context.Verbose("ProfilesPullCommand", "Pulled profile successfully; rendering output.");
 
+            progress.StartStep("render pull result");
             if (context.JsonOutput)
             {
                 var result = new
@@ -343,13 +380,19 @@ public class ProfilesPullCommand
                 Console.WriteLine(successMsg);
                 Console.WriteLine($"Location: {localStore.GetProfilePath(profileId)}");
             }
+            progress.CompleteStep("rendered pull result");
 
             return CommandResult.Success();
         }
         catch (Exception ex)
         {
             _logger?.LogDebug(ex, "Error in profiles pull");
+            context.Verbose("ProfilesPullCommand", $"Profiles pull failed with {ex.GetType().Name}: {ex.Message}");
             return CommandResult.Failure($"Failed to pull profile: {ex.Message}");
+        }
+        finally
+        {
+            context.Verbose("ProfilesPullCommand", "Profiles pull command finished execution path.");
         }
     }
 }

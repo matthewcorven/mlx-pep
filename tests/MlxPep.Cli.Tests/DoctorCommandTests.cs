@@ -3,6 +3,7 @@ namespace MlxPep.Cli.Tests.Commands;
 using System.Text.Json;
 using MlxPep.Cli.Commands;
 
+[Collection("Console")]
 public class DoctorCommandTests
 {
     [Fact]

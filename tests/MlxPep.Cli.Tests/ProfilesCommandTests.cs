@@ -4,6 +4,7 @@ using System.Text.Json;
 using MlxPep.Cli.Commands;
 using MlxPep.Core;
 
+[Collection("Console")]
 public class ProfilesListCommandTests
 {
     [Fact]
@@ -156,6 +157,7 @@ public class ProfilesListCommandTests
     }
 }
 
+[Collection("Console")]
 public class ProfilesSearchCommandTests
 {
     [Fact]
@@ -300,6 +302,7 @@ public class ProfilesSearchCommandTests
     }
 }
 
+[Collection("Console")]
 public class ProfilesPullCommandTests
 {
     [Fact]
