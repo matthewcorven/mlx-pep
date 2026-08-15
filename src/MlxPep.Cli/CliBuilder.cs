@@ -30,6 +30,7 @@ public static class CliBuilder
             return await (command switch
             {
                 "doctor" => HandleDoctor(context),
+                "config" => HandleConfig(context),
                 "models" => HandleModels(commandArgs.Skip(1).ToArray(), context),
                 "profiles" => HandleProfiles(commandArgs.Skip(1).ToArray(), context),
                 "results" => HandleResults(commandArgs.Skip(1).ToArray(), context),
@@ -79,6 +80,19 @@ public static class CliBuilder
     {
         var handler = new DoctorCommand();
         var result = await handler.ExecuteAsync(context);
+
+        return result.ExitCode;
+    }
+
+    private static async Task<int> HandleConfig(CommandContext context)
+    {
+        var handler = new ConfigCommand();
+        var result = await handler.ExecuteAsync(context);
+
+        if (!context.JsonOutput && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            Console.WriteLine(result.Message);
+        }
 
         return result.ExitCode;
     }
@@ -256,6 +270,7 @@ USAGE:
  
 COMMANDS:
     doctor              Diagnose system and environment
+    config              Show current oMLX environment configuration
     models list         List available HF cache models
     models get <id>     Download a model through the oMLX admin API
     models status       Show oMLX download tasks and model load state
@@ -288,6 +303,7 @@ OPTIONS:
  
 EXAMPLES:
     mlx-pep doctor
+    mlx-pep config
     mlx-pep --verbose --progress models get mlx-community/Qwen3-0.6B-4bit --no-wait
     mlx-pep models list --json
     mlx-pep apply my-profile.jsonl --harness copilot-cli

@@ -6,6 +6,8 @@ public static class InteractiveResultsBrowser
 {
     public static void Run()
     {
+        DisplayConfigurationHeader();
+        
         while (true)
         {
             var store = new AssessmentRunStore();
@@ -16,6 +18,7 @@ public static class InteractiveResultsBrowser
                 .ToList();
 
             Console.Clear();
+            DisplayConfigurationHeader();
             Console.WriteLine("mlx-pep results browser");
             Console.WriteLine();
 
@@ -52,6 +55,39 @@ public static class InteractiveResultsBrowser
         }
     }
 
+    private static void DisplayConfigurationHeader()
+    {
+        var baseUrl = Environment.GetEnvironmentVariable("OMLX_BASE_URL") ?? "(not set)";
+        var apiKey = Environment.GetEnvironmentVariable("OMLX_API_KEY");
+        var displayKey = MaskApiKey(apiKey);
+        
+        Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║ oMLX Configuration                                             ║");
+        Console.WriteLine($"║ URL:  {baseUrl,-58} ║");
+        Console.WriteLine($"║ Key:  {displayKey,-58} ║");
+        Console.WriteLine("╚════════════════════════════════════════════════════════════════╝");
+        Console.WriteLine();
+    }
+
+    private static string MaskApiKey(string? apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return "(not set)";
+        }
+
+        if (apiKey.Length <= 8)
+        {
+            return "***" + new string('*', Math.Max(0, apiKey.Length - 3));
+        }
+
+        var first4 = apiKey[..4];
+        var last4 = apiKey[^4..];
+        var maskedLength = apiKey.Length - 8;
+
+        return $"{first4}{'*' * maskedLength}{last4}";
+    }
+
     private static void BrowseModel(AssessmentRunStore store, string modelId)
     {
         while (true)
@@ -59,6 +95,7 @@ public static class InteractiveResultsBrowser
             var runs = store.ListRuns(requireVerifiedComplete: true, modelId: modelId).ToList();
             var latest = runs.First();
             Console.Clear();
+            DisplayConfigurationHeader();
             Console.WriteLine($"Model: {modelId}");
             Console.WriteLine($"Latest complete run: {latest.RunId}");
             Console.WriteLine();
