@@ -367,15 +367,38 @@ public class ProfilingRunner
                     if (parts.Length == 2)
                     {
                         var key = parts[0].Trim();
-                        var value = parts[1].Trim();
+                        if (key.StartsWith("export ", StringComparison.Ordinal))
+                        {
+                            key = key.Substring("export ".Length).Trim();
+                            Debug.WriteLine($"[ProfilingRunner] Parsed exported environment key {key}");
+                        }
+
+                        var value = parts[1].Trim().Trim('"', '\'');
                         
                         // Expand ~ to home directory
-                        if (value.StartsWith("~"))
-                            value = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                                value.Substring(1));
+                        if (value.StartsWith("~/", StringComparison.Ordinal))
+                        {
+                            value = Path.Combine(
+                                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                value.Substring(2));
+                            Debug.WriteLine($"[ProfilingRunner] Expanded home-relative environment value for {key}");
+                        }
+                        else if (value == "~")
+                        {
+                            value = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                            Debug.WriteLine($"[ProfilingRunner] Expanded bare home-directory environment value for {key}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[ProfilingRunner] Using literal environment value for {key}");
+                        }
                         
                         environment[key] = value;
-                        Debug.WriteLine($"[ProfilingRunner] Set {key}={value}");
+                        Debug.WriteLine($"[ProfilingRunner] Set {key}={FormatEnvironmentValueForLog(key, value)}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"[ProfilingRunner] Skipping malformed .env line: {line}");
                     }
                 }
                 
@@ -386,6 +409,15 @@ public class ProfilingRunner
                 Debug.WriteLine($"[ProfilingRunner] Failed to load .env from {path}: {ex.Message}");
             }
         }
+    }
+
+    private static string FormatEnvironmentValueForLog(string key, string value)
+    {
+        return key.Contains("KEY", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("TOKEN", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("SECRET", StringComparison.OrdinalIgnoreCase)
+            ? "<redacted>"
+            : value;
     }
 
     private static string BuildOperationId()

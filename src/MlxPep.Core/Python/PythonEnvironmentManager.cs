@@ -13,8 +13,7 @@ using System.Threading.Tasks;
 public class PythonEnvironmentManager
 {
     private static readonly string RepoRoot = FindRepoRoot();
-    private static readonly string ModelAssessorPath = Path.Combine(RepoRoot, "src", "model-assessor");
-    private static readonly string ScriptsPath = Path.Combine(ModelAssessorPath, "scripts");
+    private static readonly string? ModelAssessorPath = ResolveModelAssessorPath();
 
     /// <summary>
     /// Verifies model-assessor is available and accessible.
@@ -22,7 +21,9 @@ public class PythonEnvironmentManager
     /// </summary>
     public static bool IsModelAssessorAvailable()
     {
-        return Directory.Exists(ModelAssessorPath) && Directory.Exists(ScriptsPath);
+        var available = ModelAssessorPath != null && Directory.Exists(GetModelAssessorScriptsPath());
+        Debug.WriteLine($"[PythonEnvironmentManager] Model-assessor availability: {available}");
+        return available;
     }
 
     /// <summary>
@@ -31,7 +32,7 @@ public class PythonEnvironmentManager
     /// </summary>
     public static string GetModelAssessorScriptsPath()
     {
-        return ScriptsPath;
+        return Path.Combine(GetModelAssessorRootPath(), "scripts");
     }
 
     /// <summary>
@@ -39,7 +40,15 @@ public class PythonEnvironmentManager
     /// </summary>
     public static string GetModelAssessorRootPath()
     {
-        return ModelAssessorPath;
+        if (ModelAssessorPath != null)
+        {
+            Debug.WriteLine($"[PythonEnvironmentManager] Using model-assessor root at {ModelAssessorPath}");
+            return ModelAssessorPath;
+        }
+
+        var candidates = string.Join(Environment.NewLine, GetCandidateModelAssessorPaths().Select(path => $"  - {path}"));
+        throw new InvalidOperationException(
+            "Cannot locate model-assessor. Checked the following paths:" + Environment.NewLine + candidates);
     }
 
     /// <summary>
@@ -65,5 +74,57 @@ public class PythonEnvironmentManager
         }
 
         throw new InvalidOperationException("Cannot find repository root (mlx-pep.slnx or .git not found)");
+    }
+
+    private static string? ResolveModelAssessorPath()
+    {
+        foreach (var candidatePath in GetCandidateModelAssessorPaths())
+        {
+            var scriptsPath = Path.Combine(candidatePath, "scripts");
+            Debug.WriteLine($"[PythonEnvironmentManager] Checking model-assessor candidate: {candidatePath}");
+            if (Directory.Exists(candidatePath) && Directory.Exists(scriptsPath))
+            {
+                Debug.WriteLine($"[PythonEnvironmentManager] Found model-assessor at {candidatePath}");
+                return candidatePath;
+            }
+        }
+
+        Debug.WriteLine("[PythonEnvironmentManager] No model-assessor candidate path was usable");
+        return null;
+    }
+
+    private static IEnumerable<string> GetCandidateModelAssessorPaths()
+    {
+        var configuredPath = Environment.GetEnvironmentVariable("MLX_PEP_MODEL_ASSESSOR_PATH");
+        if (!string.IsNullOrWhiteSpace(configuredPath))
+        {
+            yield return ExpandHomeDirectory(configuredPath);
+        }
+
+        yield return Path.Combine(RepoRoot, "src", "model-assessor");
+
+        var repoParent = Directory.GetParent(RepoRoot)?.FullName;
+        if (!string.IsNullOrWhiteSpace(repoParent))
+        {
+            yield return Path.Combine(repoParent, "model-assessor");
+        }
+
+        var assemblyDirectory = new FileInfo(typeof(PythonEnvironmentManager).Assembly.Location).DirectoryName;
+        if (!string.IsNullOrWhiteSpace(assemblyDirectory))
+        {
+            yield return Path.Combine(assemblyDirectory, "model-assessor");
+        }
+    }
+
+    private static string ExpandHomeDirectory(string path)
+    {
+        if (path.StartsWith("~/", StringComparison.Ordinal))
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                path[2..]);
+        }
+
+        return path;
     }
 }
