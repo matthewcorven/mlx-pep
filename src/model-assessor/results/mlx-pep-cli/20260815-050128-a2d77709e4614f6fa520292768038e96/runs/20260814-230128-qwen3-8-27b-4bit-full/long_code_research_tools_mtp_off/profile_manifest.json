@@ -1,0 +1,20 @@
+{
+  "assistant_model_id": null,
+  "base_url": "http://127.0.0.1:8000",
+  "created_at": "2026-08-15T05:06:10.242419+00:00",
+  "guard_findings": [],
+  "instance_id": "instance-1",
+  "model_id": "Qwen3.8-27B-4bit",
+  "mtp_enabled": false,
+  "profile_id": "long_code_research_tools_mtp_off",
+  "run_id": "20260814-230128-qwen3-8-27b-4bit-full",
+  "schema_version": "1.0",
+  "source_paths": [
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/00_execution_plan.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/06_bench_results.json"
+  ],
+  "status": "completed",
+  "warning_findings": [],
+  "workload": "long_code_research_tools"
+}

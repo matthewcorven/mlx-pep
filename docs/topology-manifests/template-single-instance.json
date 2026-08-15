@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "mode": "single-instance",
+  "_comment": "Template topology manifest for single-instance development",
+  "instances": [
+    {
+      "id": "default",
+      "type": "vllm",
+      "url": "http://localhost:8000",
+      "_comment": "Local vLLM instance for development",
+      "capacity": {
+        "concurrent_requests": 32,
+        "max_batch_size": 256,
+        "target_qps": 50
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    }
+  ],
+  "routes": [
+    {
+      "name": "default",
+      "instances": ["default"],
+      "strategy": "round-robin",
+      "timeout_seconds": 30,
+      "retry_on_failure": false,
+      "max_retries": 0
+    }
+  ],
+  "routing_policy": {
+    "default_route": "default",
+    "fallback_route": null,
+    "circuit_breaker": {
+      "failure_threshold": 10,
+      "reset_timeout_seconds": 60
+    }
+  }
+}

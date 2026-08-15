@@ -110,6 +110,32 @@ python3 scripts/next_phase/run_assessment.py \
 
 ## Phase 2: Prompt-Quality Evaluation
 
+### List cases in a profile
+
+Use this to discover the exact evaluation case IDs available for that profile before running a single case or a bounded batch.
+
+```bash
+python3 scripts/next_phase/run_prompt_evals.py \
+  --model-id <model-id> \
+  --profile-id <profile-id> \
+  --list-cases
+```
+
+You can also enumerate a few profiles in one pass:
+
+```bash
+for p in \
+  short_code_research_tools_mtp_off \
+  long_code_research_tools_mtp_off \
+  deep_research_mtp_off; do
+  echo "=== $p ==="
+  python3 scripts/next_phase/run_prompt_evals.py \
+    --model-id <model-id> \
+    --profile-id "$p" \
+    --list-cases
+done
+```
+
 ### Exact case execution
 
 ```bash
@@ -173,6 +199,18 @@ Expected outputs:
 
 `ai-harness-reference.md` is the primary manual-testing artifact. It gives one table with the official terms used by VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode beside the recommended model, instance, and oMLX settings for each workload row.
 
+## Required Readiness Gate Before Reporting
+
+The assessment workflow is intentionally staged:
+
+1. run benchmark/probe collection for the selected workload(s),
+2. run the corresponding prompt-quality evaluations,
+3. confirm that each relevant workload has both benchmark and prompt-quality evidence,
+4. only then generate the recommendation manifest,
+5. and only after that generate the client-config artifacts.
+
+This gate is required because status is derived from evidence, not from the fact that some scripts were executed. Reporting is downstream output and must not consume incomplete testing results. The scripts enforce this by refusing to emit a recommendation if workload evidence is missing; the client-config stage does the same when the recommendation manifest still reports missing evidence.
+
 ## Recommended Current Operator Path
 
 Until the single-instance validation batch is complete, use this sequence:
@@ -181,8 +219,9 @@ Until the single-instance validation batch is complete, use this sequence:
 2. run one exact benchmark profile,
 3. run the matching prompt-quality case,
 4. review the artifacts,
-5. move to the next scenario,
-6. regenerate recommendations only after the batch or at a deliberate checkpoint.
+5. confirm the workload has both benchmark and prompt-quality evidence,
+6. regenerate recommendations only after the batch or at a deliberate checkpoint,
+7. generate client guidance only after the recommendation manifest is ready.
 
 The current working tracker for that process is:
 

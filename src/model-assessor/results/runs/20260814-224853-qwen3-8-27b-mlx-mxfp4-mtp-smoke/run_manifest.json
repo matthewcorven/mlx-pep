@@ -1,0 +1,144 @@
+{
+  "artifact_paths": {
+    "assistant_probe": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/assistant_probe.json",
+    "benchmark_results": [
+      "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/long_coding_mtp_off/06_bench_results.json"
+    ],
+    "instance_artifacts": {
+      "instance-1": {
+        "active_benchmark": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/00_active_benchmark.json",
+        "generation_config": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/05_generation_config.json",
+        "login": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/01_login.json",
+        "model_inventory": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/03_models.json",
+        "profile_fields": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/02_profile_fields.json",
+        "selected_model": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instances/instance-1/04_selected_model.json"
+      }
+    },
+    "instance_topology": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/instance_topology.json",
+    "model_inventory": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/03_models.json",
+    "profile_execution_plan": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/profile_execution_plan.json",
+    "profile_fields": "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/02_profile_fields.json",
+    "settings_requests": [
+      "results/runs/20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke/long_coding_mtp_off/01_settings_request.json"
+    ]
+  },
+  "assistant_model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+  "base_url": "http://127.0.0.1:8002",
+  "created_at": "2026-08-15T04:50:33.527096+00:00",
+  "errors": [
+    "instance-3: <urlopen error [Errno 61] Connection refused>",
+    "instance-4: <urlopen error [Errno 61] Connection refused>",
+    "instance-2: <urlopen error [Errno 61] Connection refused>",
+    "short_code_research_tools_mtp_off: missing initialized context for instance-3",
+    "short_coding_mtp_off: missing initialized context for instance-4",
+    "long_coding_mtp_on: missing initialized context for instance-2"
+  ],
+  "instance_topology": {
+    "instance_count": 4,
+    "instance_mode": "multi",
+    "instance_topology_summary": "Multi-instance topology required: 4 hosted instance(s) on separate ports must be managed by the operator for workload-specific recommendations.",
+    "instances": [
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8000",
+        "instance_id": "instance-1",
+        "mtp_enabled": false,
+        "port": 8000,
+        "profile_id": "long_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+        "base_url": "http://127.0.0.1:8001",
+        "instance_id": "instance-2",
+        "mtp_enabled": true,
+        "port": 8001,
+        "profile_id": "long_coding_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8002",
+        "instance_id": "instance-3",
+        "mtp_enabled": false,
+        "port": 8002,
+        "profile_id": "short_code_research_tools_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8003",
+        "instance_id": "instance-4",
+        "mtp_enabled": false,
+        "port": 8003,
+        "profile_id": "short_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_coding"
+      }
+    ],
+    "workload_to_instance": {
+      "long_coding": "instance-1",
+      "short_code_research_tools": "instance-3",
+      "short_coding": "instance-4"
+    }
+  },
+  "model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+  "mtp_mode": "profile",
+  "profile_execution_plan": [
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "mtp_enabled": false,
+      "port": 8002,
+      "profile_id": "short_code_research_tools_mtp_off",
+      "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8003",
+      "instance_id": "instance-4",
+      "mtp_enabled": false,
+      "port": 8003,
+      "profile_id": "short_coding_mtp_off",
+      "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "long_coding_mtp_off",
+      "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+      "base_url": "http://127.0.0.1:8001",
+      "instance_id": "instance-2",
+      "mtp_enabled": true,
+      "port": 8001,
+      "profile_id": "long_coding_mtp_on",
+      "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+      "workload": "long_coding"
+    }
+  ],
+  "profile_ids": [
+    "short_code_research_tools_mtp_off",
+    "short_coding_mtp_off",
+    "long_coding_mtp_off",
+    "long_coding_mtp_on"
+  ],
+  "run_id": "20260814-224853-qwen3-8-27b-mlx-mxfp4-mtp-smoke",
+  "schema_version": "1.0",
+  "status": "partial",
+  "suite": "smoke",
+  "topology_source_path": null,
+  "warnings": []
+}

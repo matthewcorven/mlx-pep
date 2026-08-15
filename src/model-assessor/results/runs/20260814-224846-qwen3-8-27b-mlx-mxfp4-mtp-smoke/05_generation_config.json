@@ -1,0 +1,6 @@
+{
+  "max_context_window": 262144,
+  "temperature": 1.0,
+  "top_k": 20,
+  "top_p": 0.95
+}

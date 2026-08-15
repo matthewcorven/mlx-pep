@@ -43,6 +43,40 @@ Run the standalone terminal browser:
 dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
 ```
 
+Run the TUI with the local oMLX environment configured:
+
+```bash
+export OMLX_BASE_URL=http://127.0.0.1:8000
+export OMLX_API_KEY=<your-omlx-api-key>
+
+dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
+```
+
+VS Code debugging:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "mlx-pep TUI",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/MlxPep.Tui/bin/Debug/net10.0/mlx-pep-tui.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "OMLX_BASE_URL": "http://127.0.0.1:8000",
+        "OMLX_API_KEY": "${env:OMLX_API_KEY}"
+      }
+    }
+  ]
+}
+```
+
+The TUI reads the same `OMLX_BASE_URL` and `OMLX_API_KEY` values as the CLI flow, and it is useful for browsing verified-complete assessment runs without leaving the terminal.
+
 ## Core workflow
 
 ### Inspect and download models
@@ -146,6 +180,88 @@ The interactive browser lets you:
 - save the summary as markdown or JSON
 - run a new assessment
 - list complete local runs for that model
+
+## TUI user workflows and scenarios
+
+The TUI is a presentation layer over the same command handlers used by the CLI. In other words, each TUI workflow is backed by the same command semantics and safety checks as the CLI, with the UI simply making it easier to browse and act.
+
+### 1. Review a model and its latest completed run
+
+Use case:
+- a user wants to inspect the newest verified-complete assessment for a known model.
+
+CLI entry points:
+- `mlx-pep results list`
+- `mlx-pep results show --model <hf-model-id>`
+- `mlx-pep results export --model <hf-model-id> --output ./summary.md --format markdown`
+
+Known scenarios:
+- Happy path: the run exists and the summary renders with the last verified-complete state.
+- Warning path: a run exists but is incomplete; the command can still display it only when `--all` is used.
+- Edge case: the selected model has no completed run; the command exits with a clear "no results"/not-found message.
+
+### 2. Download and inspect the shared oMLX model cache
+
+Use case:
+- a user wants to see what local models are already cached or start a new download.
+
+CLI entry points:
+- `mlx-pep models list`
+- `mlx-pep models status`
+- `mlx-pep models get <hf-model-id>`
+- `mlx-pep models get <hf-model-id> --no-wait`
+
+Known scenarios:
+- Happy path: the cache contains at least one model and the table or JSON output is shown.
+- Warning path: a download is accepted but the task is still in progress; the no-wait branch exits cleanly with a task id.
+- Error path: the oMLX admin login or download request fails; the command exits non-zero and surfaces the underlying error.
+- Edge case: the cache is empty; the list command prints an explicit empty-state message.
+
+### 3. Run a fresh assessment for a model
+
+Use case:
+- a user wants to generate a new local assessment and save profiles.
+
+CLI entry points:
+- `mlx-pep assess <hf-model-id> --suite smoke`
+- `mlx-pep assess <hf-model-id> --suite full`
+- `mlx-pep assess <hf-model-id> --assistant-model-id <assistant-model-id> --suite smoke`
+
+Known scenarios:
+- Happy path: the model-assessor pipeline succeeds and local profile output is stored.
+- Warning path: the assessment emits warnings or a partially valid profile set; the command still exits with a success result if the local validation for the requested workflow is acceptable.
+- Error path: the underlying Python assessment scripts fail or the model-assessor is unavailable; the command exits non-zero with the relevant cause.
+- Edge case: the assistant model is required for MTP-specific profiles but was omitted; the command fails politely rather than silently ignoring the profile requirement.
+
+### 4. Apply a generated profile to a local harness
+
+Use case:
+- a user wants to mirror a saved profile into a client harness without writing real config in a live session.
+
+CLI entry points:
+- `mlx-pep apply <profile-file> --harness vscode --dry-run`
+- `mlx-pep apply <profile-file> --harness copilot-cli --dry-run --no-confirm`
+
+Known scenarios:
+- Happy path: the profile is read and the dry-run output shows the exact configuration entries or actions that would be applied.
+- Warning path: the profile contains unsupported or manual-only settings; the apply flow reports them clearly without pretending they are auto-written.
+- Error path: the file is missing or not valid JSONL/profile content; the command exits non-zero with a concrete validation message.
+- Edge case: a harness is passed that is not supported by the current profile; the apply command surfaces the mismatch.
+
+### 5. Launch the interactive browser for the same local workflows
+
+Use case:
+- a user prefers a terminal UI instead of repeated CLI commands.
+
+Entry points:
+- `mlx-pep tui`
+
+Known scenarios:
+- Happy path: the TUI opens and allows browsing the same run, model, and summary flows as the terminal commands.
+- Error path: the TUI is invoked with `--json` and refuses to start because it is a non-JSON interactive surface.
+- Edge case: the environment is missing the local results or model-assessor data; the TUI still opens, but it shows empty or no-data states rather than failing unpredictably.
+
+These cases are intentionally written to be directly testable at the command level so the CLI and the TUI remain aligned by user workflow rather than by hidden implementation details.
 
 ## Files written by assessment
 

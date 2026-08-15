@@ -1,0 +1,118 @@
+{
+  "assistant_model_id": null,
+  "automatic_checks": {
+    "forbidden_claim_checks": [
+      {
+        "claim": "sync is enabled for all archived projects",
+        "found": false,
+        "severity": "critical"
+      },
+      {
+        "claim": "the behavior is implemented only in docs/architecture.md",
+        "found": false,
+        "severity": "warning"
+      }
+    ],
+    "required_fact_checks": [
+      {
+        "fact": "app/router.py",
+        "found": false,
+        "importance": "must_have"
+      },
+      {
+        "fact": "dispatch_request",
+        "found": false,
+        "importance": "must_have"
+      },
+      {
+        "fact": "should_enable_sync",
+        "found": false,
+        "importance": "must_have"
+      },
+      {
+        "fact": "archived projects always skip sync",
+        "found": false,
+        "importance": "strong"
+      }
+    ],
+    "summary": {
+      "automatic_quality_signal_count": 0,
+      "forbidden_claim_hits": 0,
+      "forbidden_claim_total": 2,
+      "manual_quality_signal_count": 2,
+      "required_fact_hits": 0,
+      "required_fact_total": 4
+    }
+  },
+  "case_id": "short-research-sync-rule",
+  "created_at": "2026-08-15T22:54:28.651434+00:00",
+  "evaluation_run_id": "20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off",
+  "expected_answer": {
+    "forbidden_claims": [
+      {
+        "claim": "sync is enabled for all archived projects",
+        "severity": "critical"
+      },
+      {
+        "claim": "the behavior is implemented only in docs/architecture.md",
+        "severity": "warning"
+      }
+    ],
+    "manual_review_notes": "Prefer answers that clearly distinguish the router entry point from the service rule helper.",
+    "quality_signals": [
+      {
+        "description": "The answer should anchor on code, then mention docs as supporting evidence.",
+        "detectable": "manual",
+        "signal": "Names the controlling file before supporting docs."
+      },
+      {
+        "description": "A concise answer should avoid listing unrelated fixture files.",
+        "detectable": "manual",
+        "signal": "Mentions only the most relevant files."
+      }
+    ],
+    "required_facts": [
+      {
+        "fact": "app/router.py",
+        "importance": "must_have"
+      },
+      {
+        "fact": "dispatch_request",
+        "importance": "must_have"
+      },
+      {
+        "fact": "should_enable_sync",
+        "importance": "must_have"
+      },
+      {
+        "fact": "archived projects always skip sync",
+        "importance": "strong"
+      }
+    ]
+  },
+  "fixture_hash": "d27e583c4b55cca46f6872df836a9fe87f277552cae1ea8afc60492b7605a658",
+  "fixture_version": "2026-06-11.3",
+  "manual_review_notes": "Prefer answers that clearly distinguish the router entry point from the service rule helper.",
+  "model_id": "Qwen3.8-27B-4bit",
+  "mtp_enabled": false,
+  "normalization_id": null,
+  "profile_id": "short_code_research_tools_mtp_off",
+  "recommendation_id": null,
+  "run_id": null,
+  "schema_version": "1.0",
+  "source_paths": [
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/short-research-sync-rule/raw/model_output.json",
+    "config/evaluation_cases.json",
+    "config/prompt_templates.json",
+    "fixtures/synthetic_repo/app/router.py",
+    "fixtures/synthetic_repo/app/service.py",
+    "fixtures/synthetic_repo/docs/architecture.md",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/01_login.json",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/02_profile_fields.json",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/03_models.json",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/04_selected_model.json",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/06_settings_request.json",
+    "results/evaluations/20260815-165415-qwen3-8-27b-4bit-short-code-research-tools-mtp-off/admin/07_settings_response.json"
+  ],
+  "workload": "short_code_research_tools"
+}

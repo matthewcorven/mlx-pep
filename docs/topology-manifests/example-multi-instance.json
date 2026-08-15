@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "mode": "multi-instance",
+  "_comment": "Example topology: vLLM round-robin with Ollama fallback",
+  "instances": [
+    {
+      "id": "vllm-0",
+      "type": "vllm",
+      "url": "http://localhost:8000",
+      "_comment": "Primary vLLM instance (GPU optimized)",
+      "capacity": {
+        "concurrent_requests": 32,
+        "max_batch_size": 256,
+        "target_qps": 50
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "vllm-1",
+      "type": "vllm",
+      "url": "http://localhost:8001",
+      "_comment": "Secondary vLLM instance (GPU optimized)",
+      "capacity": {
+        "concurrent_requests": 32,
+        "max_batch_size": 256,
+        "target_qps": 50
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "ollama-fallback",
+      "type": "ollama",
+      "url": "http://localhost:11434",
+      "_comment": "Fallback instance (CPU inference, higher latency)",
+      "capacity": {
+        "concurrent_requests": 8,
+        "max_batch_size": 64,
+        "target_qps": 10
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    }
+  ],
+  "routes": [
+    {
+      "name": "primary",
+      "instances": ["vllm-0", "vllm-1"],
+      "_comment": "Primary route: round-robin across vLLM instances",
+      "strategy": "round-robin",
+      "timeout_seconds": 30,
+      "retry_on_failure": true,
+      "max_retries": 2
+    },
+    {
+      "name": "fallback",
+      "instances": ["ollama-fallback"],
+      "_comment": "Fallback route: slower but always available",
+      "strategy": "round-robin",
+      "timeout_seconds": 60,
+      "retry_on_failure": false,
+      "max_retries": 0
+    }
+  ],
+  "routing_policy": {
+    "default_route": "primary",
+    "fallback_route": "fallback",
+    "_comment": "Use primary route; fall back if unavailable",
+    "circuit_breaker": {
+      "failure_threshold": 5,
+      "_comment": "Open circuit after 5 failures",
+      "reset_timeout_seconds": 60,
+      "_comment": "Close after 60 seconds without failures"
+    }
+  }
+}

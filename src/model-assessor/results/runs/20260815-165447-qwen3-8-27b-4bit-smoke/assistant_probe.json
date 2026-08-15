@@ -1,0 +1,23 @@
+{
+  "assistant_model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+  "candidate_sources": [
+    {
+      "candidate_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+      "notes": null,
+      "source": "operator_supplied"
+    }
+  ],
+  "evidence_paths": [
+    "results/runs/20260815-165447-qwen3-8-27b-4bit-smoke/03_models.json",
+    "results/runs/20260815-165447-qwen3-8-27b-4bit-smoke/06_assistant_probe_settings_request.json",
+    "results/runs/20260815-165447-qwen3-8-27b-4bit-smoke/07_assistant_probe_settings_response.json"
+  ],
+  "failure_reason": null,
+  "fallback_action": "none",
+  "model_id": "Qwen3.8-27B-4bit",
+  "omlx_inventory_check": "found",
+  "probe_attempted": true,
+  "probe_status": "supported",
+  "run_id": "20260815-165447-qwen3-8-27b-4bit-smoke",
+  "schema_version": "1.0"
+}

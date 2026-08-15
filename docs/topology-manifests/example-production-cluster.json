@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  "mode": "multi-instance",
+  "_comment": "Production topology: High-throughput vLLM cluster with staged fallbacks",
+  "instances": [
+    {
+      "id": "vllm-gpu-0",
+      "type": "vllm",
+      "url": "http://gpu-node-0.internal:8000",
+      "_comment": "GPU node 0: 4x A100 80GB, 768GB CPU RAM, CUDA 12.1",
+      "capacity": {
+        "concurrent_requests": 128,
+        "max_batch_size": 512,
+        "target_qps": 100
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "vllm-gpu-1",
+      "type": "vllm",
+      "url": "http://gpu-node-1.internal:8000",
+      "_comment": "GPU node 1: 4x A100 80GB, 768GB CPU RAM, CUDA 12.1",
+      "capacity": {
+        "concurrent_requests": 128,
+        "max_batch_size": 512,
+        "target_qps": 100
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "vllm-gpu-2",
+      "type": "vllm",
+      "url": "http://gpu-node-2.internal:8000",
+      "_comment": "GPU node 2: 4x A100 80GB, 768GB CPU RAM, CUDA 12.1",
+      "capacity": {
+        "concurrent_requests": 128,
+        "max_batch_size": 512,
+        "target_qps": 100
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "vllm-gpu-3",
+      "type": "vllm",
+      "url": "http://gpu-node-3.internal:8000",
+      "_comment": "GPU node 3: 4x A100 80GB, 768GB CPU RAM, CUDA 12.1",
+      "capacity": {
+        "concurrent_requests": 128,
+        "max_batch_size": 512,
+        "target_qps": 100
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "ollama-cpu-primary",
+      "type": "ollama",
+      "url": "http://cpu-node-0.internal:11434",
+      "_comment": "CPU fallback 1: 128 vCPU, 512GB RAM (higher throughput than secondary)",
+      "capacity": {
+        "concurrent_requests": 16,
+        "max_batch_size": 128,
+        "target_qps": 20
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    },
+    {
+      "id": "ollama-cpu-secondary",
+      "type": "ollama",
+      "url": "http://cpu-node-1.internal:11434",
+      "_comment": "CPU fallback 2: 64 vCPU, 256GB RAM (last resort)",
+      "capacity": {
+        "concurrent_requests": 8,
+        "max_batch_size": 64,
+        "target_qps": 10
+      },
+      "health_check": {
+        "enabled": true,
+        "interval_seconds": 30,
+        "timeout_seconds": 5
+      }
+    }
+  ],
+  "routes": [
+    {
+      "name": "gpu-primary",
+      "instances": ["vllm-gpu-0", "vllm-gpu-1", "vllm-gpu-2", "vllm-gpu-3"],
+      "_comment": "Primary: Round-robin across GPU nodes for maximum throughput",
+      "strategy": "round-robin",
+      "timeout_seconds": 30,
+      "retry_on_failure": true,
+      "max_retries": 2
+    },
+    {
+      "name": "cpu-fallback",
+      "instances": ["ollama-cpu-primary", "ollama-cpu-secondary"],
+      "_comment": "Fallback: CPU inference (slower but always available)",
+      "strategy": "least-loaded",
+      "_comment_strategy": "Try primary CPU first, fall back to secondary if overloaded",
+      "timeout_seconds": 60,
+      "retry_on_failure": true,
+      "max_retries": 1
+    }
+  ],
+  "routing_policy": {
+    "default_route": "gpu-primary",
+    "_comment": "Use GPU route by default for best performance",
+    "fallback_route": "cpu-fallback",
+    "_comment_fallback": "If all GPUs fail/unavailable, fall back to CPU",
+    "circuit_breaker": {
+      "failure_threshold": 10,
+      "_comment": "Open circuit after 10 consecutive failures",
+      "reset_timeout_seconds": 120,
+      "_comment_reset": "Attempt recovery after 2 minutes"
+    },
+    "load_balancing": {
+      "strategy": "least-loaded-with-affinity",
+      "_comment": "Distribute requests to least loaded instance, with session affinity",
+      "sticky_sessions": true,
+      "_comment_sticky": "Keep same client on same instance within time window",
+      "affinity_ttl_seconds": 300,
+      "_comment_ttl": "Affinity expires after 5 minutes"
+    }
+  }
+}

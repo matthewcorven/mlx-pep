@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MlxPep.Cli.Commands;
+using MlxPep.Cli.Services;
 
 namespace MlxPep.Cli;
 
@@ -9,6 +10,8 @@ namespace MlxPep.Cli;
 /// </summary>
 public static class CliBuilder
 {
+    public static Func<IOmlxModelsService> ModelsServiceFactory { get; set; } = () => new OmlxModelsService();
+
     public static async Task<int> RunAsync(string[] args)
     {
         var invocation = CliRuntime.ParseInvocation(args);
@@ -107,11 +110,11 @@ public static class CliBuilder
         string subcommand = args[0].ToLowerInvariant();
         CommandResult result = subcommand switch
         {
-            "list" => await new ModelsListCommand().ExecuteAsync(context),
+            "list" => await new ModelsListCommand(ModelsServiceFactory()).ExecuteAsync(context),
             "get" => args.Length > 1
-                ? await new ModelsGetCommand().ExecuteAsync(args[1], context, waitForCompletion: !args.Contains("--no-wait"), loadAfterDownload: args.Contains("--load"))
+                ? await new ModelsGetCommand(ModelsServiceFactory()).ExecuteAsync(args[1], context, waitForCompletion: !args.Contains("--no-wait"), loadAfterDownload: args.Contains("--load"))
                 : new CommandResult(1, "Usage: mlx-pep models get <hf_id>"),
-            "status" => await new ModelsStatusCommand().ExecuteAsync(context),
+            "status" => await new ModelsStatusCommand(ModelsServiceFactory()).ExecuteAsync(context),
             _ => new CommandResult(1, $"Unknown models subcommand: {subcommand}")
         };
 
@@ -180,13 +183,14 @@ public static class CliBuilder
     {
         if (args.Length == 0)
         {
-            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--assistant-model-id X] [--suite smoke|full] [--publish]");
+            return PrintErrorAndReturn1("Usage: mlx-pep assess <hf_id> [--assistant-model-id X] [--suite smoke|full] [--publish] [--topology-manifest PATH]");
         }
 
         string hfId = args[0];
         string? assistantModelId = GetOptionValue(args, "--assistant-model-id");
         string suite = GetOptionValue(args, "--suite") ?? "full";
         bool publish = args.Contains("--publish");
+        string? topologyManifestPath = GetOptionValue(args, "--topology-manifest");
 
         // Validate suite argument
         if (suite != "smoke" && suite != "full")
@@ -194,15 +198,21 @@ public static class CliBuilder
             return PrintErrorAndReturn1("Error: --suite must be 'smoke' or 'full'");
         }
 
+        // Validate topology manifest path if provided
+        if (!string.IsNullOrWhiteSpace(topologyManifestPath) && !File.Exists(topologyManifestPath))
+        {
+            return PrintErrorAndReturn1($"Error: topology manifest file not found: {topologyManifestPath}");
+        }
+
         var handler = new AssessCommand();
-        var result = await handler.ExecuteAsync(hfId, assistantModelId, suite, publish, context);
+        var result = await handler.ExecuteAsync(hfId, assistantModelId, suite, publish, topologyManifestPath, context);
 
         // AssessCommand handles its own JSON output; don't double-output
         if (!context.JsonOutput && result.ExitCode != 0)
         {
             Console.WriteLine(result.Message);
         }
-         
+
         return result.ExitCode;
     }
 
@@ -264,10 +274,10 @@ public static class CliBuilder
     {
         Console.WriteLine(@"
 mlx-pep — MLX Performance Evaluation Platform
- 
+
 USAGE:
     mlx-pep [--json] [--progress] [--verbose] <COMMAND> [OPTIONS]
- 
+
 COMMANDS:
     doctor              Diagnose system and environment
     config              Show current oMLX environment configuration
@@ -285,7 +295,7 @@ COMMANDS:
     tui                 Start terminal UI
     help                Show this help
     --version           Show version
- 
+
 OPTIONS:
     --json                    Output JSON (available on all commands)
     --progress                Write stderr progress updates with work and overall percentages
@@ -300,7 +310,7 @@ OPTIONS:
     --output <path>           (results export) Output file path
     --format <fmt>            (results export) markdown or json
     --help, -h                Show this help
- 
+
 EXAMPLES:
     mlx-pep doctor
     mlx-pep config

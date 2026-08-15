@@ -7,7 +7,7 @@ public static class InteractiveResultsBrowser
     public static void Run()
     {
         DisplayConfigurationHeader();
-        
+
         while (true)
         {
             var store = new AssessmentRunStore();
@@ -60,7 +60,7 @@ public static class InteractiveResultsBrowser
         var baseUrl = Environment.GetEnvironmentVariable("OMLX_BASE_URL") ?? "(not set)";
         var apiKey = Environment.GetEnvironmentVariable("OMLX_API_KEY");
         var displayKey = MaskApiKey(apiKey);
-        
+
         Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
         Console.WriteLine("║ oMLX Configuration                                             ║");
         Console.WriteLine($"║ URL:  {baseUrl,-58} ║");

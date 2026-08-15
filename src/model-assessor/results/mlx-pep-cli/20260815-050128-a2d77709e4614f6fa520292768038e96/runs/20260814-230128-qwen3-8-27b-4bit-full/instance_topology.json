@@ -1,0 +1,114 @@
+{
+  "instance_count": 1,
+  "instance_mode": "single",
+  "instance_topology_summary": "Single hosted instance is sufficient for CLI assessment runs.",
+  "instances": [
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "short_code_research_tools_mtp_off",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "short_code_research_tools_mtp_on",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "long_code_research_tools_mtp_off",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "long_code_research_tools_mtp_on",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "short_coding_mtp_off",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "short_coding_mtp_on",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "long_coding_mtp_off",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "long_coding_mtp_on",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "deep_research_mtp_off",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": null,
+      "base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "mtp_enabled": false,
+      "port": 8000,
+      "profile_id": "deep_research_mtp_on",
+      "reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+      "workload": "deep_research"
+    }
+  ],
+  "workload_to_instance": {
+    "deep_research": "instance-1",
+    "long_code_research_tools": "instance-1",
+    "long_coding": "instance-1",
+    "short_code_research_tools": "instance-1",
+    "short_coding": "instance-1"
+  }
+}

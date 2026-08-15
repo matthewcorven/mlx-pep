@@ -1,0 +1,83 @@
+[
+  {
+    "current": 0,
+    "message": "Loading Qwen3.8-27B-4bit...",
+    "phase": "load",
+    "total": 1,
+    "type": "progress"
+  },
+  {
+    "current": 0,
+    "message": "Warming up (JIT compile)...",
+    "phase": "warmup",
+    "total": 1,
+    "type": "progress"
+  },
+  {
+    "current": 1,
+    "message": "Single: pp1024/tg256",
+    "phase": "single",
+    "total": 1,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "cached_tokens": 0,
+      "completion_tokens": 256,
+      "e2e_latency_s": 18.026,
+      "gen_tps": 20.6,
+      "peak_memory_bytes": 17022324828,
+      "pp": 1024,
+      "processing_tps": 184.0,
+      "prompt_tokens": 1024,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 16.1,
+          "p_avg": 2.6,
+          "total_avg": 6.0,
+          "total_max": 17.1
+        },
+        "gpu": {
+          "util_avg": 43.8,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 15.82,
+          "mlx_cache_peak": 0.6,
+          "phys_footprint_peak": 16.6,
+          "system_used_peak": 58.06,
+          "system_wired_peak": 19.85,
+          "total_ram": 128
+        },
+        "sample_count": 70,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "single",
+      "tg": 256,
+      "total_throughput": 71.0,
+      "tpot_ms": 48.81,
+      "ttft_ms": 5564.3
+    },
+    "type": "result"
+  },
+  {
+    "current": 1,
+    "message": "Unloading Qwen3.8-27B-4bit...",
+    "phase": "cleanup",
+    "total": 1,
+    "type": "progress"
+  },
+  {
+    "summary": {
+      "context_profile": "code_python",
+      "model_id": "Qwen3.8-27B-4bit",
+      "total_tests": 1,
+      "total_time": 21.1
+    },
+    "type": "done"
+  }
+]

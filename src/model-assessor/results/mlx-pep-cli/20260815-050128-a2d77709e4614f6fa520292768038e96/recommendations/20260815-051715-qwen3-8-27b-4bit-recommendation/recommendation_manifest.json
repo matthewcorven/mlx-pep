@@ -1,0 +1,385 @@
+{
+  "assistant_model_id": null,
+  "created_at": "2026-08-15T05:17:15.235881+00:00",
+  "evaluation_run_id": null,
+  "instance_topology": {
+    "instance_count": 10,
+    "instance_mode": "multi",
+    "instance_topology_summary": "Multi-instance topology required: 10 hosted instance(s) on separate ports must be managed by the operator for workload-specific recommendations.",
+    "instances": [
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8000",
+        "instance_id": "instance-1",
+        "mtp_enabled": false,
+        "port": 8000,
+        "profile_id": "deep_research_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "deep_research"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8001",
+        "instance_id": "instance-2",
+        "mtp_enabled": false,
+        "port": 8001,
+        "profile_id": "deep_research_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "deep_research"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8002",
+        "instance_id": "instance-3",
+        "mtp_enabled": false,
+        "port": 8002,
+        "profile_id": "long_code_research_tools_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8003",
+        "instance_id": "instance-4",
+        "mtp_enabled": false,
+        "port": 8003,
+        "profile_id": "long_code_research_tools_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8004",
+        "instance_id": "instance-5",
+        "mtp_enabled": false,
+        "port": 8004,
+        "profile_id": "long_coding_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8005",
+        "instance_id": "instance-6",
+        "mtp_enabled": false,
+        "port": 8005,
+        "profile_id": "long_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8006",
+        "instance_id": "instance-7",
+        "mtp_enabled": false,
+        "port": 8006,
+        "profile_id": "short_code_research_tools_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8007",
+        "instance_id": "instance-8",
+        "mtp_enabled": false,
+        "port": 8007,
+        "profile_id": "short_code_research_tools_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8008",
+        "instance_id": "instance-9",
+        "mtp_enabled": false,
+        "port": 8008,
+        "profile_id": "short_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8009",
+        "instance_id": "instance-10",
+        "mtp_enabled": false,
+        "port": 8009,
+        "profile_id": "short_coding_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_coding"
+      }
+    ],
+    "workload_to_instance": {
+      "deep_research": "instance-1",
+      "long_code_research_tools": "instance-3",
+      "long_coding": "instance-5",
+      "short_code_research_tools": "instance-7",
+      "short_coding": "instance-9"
+    }
+  },
+  "missing_evidence": [],
+  "model_id": "Qwen3.8-27B-4bit",
+  "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+  "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+  "recommendations": [
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "deep_research_mtp_off",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 1,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 122.088 s; TTFT 94195.500 ms; generation TPS 18.400 tok/s; prefill TPS 173.900 tok/s; total throughput 138.400 tok/s; peak memory 17.86 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "deep_research_mtp_on",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 2,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 129.786 s; TTFT 96676.700 ms; generation TPS 15.500 tok/s; prefill TPS 169.500 tok/s; total throughput 130.200 tok/s; peak memory 17.86 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "long_code_research_tools_mtp_on",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 1,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "3 benchmark result(s); mean E2E 40.415 s; TTFT 34152.150 ms; generation TPS 19.750 tok/s; prefill TPS 178.650 tok/s; total throughput 132.650 tok/s; peak memory 17.14 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "long_code_research_tools_mtp_off",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 2,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "3 benchmark result(s); mean E2E 43.379 s; TTFT 35425.300 ms; generation TPS 17.700 tok/s; prefill TPS 177.550 tok/s; total throughput 126.800 tok/s; peak memory 17.14 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "long_coding_mtp_on",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 1,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "2 benchmark result(s); mean E2E 54.828 s; TTFT 35654.200 ms; generation TPS 19.250 tok/s; prefill TPS 171.450 tok/s; total throughput 119.550 tok/s; peak memory 17.35 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "long_coding_mtp_off",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 2,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/06_bench_results.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+      ],
+      "speed_summary": "2 benchmark result(s); mean E2E 59.942 s; TTFT 33692.050 ms; generation TPS 19.550 tok/s; prefill TPS 183.250 tok/s; total throughput 108.600 tok/s; peak memory 17.35 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "short_code_research_tools_mtp_off",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 1,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/06_bench_results.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 13.016 s; TTFT 4083.000 ms; generation TPS 28.700 tok/s; prefill TPS 250.800 tok/s; total throughput 98.300 tok/s; peak memory 15.85 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "short_code_research_tools_mtp_on",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 2,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/06_bench_results.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 13.749 s; TTFT 4424.300 ms; generation TPS 27.500 tok/s; prefill TPS 231.500 tok/s; total throughput 93.100 tok/s; peak memory 15.85 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "short_coding_mtp_off",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 1,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/06_bench_results.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 17.800 s; TTFT 5479.100 ms; generation TPS 20.800 tok/s; prefill TPS 186.900 tok/s; total throughput 71.900 tok/s; peak memory 15.85 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "assistant_recommended": false,
+      "caveats": [
+        "Secondary evidence type for this workload is missing: evaluation."
+      ],
+      "confidence": "low",
+      "mtp_recommended": false,
+      "profile_id": "short_coding_mtp_on",
+      "quality_summary": "No prompt-quality evaluation evidence available.",
+      "rank": 2,
+      "source_paths": [
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/01_settings_request.json",
+        "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/06_bench_results.json"
+      ],
+      "speed_summary": "1 benchmark result(s); mean E2E 18.026 s; TTFT 5564.300 ms; generation TPS 20.600 tok/s; prefill TPS 184.000 tok/s; total throughput 71.000 tok/s; peak memory 15.85 GiB.",
+      "tradeoffs": [
+        "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+      ],
+      "workload": "short_coding"
+    }
+  ],
+  "run_id": null,
+  "schema_version": "1.0",
+  "source_evaluation_run_ids": [],
+  "source_paths": [
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/06_bench_results.json"
+  ],
+  "source_run_ids": [
+    "20260814-230128-qwen3-8-27b-4bit-full"
+  ]
+}

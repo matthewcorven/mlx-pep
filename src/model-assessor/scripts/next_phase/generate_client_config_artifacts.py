@@ -728,6 +728,12 @@ def main() -> int:
         ["schema_version", "recommendation_id", "created_at", "model_id", "recommendations", "source_paths"],
         "recommendation_manifest",
     )
+    missing_evidence = recommendation_manifest.get("missing_evidence") or []
+    if missing_evidence:
+        raise ValueError(
+            "Client configuration artifacts cannot be generated while recommendation evidence is incomplete: "
+            + "; ".join(missing_evidence)
+        )
 
     profiles_doc = load_json(profiles_json_path)
     profiles_by_id = {

@@ -53,6 +53,53 @@ This repository captures four things:
 ./scripts/run_full_matrix.sh --model-id gemma-4-12B-it-bf16
 ```
 
+## TUI Usage
+
+The repo includes a local interactive results browser for reviewing verified assessment runs. The app runs from the TUI project entry point and reads the same `OMLX_BASE_URL` / `OMLX_API_KEY` environment variables as the CLI flows.
+
+Run it from the repo root:
+
+```bash
+export OMLX_BASE_URL=http://127.0.0.1:8000
+export OMLX_API_KEY=<your-omlx-api-key>
+
+dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
+```
+
+Or run the built binary directly:
+
+```bash
+cd /Users/core/git/matthewcorven/mlx-pep
+dotnet src/MlxPep.Tui/bin/Debug/net10.0/mlx-pep-tui.dll
+```
+
+## VS Code Debugging
+
+For debugging in VS Code, add a launch configuration like this:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "mlx-pep TUI",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/MlxPep.Tui/bin/Debug/net10.0/mlx-pep-tui.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "OMLX_BASE_URL": "http://127.0.0.1:8000",
+        "OMLX_API_KEY": "${env:OMLX_API_KEY}"
+      }
+    }
+  ]
+}
+```
+
+Then start the app from Run and Debug using the `mlx-pep TUI` configuration.
+
 ## Next-Phase Workflow Status
 
 The stable, long-lived repository documentation now lives primarily in:
@@ -84,6 +131,26 @@ python3 scripts/next_phase/run_assessment.py \
 python3 scripts/next_phase/run_prompt_evals.py \
   --model-id gemma-4-12B-it-bf16 \
   --profile-id short_code_research_tools_mtp_off
+```
+
+List the available prompt cases for a specific profile before executing it, so you can choose the exact case IDs for a single, bounded validation pass:
+
+```bash
+python3 scripts/next_phase/run_prompt_evals.py \
+  --model-id gemma-4-12B-it-bf16 \
+  --profile-id deep_research_mtp_off \
+  --list-cases
+
+for p in \
+  short_code_research_tools_mtp_off \
+  long_code_research_tools_mtp_off \
+  deep_research_mtp_off; do
+  echo "=== $p ==="
+  python3 scripts/next_phase/run_prompt_evals.py \
+    --model-id gemma-4-12B-it-bf16 \
+    --profile-id "$p" \
+    --list-cases
+done
 ```
 
 When a stored recommendation manifest declares a multi-instance topology, pass that contract back into the live runner so real assessments target the same separate-port layout that the client artifacts describe:
@@ -122,6 +189,18 @@ python3 scripts/next_phase/generate_recommendation_report.py \
 python3 scripts/next_phase/generate_client_config_artifacts.py \
   --recommendation-manifest results/recommendations/20260611-062759-gemma-4-12b-it-bf16-recommendation/recommendation_manifest.json
 ```
+
+## Required Worker Flow And Evidence Gate
+
+The repo now treats the workflow as a strict staged pipeline rather than a loose set of parallel tasks:
+
+1. Run benchmark/probe collection for the selected model and workload set.
+2. Run prompt-quality evaluation for the same workloads and case sets.
+3. Verify each workload has both benchmark evidence and prompt-quality evidence before using data downstream.
+4. Only then run `generate_recommendation_report.py`.
+5. Only then run `generate_client_config_artifacts.py`.
+
+This is not optional. The recommendation and client-artifact scripts now refuse to emit downstream artifacts if required evidence is missing. In practical terms, a report should be understood as a checkpoint artifact, not a first-class source of truth for an unvalidated model run.
 
 Read the readiness handoff before treating the current recommendations as complete. The current repo outputs now cover all five benchmark workloads and provide actionable ranked recommendations, but confidence remains low where long and deep prompt-quality evidence is still missing.
 

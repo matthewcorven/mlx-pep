@@ -33,6 +33,7 @@ public class AssessCommand
         string? assistantModelId = null,
         string suite = "full",
         bool publish = false,
+        string? topologyManifestPath = null,
         CommandContext? context = null)
     {
         context ??= new CommandContext();
@@ -59,7 +60,8 @@ public class AssessCommand
                 var profilingResult = await _profilingRunner.RunProfilingAsync(
                     hfId,
                     assistantModelId,
-                    suite);
+                    suite,
+                    topologyManifestPath);
                 progress.CompleteStep("profiling workflow complete");
 
                 progress.StartStep("map recommendation manifest to profiles");

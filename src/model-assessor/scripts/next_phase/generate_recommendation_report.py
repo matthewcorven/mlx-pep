@@ -502,6 +502,38 @@ def build_quality_summary(candidate: dict[str, Any]) -> str:
     return sentence
 
 
+def validate_report_evidence(candidates: list[dict[str, Any]]) -> None:
+    if not candidates:
+        raise ValueError(
+            "Recommendation report cannot be generated because no candidate evidence was found. "
+            "Sequence requirement: run benchmark/probe collection first, then prompt-quality evaluation, then generate the recommendation report."
+        )
+
+    workloads: dict[str, dict[str, bool]] = {}
+    for candidate in candidates:
+        workload = candidate.get("workload") or "unknown"
+        summary = workloads.setdefault(workload, {"benchmark": False, "evaluation": False})
+        benchmark = bool((candidate.get("benchmark") or {}).get("available"))
+        evaluation = bool((candidate.get("evaluation") or {}).get("available"))
+        summary["benchmark"] = summary["benchmark"] or benchmark
+        summary["evaluation"] = summary["evaluation"] or evaluation
+
+    missing: list[str] = []
+    for workload in sorted(workloads):
+        summary = workloads[workload]
+        if not summary["benchmark"]:
+            missing.append(f"workload '{workload}' is missing benchmark evidence")
+        if not summary["evaluation"]:
+            missing.append(f"workload '{workload}' is missing prompt-quality evaluation evidence")
+
+    if missing:
+        raise ValueError(
+            "Recommendation report cannot be generated because required evidence is incomplete: "
+            + "; ".join(missing)
+            + ". Sequence requirement: run benchmark/probe collection first, then prompt-quality evaluation, then generate the recommendation report."
+        )
+
+
 def build_candidate_caveats(
     candidate: dict[str, Any],
     ranked_candidates: list[dict[str, Any]],
@@ -1034,6 +1066,8 @@ def main() -> int:
 
     if not candidates:
         raise SystemExit(f"No run or evaluation evidence matched model_id={args.model_id!r}")
+
+    validate_report_evidence(candidates)
 
     now = dt.datetime.now(dt.timezone.utc)
     normalization_id = build_artifact_id(args.model_id, "normalized", now)

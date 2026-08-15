@@ -1,0 +1,5153 @@
+{
+  "artifacts": {
+    "ai_harness_reference": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+    "client_recommendations": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/client_recommendations.json",
+    "readme": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/README.md",
+    "unsupported_settings": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/unsupported-settings.md"
+  },
+  "assistant_model_id": null,
+  "client_recommendation_rows": [
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "deep_research_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "deep_research_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX deep_research"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "131072"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "8192"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "deep_research_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload deep_research, rank 1"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "deep_research_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "deep_research_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX deep_research"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 1)"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "131072"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "8192"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-1/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-1/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "deep_research_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "deep_research_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX deep_research"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "131072"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "8192"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "deep_research_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload deep_research, rank 2"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "deep_research_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8000/v1",
+      "instance_base_url": "http://127.0.0.1:8000",
+      "instance_id": "instance-1",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "deep_research_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.35,
+        "top_k": 80,
+        "top_p": 0.97,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX deep_research"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8000/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (deep_research rank 2)"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "131072"
+        },
+        {
+          "term": "provider.omlx-instance-1.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "8192"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-1/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-1/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_code_research_tools_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_code_research_tools_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX long_code_research_tools"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "65536"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "4096"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "long_code_research_tools_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload long_code_research_tools, rank 1"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "long_code_research_tools_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8002/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "long_code_research_tools_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX long_code_research_tools"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8002/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 1)"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "65536"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "4096"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-3/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-3/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_code_research_tools_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_code_research_tools_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX long_code_research_tools"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "65536"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "4096"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "long_code_research_tools_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload long_code_research_tools, rank 2"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "long_code_research_tools_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8002/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8002/v1",
+      "instance_base_url": "http://127.0.0.1:8002",
+      "instance_id": "instance-3",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "long_code_research_tools_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.25,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX long_code_research_tools"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8002/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (long_code_research_tools rank 2)"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "65536"
+        },
+        {
+          "term": "provider.omlx-instance-3.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "4096"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-3/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-3/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_coding_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_coding_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX long_coding"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "32768"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "4096"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "long_coding_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload long_coding, rank 1"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "long_coding_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8004/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "long_coding_mtp_on",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX long_coding"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8004/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 1)"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "32768"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "4096"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-5/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-5/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_coding_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "long_coding_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX long_coding"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "32768"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "4096"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "long_coding_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload long_coding, rank 2"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "long_coding_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8004/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8004/v1",
+      "instance_base_url": "http://127.0.0.1:8004",
+      "instance_id": "instance-5",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "long_coding_mtp_off",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX long_coding"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8004/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (long_coding rank 2)"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "32768"
+        },
+        {
+          "term": "provider.omlx-instance-5.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "4096"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-5/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-5/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_code_research_tools_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_code_research_tools_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX short_code_research_tools"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "16384"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "1536"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "short_code_research_tools_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload short_code_research_tools, rank 1"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "short_code_research_tools_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8006/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "short_code_research_tools_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX short_code_research_tools"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8006/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 1)"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "16384"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "1536"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-7/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-7/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_code_research_tools_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_code_research_tools_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX short_code_research_tools"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "16384"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "1536"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "short_code_research_tools_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload short_code_research_tools, rank 2"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "short_code_research_tools_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8006/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8006/v1",
+      "instance_base_url": "http://127.0.0.1:8006",
+      "instance_id": "instance-7",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "short_code_research_tools_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.2,
+        "top_k": 64,
+        "top_p": 0.95,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX short_code_research_tools"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8006/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (short_code_research_tools rank 2)"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "16384"
+        },
+        {
+          "term": "provider.omlx-instance-7.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "1536"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-7/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-7/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_coding_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_coding_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX short_coding"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "16384"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "1024"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "short_coding_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload short_coding, rank 1"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "short_coding_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8008/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "short_coding_mtp_off",
+      "rank": 1,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX short_coding"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8008/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 1)"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "16384"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "1024"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-9/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-9/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "harness_display_name": "VS Code",
+      "harness_id": "vscode",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "VS Code documents local-model support through built-in providers or extension-provided providers. The generic Custom Endpoint provider is documented on the same page as an Insiders capability, so this row is a selector-only reference for stable VS Code.",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_coding_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "Chat: Manage Language Models",
+          "value": "register a built-in or extension-provided local model entry first"
+        },
+        {
+          "term": "inlineChat.defaultModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "harness_display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Custom Endpoint is the documented generic self-hosted path in VS Code Insiders. The repo has only validated oMLX `/v1/models` and `/v1/completions`, so agent/tool-calling compatibility and the exact endpoint URL still require operator validation.",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "profile_id": "short_coding_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "vendor",
+          "value": "customendpoint"
+        },
+        {
+          "term": "name",
+          "value": "oMLX short_coding"
+        },
+        {
+          "term": "apiKey",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "models[].id",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "models[].name",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "models[].url",
+          "value": "requires a compatible Chat Completions, Responses, or Messages endpoint; raw oMLX chat compatibility is not yet verified in this repo"
+        },
+        {
+          "term": "models[].apiType",
+          "value": "chat-completions"
+        },
+        {
+          "term": "models[].toolCalling",
+          "value": "true if your routed endpoint supports it"
+        },
+        {
+          "term": "models[].maxInputTokens",
+          "value": "16384"
+        },
+        {
+          "term": "models[].maxOutputTokens",
+          "value": "1024"
+        },
+        {
+          "term": "chat.utilityModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "chat.utilitySmallModel",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        }
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "harness_display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "Claude Code officially supports direct Anthropic API access, Bedrock, Vertex, Foundry, and Anthropic-compatible gateways. Its gateway docs require Anthropic Messages, Bedrock, or Vertex-style endpoints. Raw oMLX is not documented as a direct provider here, so use a gateway or proxy layer rather than the raw oMLX public API.",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "profile_id": "short_coding_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "model",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "env.ANTHROPIC_BASE_URL",
+          "value": "Anthropic-compatible gateway URL in front of oMLX"
+        },
+        {
+          "term": "env.ANTHROPIC_API_KEY",
+          "value": "gateway or forwarded oMLX credential"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+          "value": "oMLX workload short_coding, rank 2"
+        }
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "harness_display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "GitHub Copilot CLI officially supports your own model provider through environment variables, including OpenAI-compatible endpoints, Ollama, and vLLM. The official docs require tool calling and streaming support, and recommend a context window of at least 128k tokens. This repo has not yet validated those requirements against oMLX.",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "profile_id": "short_coding_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "COPILOT_PROVIDER_TYPE",
+          "value": "openai"
+        },
+        {
+          "term": "COPILOT_PROVIDER_BASE_URL",
+          "value": "http://127.0.0.1:8008/v1"
+        },
+        {
+          "term": "COPILOT_PROVIDER_API_KEY",
+          "value": "operator-supplied OMLX_API_KEY"
+        },
+        {
+          "term": "COPILOT_MODEL",
+          "value": "Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "settings.json:model",
+          "value": "Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported",
+      "workload": "short_coding"
+    },
+    {
+      "assistant_model_id": "none",
+      "config_surface": "opencode.json provider and model configuration",
+      "harness_display_name": "OpenCode",
+      "harness_id": "opencode",
+      "inference_api_base_url": "http://127.0.0.1:8008/v1",
+      "instance_base_url": "http://127.0.0.1:8008",
+      "instance_id": "instance-9",
+      "model_id": "Qwen3.8-27B-4bit",
+      "notes": "OpenCode officially supports local models and custom providers through `opencode.json`. The documented custom-provider path uses `@ai-sdk/openai-compatible` with `options.baseURL`, `options.apiKey`, model metadata, and top-level `model`. Tool-calling behavior should still be verified against the routed oMLX model.",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "profile_id": "short_coding_mtp_on",
+      "rank": 2,
+      "recommended_server_settings": {
+        "force_sampling": true,
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "min_p": 0.0,
+        "mtp_enabled": false,
+        "temperature": 0.1,
+        "top_k": 40,
+        "top_p": 0.9,
+        "vlm_mtp_enabled": false
+      },
+      "recommended_values": [
+        {
+          "term": "provider.<provider_id>.npm",
+          "value": "@ai-sdk/openai-compatible"
+        },
+        {
+          "term": "provider.<provider_id>.name",
+          "value": "oMLX short_coding"
+        },
+        {
+          "term": "provider.<provider_id>.options.baseURL",
+          "value": "http://127.0.0.1:8008/v1"
+        },
+        {
+          "term": "provider.<provider_id>.options.apiKey",
+          "value": "{env:OMLX_API_KEY}"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.name",
+          "value": "Qwen3.8-27B-4bit (short_coding rank 2)"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.limit.context",
+          "value": "16384"
+        },
+        {
+          "term": "provider.omlx-instance-9.models.Qwen3.8-27B-4bit.limit.output",
+          "value": "1024"
+        },
+        {
+          "term": "model",
+          "value": "omlx-instance-9/Qwen3.8-27B-4bit"
+        },
+        {
+          "term": "small_model",
+          "value": "omlx-instance-9/Qwen3.8-27B-4bit"
+        }
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported",
+      "workload": "short_coding"
+    }
+  ],
+  "created_at": "2026-08-15T05:17:15.235881+00:00",
+  "evaluation_run_id": null,
+  "harness_research_reference": [
+    {
+      "artifact_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+      "config_surface": "Language Models editor plus settings.json selectors",
+      "display_name": "VS Code",
+      "harness_id": "vscode",
+      "official_terms": [
+        "Chat: Manage Language Models",
+        "inlineChat.defaultModel",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "local_models_supported_via_built_in_or_extension_provider"
+    },
+    {
+      "artifact_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+      "config_surface": "chatLanguageModels.json plus model picker selectors",
+      "display_name": "VS Code Insiders",
+      "harness_id": "vscode_insiders",
+      "official_terms": [
+        "chatLanguageModels.json",
+        "vendor",
+        "name",
+        "models[].id",
+        "models[].name",
+        "models[].url",
+        "models[].apiType",
+        "models[].toolCalling",
+        "models[].maxInputTokens",
+        "models[].maxOutputTokens",
+        "chat.utilityModel",
+        "chat.utilitySmallModel"
+      ],
+      "source_urls": [
+        "https://code.visualstudio.com/docs/agent-customization/language-models"
+      ],
+      "support_status": "custom_endpoint_provider_documented_in_insiders"
+    },
+    {
+      "artifact_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+      "config_surface": "settings.json model/env fields or shell environment before launch",
+      "display_name": "Claude Code",
+      "harness_id": "claude_code",
+      "official_terms": [
+        "model",
+        "env.ANTHROPIC_BASE_URL",
+        "env.ANTHROPIC_MODEL",
+        "env.ANTHROPIC_API_KEY",
+        "env.ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES"
+      ],
+      "source_urls": [
+        "https://code.claude.com/docs/en/settings",
+        "https://code.claude.com/docs/en/model-config",
+        "https://code.claude.com/docs/en/llm-gateway",
+        "https://code.claude.com/docs/en/env-vars"
+      ],
+      "support_status": "gateway_or_provider_specific_path_required"
+    },
+    {
+      "artifact_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+      "config_surface": "shell environment, command-line flags, and ~/.copilot/settings.json",
+      "display_name": "GitHub Copilot CLI",
+      "harness_id": "github_copilot_cli",
+      "official_terms": [
+        "COPILOT_PROVIDER_BASE_URL",
+        "COPILOT_PROVIDER_TYPE",
+        "COPILOT_PROVIDER_API_KEY",
+        "COPILOT_MODEL",
+        "--model",
+        "settings.json:model"
+      ],
+      "source_urls": [
+        "https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+        "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference"
+      ],
+      "support_status": "official_byok_provider_env_supported"
+    },
+    {
+      "artifact_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/client-configs/20260815-051715-qwen3-8-27b-4bit-recommendation/ai-harness-reference.md",
+      "config_surface": "opencode.json provider and model configuration",
+      "display_name": "OpenCode",
+      "harness_id": "opencode",
+      "official_terms": [
+        "provider.<provider_id>.npm",
+        "provider.<provider_id>.name",
+        "provider.<provider_id>.options.baseURL",
+        "provider.<provider_id>.options.apiKey",
+        "provider.<provider_id>.models.<model_id>.name",
+        "provider.<provider_id>.models.<model_id>.limit.context",
+        "provider.<provider_id>.models.<model_id>.limit.output",
+        "model",
+        "small_model"
+      ],
+      "source_urls": [
+        "https://opencode.ai/docs/config",
+        "https://opencode.ai/docs/models",
+        "https://opencode.ai/docs/providers"
+      ],
+      "support_status": "official_custom_provider_and_local_model_supported"
+    }
+  ],
+  "instance_topology": {
+    "instance_count": 10,
+    "instance_mode": "multi",
+    "instance_topology_summary": "Multi-instance topology required: 10 hosted instance(s) on separate ports must be managed by the operator for workload-specific recommendations.",
+    "instances": [
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8000",
+        "instance_id": "instance-1",
+        "mtp_enabled": false,
+        "port": 8000,
+        "profile_id": "deep_research_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "deep_research"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8001",
+        "instance_id": "instance-2",
+        "mtp_enabled": false,
+        "port": 8001,
+        "profile_id": "deep_research_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "deep_research"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8002",
+        "instance_id": "instance-3",
+        "mtp_enabled": false,
+        "port": 8002,
+        "profile_id": "long_code_research_tools_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8003",
+        "instance_id": "instance-4",
+        "mtp_enabled": false,
+        "port": 8003,
+        "profile_id": "long_code_research_tools_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8004",
+        "instance_id": "instance-5",
+        "mtp_enabled": false,
+        "port": 8004,
+        "profile_id": "long_coding_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8005",
+        "instance_id": "instance-6",
+        "mtp_enabled": false,
+        "port": 8005,
+        "profile_id": "long_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "long_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8006",
+        "instance_id": "instance-7",
+        "mtp_enabled": false,
+        "port": 8006,
+        "profile_id": "short_code_research_tools_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8007",
+        "instance_id": "instance-8",
+        "mtp_enabled": false,
+        "port": 8007,
+        "profile_id": "short_code_research_tools_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_code_research_tools"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8008",
+        "instance_id": "instance-9",
+        "mtp_enabled": false,
+        "port": 8008,
+        "profile_id": "short_coding_mtp_off",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_coding"
+      },
+      {
+        "assistant_model_id": null,
+        "base_url": "http://127.0.0.1:8009",
+        "instance_id": "instance-10",
+        "mtp_enabled": false,
+        "port": 8009,
+        "profile_id": "short_coding_mtp_on",
+        "reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+        "workload": "short_coding"
+      }
+    ],
+    "workload_to_instance": {
+      "deep_research": "instance-1",
+      "long_code_research_tools": "instance-3",
+      "long_coding": "instance-5",
+      "short_code_research_tools": "instance-7",
+      "short_coding": "instance-9"
+    }
+  },
+  "missing_evidence": [],
+  "model_id": "Qwen3.8-27B-4bit",
+  "mtp_enabled": null,
+  "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+  "profile_id": null,
+  "profiles_catalog_path": "config/benchmark_profiles.json",
+  "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+  "recommendation_manifest_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/recommendations/20260815-051715-qwen3-8-27b-4bit-recommendation/recommendation_manifest.json",
+  "run_id": null,
+  "schema_version": "1.0",
+  "source_paths": [
+    "config/benchmark_profiles.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/recommendations/20260815-051715-qwen3-8-27b-4bit-recommendation/recommendation_manifest.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/06_bench_results.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/01_settings_request.json",
+    "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/06_bench_results.json"
+  ],
+  "supported_harnesses": [
+    "vscode",
+    "vscode_insiders",
+    "claude_code",
+    "github_copilot_cli",
+    "opencode"
+  ],
+  "unsupported_settings": [
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "force_sampling",
+      "values": [
+        {
+          "rank": 1,
+          "value": true,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": true,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": true,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": true,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": true,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": true,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": true,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": true,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": true,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": true,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "max_context_window",
+      "values": [
+        {
+          "rank": 1,
+          "value": 131072,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 131072,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 65536,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 65536,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 32768,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 32768,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 16384,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 16384,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 16384,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 16384,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "max_tokens",
+      "values": [
+        {
+          "rank": 1,
+          "value": 8192,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 8192,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 4096,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 4096,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 4096,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 4096,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 1536,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 1536,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 1024,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 1024,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "min_p",
+      "values": [
+        {
+          "rank": 1,
+          "value": 0.0,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 0.0,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 0.0,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.0,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.0,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.0,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 0.0,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.0,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.0,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.0,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "mtp_enabled",
+      "values": [
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "temperature",
+      "values": [
+        {
+          "rank": 1,
+          "value": 0.35,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 0.35,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 0.25,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.25,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.1,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.1,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 0.2,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.2,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.1,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.1,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "top_k",
+      "values": [
+        {
+          "rank": 1,
+          "value": 80,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 80,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 64,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 64,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 40,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 40,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 64,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 64,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 40,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 40,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "top_p",
+      "values": [
+        {
+          "rank": 1,
+          "value": 0.97,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": 0.97,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": 0.95,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.95,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.9,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.9,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": 0.95,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": 0.95,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": 0.9,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": 0.9,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    },
+    {
+      "apply_instead": "Apply the setting through the oMLX admin API, the benchmark profile catalog, or the repo-local assessment scripts before launching the selected AI harness.",
+      "harnesses": [
+        "vscode",
+        "vscode_insiders",
+        "claude_code",
+        "github_copilot_cli",
+        "opencode"
+      ],
+      "reason": "This is an oMLX-side runtime setting, not a portable client-native custom-model key across VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.",
+      "setting": "vlm_mtp_enabled",
+      "values": [
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "deep_research"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "long_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "long_coding"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "short_code_research_tools"
+        },
+        {
+          "rank": 1,
+          "value": false,
+          "workload": "short_coding"
+        },
+        {
+          "rank": 2,
+          "value": false,
+          "workload": "short_coding"
+        }
+      ],
+      "workloads": [
+        "deep_research",
+        "long_code_research_tools",
+        "long_coding",
+        "short_code_research_tools",
+        "short_coding"
+      ]
+    }
+  ],
+  "workload": null,
+  "workloads": [
+    {
+      "assistant_model_id": null,
+      "created_at": "2026-08-15T05:17:15.235881+00:00",
+      "evaluation_run_id": null,
+      "model_id": "Qwen3.8-27B-4bit",
+      "mtp_enabled": null,
+      "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+      "profile_id": null,
+      "ranked_recommendations": [
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "deep_research_mtp_off",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 1,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 131072,
+            "max_tokens": 8192,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.35,
+            "top_k": 80,
+            "top_p": 0.97,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_off/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 122.088 s; TTFT 94195.500 ms; generation TPS 18.400 tok/s; prefill TPS 173.900 tok/s; total throughput 138.400 tok/s; peak memory 17.86 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "deep_research"
+        },
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "deep_research_mtp_on",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 2,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 131072,
+            "max_tokens": 8192,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.35,
+            "top_k": 80,
+            "top_p": 0.97,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/deep_research_mtp_on/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 129.786 s; TTFT 96676.700 ms; generation TPS 15.500 tok/s; prefill TPS 169.500 tok/s; total throughput 130.200 tok/s; peak memory 17.86 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "deep_research"
+        }
+      ],
+      "recommendation_count": 2,
+      "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+      "run_id": null,
+      "schema_version": "1.0",
+      "workload": "deep_research"
+    },
+    {
+      "assistant_model_id": null,
+      "created_at": "2026-08-15T05:17:15.235881+00:00",
+      "evaluation_run_id": null,
+      "model_id": "Qwen3.8-27B-4bit",
+      "mtp_enabled": null,
+      "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+      "profile_id": null,
+      "ranked_recommendations": [
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "long_code_research_tools_mtp_on",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 1,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 65536,
+            "max_tokens": 4096,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.25,
+            "top_k": 64,
+            "top_p": 0.95,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_on/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "3 benchmark result(s); mean E2E 40.415 s; TTFT 34152.150 ms; generation TPS 19.750 tok/s; prefill TPS 178.650 tok/s; total throughput 132.650 tok/s; peak memory 17.14 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "long_code_research_tools"
+        },
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "long_code_research_tools_mtp_off",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 2,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 65536,
+            "max_tokens": 4096,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.25,
+            "top_k": 64,
+            "top_p": 0.95,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_code_research_tools_mtp_off/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "3 benchmark result(s); mean E2E 43.379 s; TTFT 35425.300 ms; generation TPS 17.700 tok/s; prefill TPS 177.550 tok/s; total throughput 126.800 tok/s; peak memory 17.14 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "long_code_research_tools"
+        }
+      ],
+      "recommendation_count": 2,
+      "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+      "run_id": null,
+      "schema_version": "1.0",
+      "workload": "long_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "created_at": "2026-08-15T05:17:15.235881+00:00",
+      "evaluation_run_id": null,
+      "model_id": "Qwen3.8-27B-4bit",
+      "mtp_enabled": null,
+      "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+      "profile_id": null,
+      "ranked_recommendations": [
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "long_coding_mtp_on",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 1,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 32768,
+            "max_tokens": 4096,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.1,
+            "top_k": 40,
+            "top_p": 0.9,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_on/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "2 benchmark result(s); mean E2E 54.828 s; TTFT 35654.200 ms; generation TPS 19.250 tok/s; prefill TPS 171.450 tok/s; total throughput 119.550 tok/s; peak memory 17.35 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "long_coding"
+        },
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "long_coding_mtp_off",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 2,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 32768,
+            "max_tokens": 4096,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.1,
+            "top_k": 40,
+            "top_p": 0.9,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/long_coding_mtp_off/06_bench_results.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json"
+          ],
+          "speed_summary": "2 benchmark result(s); mean E2E 59.942 s; TTFT 33692.050 ms; generation TPS 19.550 tok/s; prefill TPS 183.250 tok/s; total throughput 108.600 tok/s; peak memory 17.35 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "long_coding"
+        }
+      ],
+      "recommendation_count": 2,
+      "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+      "run_id": null,
+      "schema_version": "1.0",
+      "workload": "long_coding"
+    },
+    {
+      "assistant_model_id": null,
+      "created_at": "2026-08-15T05:17:15.235881+00:00",
+      "evaluation_run_id": null,
+      "model_id": "Qwen3.8-27B-4bit",
+      "mtp_enabled": null,
+      "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+      "profile_id": null,
+      "ranked_recommendations": [
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "short_code_research_tools_mtp_off",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 1,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 16384,
+            "max_tokens": 1536,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.2,
+            "top_k": 64,
+            "top_p": 0.95,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_off/06_bench_results.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 13.016 s; TTFT 4083.000 ms; generation TPS 28.700 tok/s; prefill TPS 250.800 tok/s; total throughput 98.300 tok/s; peak memory 15.85 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "short_code_research_tools"
+        },
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "short_code_research_tools_mtp_on",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 2,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 16384,
+            "max_tokens": 1536,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.2,
+            "top_k": 64,
+            "top_p": 0.95,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_code_research_tools_mtp_on/06_bench_results.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 13.749 s; TTFT 4424.300 ms; generation TPS 27.500 tok/s; prefill TPS 231.500 tok/s; total throughput 93.100 tok/s; peak memory 15.85 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "short_code_research_tools"
+        }
+      ],
+      "recommendation_count": 2,
+      "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+      "run_id": null,
+      "schema_version": "1.0",
+      "workload": "short_code_research_tools"
+    },
+    {
+      "assistant_model_id": null,
+      "created_at": "2026-08-15T05:17:15.235881+00:00",
+      "evaluation_run_id": null,
+      "model_id": "Qwen3.8-27B-4bit",
+      "mtp_enabled": null,
+      "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+      "profile_id": null,
+      "ranked_recommendations": [
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "short_coding_mtp_off",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 1,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 16384,
+            "max_tokens": 1024,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.1,
+            "top_k": 40,
+            "top_p": 0.9,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_off/06_bench_results.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 17.800 s; TTFT 5479.100 ms; generation TPS 20.800 tok/s; prefill TPS 186.900 tok/s; total throughput 71.900 tok/s; peak memory 15.85 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "short_coding"
+        },
+        {
+          "assistant_model_id": null,
+          "assistant_recommended": false,
+          "caveats": [
+            "Secondary evidence type for this workload is missing: evaluation."
+          ],
+          "confidence": "low",
+          "created_at": "2026-08-15T05:17:15.235881+00:00",
+          "evaluation_run_id": null,
+          "harness_reference_action": "Use the matching workload and harness rows in ai-harness-reference.md; apply oMLX-side settings before configuring or launching the selected harness.",
+          "model_id": "Qwen3.8-27B-4bit",
+          "mtp_enabled": false,
+          "normalization_id": "20260815-051715-qwen3-8-27b-4bit-normalized",
+          "profile_id": "short_coding_mtp_on",
+          "profile_source_path": "config/benchmark_profiles.json",
+          "quality_summary": "No prompt-quality evaluation evidence available.",
+          "rank": 2,
+          "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+          "recommended_server_settings": {
+            "force_sampling": true,
+            "max_context_window": 16384,
+            "max_tokens": 1024,
+            "min_p": 0.0,
+            "mtp_enabled": false,
+            "temperature": 0.1,
+            "top_k": 40,
+            "top_p": 0.9,
+            "vlm_mtp_enabled": false
+          },
+          "run_id": null,
+          "schema_version": "1.0",
+          "settings_source_path": "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/01_settings_request.json",
+          "source_paths": [
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/assistant_probe.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/run_manifest.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/01_settings_request.json",
+            "results/mlx-pep-cli/20260815-050128-a2d77709e4614f6fa520292768038e96/runs/20260814-230128-qwen3-8-27b-4bit-full/short_coding_mtp_on/06_bench_results.json"
+          ],
+          "speed_summary": "1 benchmark result(s); mean E2E 18.026 s; TTFT 5564.300 ms; generation TPS 20.600 tok/s; prefill TPS 184.000 tok/s; total throughput 71.000 tok/s; peak memory 15.85 GiB.",
+          "tradeoffs": [
+            "Ranking leans on speed evidence because no prompt-quality evaluation exists for this profile yet."
+          ],
+          "unsupported_direct_settings": [
+            "force_sampling",
+            "max_context_window",
+            "max_tokens",
+            "min_p",
+            "mtp_enabled",
+            "temperature",
+            "top_k",
+            "top_p",
+            "vlm_mtp_enabled"
+          ],
+          "workload": "short_coding"
+        }
+      ],
+      "recommendation_count": 2,
+      "recommendation_id": "20260815-051715-qwen3-8-27b-4bit-recommendation",
+      "run_id": null,
+      "schema_version": "1.0",
+      "workload": "short_coding"
+    }
+  ]
+}

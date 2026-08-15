@@ -1,0 +1,182 @@
+[
+  {
+    "current": 0,
+    "message": "Loading Qwen3.8-27B-4bit...",
+    "phase": "load",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "current": 0,
+    "message": "Warming up (JIT compile)...",
+    "phase": "warmup",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "current": 1,
+    "message": "Single: pp4096/tg256",
+    "phase": "single",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "cached_tokens": 0,
+      "completion_tokens": 256,
+      "e2e_latency_s": 35.627,
+      "gen_tps": 18.5,
+      "peak_memory_bytes": 18262196282,
+      "pp": 4096,
+      "processing_tps": 188.2,
+      "prompt_tokens": 4096,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 15.3,
+          "p_avg": 1.8,
+          "total_avg": 5.1,
+          "total_max": 13.1
+        },
+        "gpu": {
+          "util_avg": 67.8,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 16.94,
+          "mlx_cache_peak": 0.57,
+          "phys_footprint_peak": 18.0,
+          "system_used_peak": 60.01,
+          "system_wired_peak": 21.88,
+          "total_ram": 128
+        },
+        "sample_count": 140,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "single",
+      "tg": 256,
+      "total_throughput": 122.2,
+      "tpot_ms": 54.29,
+      "ttft_ms": 21761.6
+    },
+    "type": "result"
+  },
+  {
+    "current": 2,
+    "message": "Single: pp8192/tg256",
+    "phase": "single",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "cached_tokens": 0,
+      "completion_tokens": 256,
+      "e2e_latency_s": 64.285,
+      "gen_tps": 16.9,
+      "peak_memory_bytes": 18988597326,
+      "pp": 8192,
+      "processing_tps": 166.9,
+      "prompt_tokens": 8192,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 15.3,
+          "p_avg": 1.7,
+          "total_avg": 5.1,
+          "total_max": 18.7
+        },
+        "gpu": {
+          "util_avg": 79.2,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 17.62,
+          "mlx_cache_peak": 3.05,
+          "phys_footprint_peak": 18.97,
+          "system_used_peak": 60.95,
+          "system_wired_peak": 22.68,
+          "total_ram": 128
+        },
+        "sample_count": 254,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "single",
+      "tg": 256,
+      "total_throughput": 131.4,
+      "tpot_ms": 59.51,
+      "ttft_ms": 49089.0
+    },
+    "type": "result"
+  },
+  {
+    "current": 3,
+    "message": "Batch 2x: pp1024/tg256",
+    "phase": "batch",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "avg_ttft_ms": 13233.9,
+      "batch_size": 2,
+      "e2e_latency_s": 30.224,
+      "peak_memory_bytes": 17952149596,
+      "pp": 1024,
+      "pp_tps": 154.7,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 15.4,
+          "p_avg": 2.0,
+          "total_avg": 5.3,
+          "total_max": 11.2
+        },
+        "gpu": {
+          "util_avg": 99.0,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 16.7,
+          "mlx_cache_peak": 1.23,
+          "phys_footprint_peak": 17.46,
+          "system_used_peak": 59.46,
+          "system_wired_peak": 21.14,
+          "total_ram": 128
+        },
+        "sample_count": 119,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "batch",
+      "tg": 256,
+      "tg_tps": 30.1,
+      "total_gen_tokens": 512
+    },
+    "type": "result"
+  },
+  {
+    "current": 3,
+    "message": "Unloading Qwen3.8-27B-4bit...",
+    "phase": "cleanup",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "summary": {
+      "context_profile": "code_python",
+      "model_id": "Qwen3.8-27B-4bit",
+      "total_tests": 3,
+      "total_time": 133.0
+    },
+    "type": "done"
+  }
+]

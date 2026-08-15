@@ -1,0 +1,179 @@
+[
+  {
+    "current": 0,
+    "message": "Loading Qwen3.8-27B-4bit...",
+    "phase": "load",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "current": 0,
+    "message": "Warming up (JIT compile)...",
+    "phase": "warmup",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "current": 1,
+    "message": "Single: pp1024/tg256",
+    "phase": "single",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "cached_tokens": 0,
+      "completion_tokens": 256,
+      "e2e_latency_s": 13.749,
+      "gen_tps": 27.5,
+      "peak_memory_bytes": 17022324828,
+      "pp": 1024,
+      "processing_tps": 231.5,
+      "prompt_tokens": 1024,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 23.4,
+          "p_avg": 3.6,
+          "total_avg": 8.5,
+          "total_max": 19.6
+        },
+        "gpu": {
+          "util_avg": 99.8,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 15.85,
+          "mlx_cache_peak": 0.6,
+          "phys_footprint_peak": 16.56,
+          "system_used_peak": 58.3,
+          "system_wired_peak": 20.32,
+          "total_ram": 128
+        },
+        "sample_count": 54,
+        "thermal": {
+          "max": 0,
+          "start": 0
+        }
+      },
+      "test_type": "single",
+      "tg": 256,
+      "total_throughput": 93.1,
+      "tpot_ms": 36.54,
+      "ttft_ms": 4424.3
+    },
+    "type": "result"
+  },
+  {
+    "current": 2,
+    "message": "Batch 2x: pp1024/tg256",
+    "phase": "batch",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "avg_ttft_ms": 10181.6,
+      "batch_size": 2,
+      "e2e_latency_s": 21.132,
+      "peak_memory_bytes": 17243574364,
+      "pp": 1024,
+      "pp_tps": 201.1,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 28.8,
+          "p_avg": 4.0,
+          "total_avg": 10.2,
+          "total_max": 22.1
+        },
+        "gpu": {
+          "util_avg": 99.8,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 16.05,
+          "mlx_cache_peak": 0.6,
+          "phys_footprint_peak": 16.77,
+          "system_used_peak": 58.84,
+          "system_wired_peak": 20.48,
+          "total_ram": 128
+        },
+        "sample_count": 83,
+        "thermal": {
+          "max": 2,
+          "start": 0
+        }
+      },
+      "test_type": "batch",
+      "tg": 256,
+      "tg_tps": 46.8,
+      "total_gen_tokens": 512
+    },
+    "type": "result"
+  },
+  {
+    "current": 3,
+    "message": "Batch 4x: pp1024/tg256",
+    "phase": "batch",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "data": {
+      "avg_ttft_ms": 20313.6,
+      "batch_size": 4,
+      "e2e_latency_s": 38.711,
+      "peak_memory_bytes": 17686564956,
+      "pp": 1024,
+      "pp_tps": 200.0,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 18.9,
+          "p_avg": 2.5,
+          "total_avg": 6.6,
+          "total_max": 23.7
+        },
+        "gpu": {
+          "util_avg": 99.3,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 16.47,
+          "mlx_cache_peak": 1.39,
+          "phys_footprint_peak": 17.6,
+          "system_used_peak": 59.84,
+          "system_wired_peak": 21.72,
+          "total_ram": 128
+        },
+        "sample_count": 153,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "batch",
+      "tg": 256,
+      "tg_tps": 56.2,
+      "total_gen_tokens": 1024
+    },
+    "type": "result"
+  },
+  {
+    "current": 3,
+    "message": "Unloading Qwen3.8-27B-4bit...",
+    "phase": "cleanup",
+    "total": 3,
+    "type": "progress"
+  },
+  {
+    "summary": {
+      "context_profile": "code_python",
+      "model_id": "Qwen3.8-27B-4bit",
+      "total_tests": 3,
+      "total_time": 76.5
+    },
+    "type": "done"
+  }
+]

@@ -107,7 +107,8 @@ public class ProfilingRunner
     public async Task<AssessmentRunResult> RunProfilingAsync(
         string modelHfId,
         string? assistantModelId = null,
-        string suite = "full")
+        string suite = "full",
+        string? topologyManifestPath = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting profiling for {modelHfId} (suite={suite})");
         
@@ -147,12 +148,26 @@ public class ProfilingRunner
             Debug.WriteLine($"[ProfilingRunner] Using operation ID {operationId}");
             Debug.WriteLine($"[ProfilingRunner] Using MTP mode {mtpMode}");
 
-            var topologyManifestPath = CreateSingleInstanceTopologyManifest(
-                operationId,
-                suite,
-                mtpMode,
-                assistantModelId);
-            Debug.WriteLine($"[ProfilingRunner] Generated single-instance topology manifest at {topologyManifestPath}");
+            // Use provided topology manifest or generate a single-instance one
+            string resolvedTopologyManifestPath;
+            if (!string.IsNullOrWhiteSpace(topologyManifestPath))
+            {
+                if (!File.Exists(topologyManifestPath))
+                {
+                    throw new FileNotFoundException($"Topology manifest file not found: {topologyManifestPath}");
+                }
+                resolvedTopologyManifestPath = Path.GetFullPath(topologyManifestPath);
+                Debug.WriteLine($"[ProfilingRunner] Using provided topology manifest at {resolvedTopologyManifestPath}");
+            }
+            else
+            {
+                resolvedTopologyManifestPath = CreateSingleInstanceTopologyManifest(
+                    operationId,
+                    suite,
+                    mtpMode,
+                    assistantModelId);
+                Debug.WriteLine($"[ProfilingRunner] Generated single-instance topology manifest at {resolvedTopologyManifestPath}");
+            }
 
             var assessmentModelId = await ResolveAssessmentModelIdAsync(modelHfId, cts: default);
             if (assessmentModelId.Equals(modelHfId, StringComparison.Ordinal))
@@ -165,7 +180,7 @@ public class ProfilingRunner
             }
 
             var args =
-                $"{QuoteArgument(AssessmentScriptPath)} --model-id {QuoteArgument(assessmentModelId)} --suite {QuoteArgument(suite)} --mtp {QuoteArgument(mtpMode)} --results-dir {QuoteArgument(runBaseDir)} --topology-manifest {QuoteArgument(topologyManifestPath)}";
+                $"{QuoteArgument(AssessmentScriptPath)} --model-id {QuoteArgument(assessmentModelId)} --suite {QuoteArgument(suite)} --mtp {QuoteArgument(mtpMode)} --results-dir {QuoteArgument(runBaseDir)} --topology-manifest {QuoteArgument(resolvedTopologyManifestPath)}";
             
             if (!string.IsNullOrWhiteSpace(assistantModelId))
             {

@@ -76,15 +76,15 @@ public class ConfigCommand
         lines.Add("");
         lines.Add("Environment Variables:");
         lines.Add("");
-        
+
         // Display OMLX_BASE_URL
         var displayUrl = baseUrl ?? "(not set)";
         lines.Add($"  OMLX_BASE_URL:  {displayUrl}");
-        
+
         // Display OMLX_API_KEY (masked)
         var displayKey = MaskApiKey(apiKey);
         lines.Add($"  OMLX_API_KEY:   {displayKey}");
-        
+
         lines.Add("");
 
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))

@@ -1,0 +1,42 @@
+[
+  {
+    "assistant_model_id": null,
+    "base_url": "http://127.0.0.1:8002",
+    "instance_id": "instance-3",
+    "mtp_enabled": false,
+    "port": 8002,
+    "profile_id": "short_code_research_tools_mtp_off",
+    "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+    "workload": "short_code_research_tools"
+  },
+  {
+    "assistant_model_id": null,
+    "base_url": "http://127.0.0.1:8003",
+    "instance_id": "instance-4",
+    "mtp_enabled": false,
+    "port": 8003,
+    "profile_id": "short_coding_mtp_off",
+    "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+    "workload": "short_coding"
+  },
+  {
+    "assistant_model_id": null,
+    "base_url": "http://127.0.0.1:8000",
+    "instance_id": "instance-1",
+    "mtp_enabled": false,
+    "port": 8000,
+    "profile_id": "long_coding_mtp_off",
+    "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+    "workload": "long_coding"
+  },
+  {
+    "assistant_model_id": "Qwen3.8-27B-MLX-MXFP4-MTP",
+    "base_url": "http://127.0.0.1:8001",
+    "instance_id": "instance-2",
+    "mtp_enabled": true,
+    "port": 8001,
+    "profile_id": "long_coding_mtp_on",
+    "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+    "workload": "long_coding"
+  }
+]

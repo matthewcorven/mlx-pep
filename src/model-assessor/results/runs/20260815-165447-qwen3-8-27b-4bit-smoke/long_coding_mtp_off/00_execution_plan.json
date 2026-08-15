@@ -1,0 +1,10 @@
+{
+  "assistant_model_id": null,
+  "base_url": "http://127.0.0.1:8000",
+  "instance_id": "instance-1",
+  "mtp_enabled": false,
+  "port": 8000,
+  "profile_id": "long_coding_mtp_off",
+  "topology_reason": "Distinct workload settings require a dedicated hosted instance on its own port.",
+  "workload": "long_coding"
+}
