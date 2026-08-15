@@ -1,0 +1,20 @@
+{
+  "fixture_version": "2026-06-11.3",
+  "fixture_files": [
+    "fixtures/synthetic_repo/README.md",
+    "fixtures/synthetic_repo/app/router.py",
+    "fixtures/synthetic_repo/app/service.py",
+    "fixtures/synthetic_repo/config/projects.json",
+    "fixtures/synthetic_repo/data/project_notes.py",
+    "fixtures/synthetic_repo/docs/architecture.md",
+    "fixtures/synthetic_repo/docs/change_request.md",
+    "fixtures/synthetic_repo/docs/operator_brief.md"
+  ],
+  "fixture_size_bytes": 3498,
+  "change_notes": [
+    "Initial Chunk 3 synthetic evaluation fixture set with one text-only scenario per workload.",
+    "Covers research, coding, and recommendation prompts without requiring live oMLX access.",
+    "Expanded the prompt-case catalog to include MTP-on profile variants so prompt-quality comparisons can track both sides of the benchmark matrix.",
+    "Added the missing short-code-research MTP-on case so every benchmarked workload now has explicit evaluation coverage for both profile variants where defined."
+  ]
+}

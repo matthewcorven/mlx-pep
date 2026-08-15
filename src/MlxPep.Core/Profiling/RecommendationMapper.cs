@@ -98,8 +98,8 @@ public class RecommendationMapper
                 topK = topKVal;
             if (tierRec.Sampler.ContainsKey("repetitionPenalty") && tierRec.Sampler["repetitionPenalty"] is double repVal)
                 repPenalty = repVal;
-            if (tierRec.Sampler.ContainsKey("contextTokens") && tierRec.Sampler["contextTokens"] is int contextTokenValue)
-                contextTokens = contextTokenValue;
+            if (tierRec.Sampler.ContainsKey("contextTokens") && tierRec.Sampler["contextTokens"] is int contextTokenValue && contextTokenValue > 0)
+                contextTokens = contextTokenValue;  // Only set if > 0 (skip 0 as invalid)
 
             sampler = new SamplerSettings(temperature, topP, topK, repPenalty, contextTokens);
         }

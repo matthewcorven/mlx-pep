@@ -1,0 +1,4 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "error": "Model not found in /admin/api/models: test/model"
+}

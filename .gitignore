@@ -13,7 +13,6 @@ artifacts/
 
 ## Local development
 .env
-src/model-assessor/
 
 ## Python prototype
 __pycache__/

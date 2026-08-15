@@ -221,6 +221,86 @@ public class ProfileValidator
             System.Diagnostics.Debug.WriteLine($"[ProfileValidator] harness is null, skipping unknown key check");
         }
 
+        // Validate sampler settings bounds
+        if (profile.Sampler != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Validating sampler settings");
+
+            if (profile.Sampler.Temperature.HasValue)
+            {
+                var temp = profile.Sampler.Temperature.Value;
+                if (temp < 0 || temp > 2)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler temperature out of range: {temp}");
+                    errors.Add($"Sampler temperature must be in range [0, 2], got {temp}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler temperature valid: {temp}");
+                }
+            }
+
+            if (profile.Sampler.TopP.HasValue)
+            {
+                var topP = profile.Sampler.TopP.Value;
+                if (topP < 0 || topP > 1)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler topP out of range: {topP}");
+                    errors.Add($"Sampler topP must be in range [0, 1], got {topP}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler topP valid: {topP}");
+                }
+            }
+
+            if (profile.Sampler.TopK.HasValue)
+            {
+                var topK = profile.Sampler.TopK.Value;
+                if (topK <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler topK invalid (must be positive): {topK}");
+                    errors.Add($"Sampler topK must be positive, got {topK}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler topK valid: {topK}");
+                }
+            }
+
+            if (profile.Sampler.RepetitionPenalty.HasValue)
+            {
+                var repPenalty = profile.Sampler.RepetitionPenalty.Value;
+                if (repPenalty < 0 || repPenalty > 2)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler repetitionPenalty out of range: {repPenalty}");
+                    errors.Add($"Sampler repetitionPenalty must be in range [0, 2], got {repPenalty}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler repetitionPenalty valid: {repPenalty}");
+                }
+            }
+
+            if (profile.Sampler.ContextTokens.HasValue)
+            {
+                var contextTokens = profile.Sampler.ContextTokens.Value;
+                if (contextTokens <= 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler contextTokens invalid (must be positive): {contextTokens}");
+                    errors.Add($"Sampler contextTokens must be positive, got {contextTokens}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ProfileValidator] Sampler contextTokens valid: {contextTokens}");
+                }
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"[ProfileValidator] sampler is null, skipping sampler validation");
+        }
+
         var result = errors.Any()
             ? new ValidationResult(false, errors, warnings)
             : new ValidationResult(true, new List<string>(), warnings);

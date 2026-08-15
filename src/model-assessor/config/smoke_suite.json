@@ -1,0 +1,8 @@
+{
+  "profiles": [
+    "short_code_research_tools_mtp_off",
+    "short_coding_mtp_off",
+    "long_coding_mtp_off",
+    "long_coding_mtp_on"
+  ]
+}

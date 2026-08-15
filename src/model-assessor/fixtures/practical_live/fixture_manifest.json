@@ -1,0 +1,21 @@
+{
+  "change_notes": [
+    "Initial practical live fixture set for long-code-research, long-coding, and deep-research prompt-quality coverage.",
+    "Aspire language-support planning context is generated from the latest default branch of the public microsoft/aspire repository.",
+    "Long and deep scenarios are local practical briefs meant for immediate live use with the existing prompt evaluation runner."
+  ],
+  "fixture_files": [
+    "fixtures/practical_live/README.md",
+    "fixtures/practical_live/aspire_zig_apphost/00_source_state.json",
+    "fixtures/practical_live/aspire_zig_apphost/01_task_brief.md",
+    "fixtures/practical_live/aspire_zig_apphost/02_context_bundle.md",
+    "fixtures/practical_live/echo_show_home_assistant/01_scope.md",
+    "fixtures/practical_live/echo_show_home_assistant/02_device_matrix.md",
+    "fixtures/practical_live/echo_show_home_assistant/03_constraints.md",
+    "fixtures/practical_live/nextjs_aspire_commerce/01_solution_brief.md",
+    "fixtures/practical_live/nextjs_aspire_commerce/02_requirements.md",
+    "fixtures/practical_live/nextjs_aspire_commerce/03_constraints.md"
+  ],
+  "fixture_size_bytes": 11128,
+  "fixture_version": "practical-live-20260611-f08078c7cc03"
+}

@@ -1,0 +1,286 @@
+{
+  "cases": [
+    {
+      "case_id": "aspire-zig-apphost-planning-mtp-off",
+      "workload": "long_code_research_tools",
+      "profile_id": "long_code_research_tools_mtp_off",
+      "prompt_template_id": "long_code_research_tools",
+      "placeholder_values": {
+        "FEATURE_OR_WORKFLOW": "the current Aspire polyglot AppHost language-support flow and the phased implementation work needed to support Zig as a first-class AppHost language alongside C# and TypeScript"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/aspire_zig_apphost/00_source_state.json",
+        "fixtures/practical_live/aspire_zig_apphost/01_task_brief.md",
+        "fixtures/practical_live/aspire_zig_apphost/02_context_bundle.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/aspire_zig_apphost/01_task_brief.md",
+        "fixtures/practical_live/aspire_zig_apphost/02_context_bundle.md"
+      ],
+      "prompt_context_intro": "Use the following Aspire evidence bundle as the primary context. After explaining the current seams, propose a phased implementation plan for Zig AppHost support.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "ASPIRE001", "importance": "must_have"},
+          {"fact": "manual authoring", "importance": "strong"},
+          {"fact": "GuestAppHostProject", "importance": "must_have"},
+          {"fact": "TypeScriptAppHostToolingCheck", "importance": "strong"},
+          {"fact": "phased", "importance": "must_have"}
+        ],
+        "forbidden_claims": [
+          {"claim": "Zig is already a supported AppHost language in Aspire", "severity": "critical"},
+          {"claim": "only documentation updates are required", "severity": "critical"},
+          {"claim": "no validation or test updates are needed", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates current-state analysis from phased implementation planning.",
+            "detectable": "manual",
+            "description": "The answer should not blur current Aspire behavior with proposed Zig work."
+          },
+          {
+            "signal": "Mentions code generation, tooling checks, discovery, and validation or test surfaces.",
+            "detectable": "manual",
+            "description": "A practical plan should touch the major product seams implied by the supplied evidence."
+          }
+        ],
+        "manual_review_notes": "Strong answers call out language discovery, project-factory handling, diagnostics, code generation or SDK surface, and practical validation phases instead of treating Zig as a docs-only addition."
+      }
+    },
+    {
+      "case_id": "aspire-zig-apphost-planning-mtp-on",
+      "workload": "long_code_research_tools",
+      "profile_id": "long_code_research_tools_mtp_on",
+      "prompt_template_id": "long_code_research_tools",
+      "placeholder_values": {
+        "FEATURE_OR_WORKFLOW": "the current Aspire polyglot AppHost language-support flow and the phased implementation work needed to support Zig as a first-class AppHost language alongside C# and TypeScript"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/aspire_zig_apphost/00_source_state.json",
+        "fixtures/practical_live/aspire_zig_apphost/01_task_brief.md",
+        "fixtures/practical_live/aspire_zig_apphost/02_context_bundle.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/aspire_zig_apphost/01_task_brief.md",
+        "fixtures/practical_live/aspire_zig_apphost/02_context_bundle.md"
+      ],
+      "prompt_context_intro": "Use the following Aspire evidence bundle as the primary context. After explaining the current seams, propose a phased implementation plan for Zig AppHost support.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "ASPIRE001", "importance": "must_have"},
+          {"fact": "manual authoring", "importance": "strong"},
+          {"fact": "GuestAppHostProject", "importance": "must_have"},
+          {"fact": "TypeScriptAppHostToolingCheck", "importance": "strong"},
+          {"fact": "phased", "importance": "must_have"}
+        ],
+        "forbidden_claims": [
+          {"claim": "Zig is already a supported AppHost language in Aspire", "severity": "critical"},
+          {"claim": "only documentation updates are required", "severity": "critical"},
+          {"claim": "no validation or test updates are needed", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates current-state analysis from phased implementation planning.",
+            "detectable": "manual",
+            "description": "The answer should not blur current Aspire behavior with proposed Zig work."
+          },
+          {
+            "signal": "Mentions code generation, tooling checks, discovery, and validation or test surfaces.",
+            "detectable": "manual",
+            "description": "A practical plan should touch the major product seams implied by the supplied evidence."
+          }
+        ],
+        "manual_review_notes": "Strong answers call out language discovery, project-factory handling, diagnostics, code generation or SDK surface, and practical validation phases instead of treating Zig as a docs-only addition."
+      }
+    },
+    {
+      "case_id": "nextjs-commerce-aspire-ts-mtp-off",
+      "workload": "long_coding",
+      "profile_id": "long_coding_mtp_off",
+      "prompt_template_id": "long_coding",
+      "placeholder_values": {
+        "GOAL": "develop a single-shot architecture and implementation proposal for an e-commerce application using Next.js in TypeScript for UI and backend, Redis for a cached product catalogue and supporting datasets, and Aspire with a TypeScript AppHost to orchestrate the system"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/nextjs_aspire_commerce/01_solution_brief.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/02_requirements.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/03_constraints.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/nextjs_aspire_commerce/01_solution_brief.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/02_requirements.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/03_constraints.md"
+      ],
+      "prompt_context_intro": "Use the following product and architecture brief as the primary context for the proposal.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "Next.js", "importance": "must_have"},
+          {"fact": "TypeScript", "importance": "must_have"},
+          {"fact": "Redis", "importance": "must_have"},
+          {"fact": "cached product catalogue", "importance": "must_have"},
+          {"fact": "TypeScript AppHost", "importance": "strong"}
+        ],
+        "forbidden_claims": [
+          {"claim": "the AppHost should be written in C#", "severity": "critical"},
+          {"claim": "Redis is the primary system of record", "severity": "critical"},
+          {"claim": "the design can ignore backend service boundaries", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates UI, backend, cache, and orchestration responsibilities.",
+            "detectable": "manual",
+            "description": "A strong answer should present functional architecture instead of a flat list of technologies."
+          },
+          {
+            "signal": "Includes cache invalidation or data refresh behavior.",
+            "detectable": "automatic",
+            "description": "The brief explicitly requires handling supporting datasets and catalogue updates."
+          }
+        ],
+        "manual_review_notes": "Strong answers stay implementation-oriented, use Aspire as orchestration rather than as application logic, and cover cache correctness plus validation." 
+      }
+    },
+    {
+      "case_id": "nextjs-commerce-aspire-ts-mtp-on",
+      "workload": "long_coding",
+      "profile_id": "long_coding_mtp_on",
+      "prompt_template_id": "long_coding",
+      "placeholder_values": {
+        "GOAL": "develop a single-shot architecture and implementation proposal for an e-commerce application using Next.js in TypeScript for UI and backend, Redis for a cached product catalogue and supporting datasets, and Aspire with a TypeScript AppHost to orchestrate the system"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/nextjs_aspire_commerce/01_solution_brief.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/02_requirements.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/03_constraints.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/nextjs_aspire_commerce/01_solution_brief.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/02_requirements.md",
+        "fixtures/practical_live/nextjs_aspire_commerce/03_constraints.md"
+      ],
+      "prompt_context_intro": "Use the following product and architecture brief as the primary context for the proposal.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "Next.js", "importance": "must_have"},
+          {"fact": "TypeScript", "importance": "must_have"},
+          {"fact": "Redis", "importance": "must_have"},
+          {"fact": "cached product catalogue", "importance": "must_have"},
+          {"fact": "TypeScript AppHost", "importance": "strong"}
+        ],
+        "forbidden_claims": [
+          {"claim": "the AppHost should be written in C#", "severity": "critical"},
+          {"claim": "Redis is the primary system of record", "severity": "critical"},
+          {"claim": "the design can ignore backend service boundaries", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates UI, backend, cache, and orchestration responsibilities.",
+            "detectable": "manual",
+            "description": "A strong answer should present functional architecture instead of a flat list of technologies."
+          },
+          {
+            "signal": "Includes cache invalidation or data refresh behavior.",
+            "detectable": "automatic",
+            "description": "The brief explicitly requires handling supporting datasets and catalogue updates."
+          }
+        ],
+        "manual_review_notes": "Strong answers stay implementation-oriented, use Aspire as orchestration rather than as application logic, and cover cache correctness plus validation."
+      }
+    },
+    {
+      "case_id": "echo-show-home-assistant-viability-mtp-off",
+      "workload": "deep_research",
+      "profile_id": "deep_research_mtp_off",
+      "prompt_template_id": "deep_research",
+      "placeholder_values": {
+        "TOPIC": "the viability of modifying Amazon Echo Show devices across known version families and revisions to integrate with Home Assistant and custom voice or music implementations using paid Spotify and Amazon Music accounts"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/echo_show_home_assistant/01_scope.md",
+        "fixtures/practical_live/echo_show_home_assistant/02_device_matrix.md",
+        "fixtures/practical_live/echo_show_home_assistant/03_constraints.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/echo_show_home_assistant/01_scope.md",
+        "fixtures/practical_live/echo_show_home_assistant/02_device_matrix.md",
+        "fixtures/practical_live/echo_show_home_assistant/03_constraints.md"
+      ],
+      "prompt_context_intro": "Use the following device and constraint brief as the primary context for the viability assessment.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "versions", "importance": "must_have"},
+          {"fact": "revisions", "importance": "strong"},
+          {"fact": "Home Assistant", "importance": "must_have"},
+          {"fact": "Spotify", "importance": "must_have"},
+          {"fact": "Amazon Music", "importance": "must_have"},
+          {"fact": "viability", "importance": "must_have"}
+        ],
+        "forbidden_claims": [
+          {"claim": "all Echo Show versions are easily rootable", "severity": "critical"},
+          {"claim": "paid accounts alone are enough to guarantee native Spotify and Amazon Music integration", "severity": "critical"},
+          {"claim": "device revisions do not matter", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates feasible, risky, and impractical paths.",
+            "detectable": "manual",
+            "description": "A strong answer should not flatten the viability judgment into a simple yes or no."
+          },
+          {
+            "signal": "Mentions indirect alternatives such as Home Assistant Assist or external playback relays.",
+            "detectable": "manual",
+            "description": "The constraints explicitly require comparing direct device modification with practical alternatives."
+          }
+        ],
+        "manual_review_notes": "Strong answers distinguish hardware access risk, service-lock or DRM constraints, and the difference between direct modification and indirect integration patterns."
+      }
+    },
+    {
+      "case_id": "echo-show-home-assistant-viability-mtp-on",
+      "workload": "deep_research",
+      "profile_id": "deep_research_mtp_on",
+      "prompt_template_id": "deep_research",
+      "placeholder_values": {
+        "TOPIC": "the viability of modifying Amazon Echo Show devices across known version families and revisions to integrate with Home Assistant and custom voice or music implementations using paid Spotify and Amazon Music accounts"
+      },
+      "fixture_paths": [
+        "fixtures/practical_live/echo_show_home_assistant/01_scope.md",
+        "fixtures/practical_live/echo_show_home_assistant/02_device_matrix.md",
+        "fixtures/practical_live/echo_show_home_assistant/03_constraints.md"
+      ],
+      "prompt_context_paths": [
+        "fixtures/practical_live/echo_show_home_assistant/01_scope.md",
+        "fixtures/practical_live/echo_show_home_assistant/02_device_matrix.md",
+        "fixtures/practical_live/echo_show_home_assistant/03_constraints.md"
+      ],
+      "prompt_context_intro": "Use the following device and constraint brief as the primary context for the viability assessment.",
+      "expected_answer": {
+        "required_facts": [
+          {"fact": "versions", "importance": "must_have"},
+          {"fact": "revisions", "importance": "strong"},
+          {"fact": "Home Assistant", "importance": "must_have"},
+          {"fact": "Spotify", "importance": "must_have"},
+          {"fact": "Amazon Music", "importance": "must_have"},
+          {"fact": "viability", "importance": "must_have"}
+        ],
+        "forbidden_claims": [
+          {"claim": "all Echo Show versions are easily rootable", "severity": "critical"},
+          {"claim": "paid accounts alone are enough to guarantee native Spotify and Amazon Music integration", "severity": "critical"},
+          {"claim": "device revisions do not matter", "severity": "warning"}
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates feasible, risky, and impractical paths.",
+            "detectable": "manual",
+            "description": "A strong answer should not flatten the viability judgment into a simple yes or no."
+          },
+          {
+            "signal": "Mentions indirect alternatives such as Home Assistant Assist or external playback relays.",
+            "detectable": "manual",
+            "description": "The constraints explicitly require comparing direct device modification with practical alternatives."
+          }
+        ],
+        "manual_review_notes": "Strong answers distinguish hardware access risk, service-lock or DRM constraints, and the difference between direct modification and indirect integration patterns."
+      }
+    }
+  ]
+}

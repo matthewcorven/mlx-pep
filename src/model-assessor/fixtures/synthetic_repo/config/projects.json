@@ -1,0 +1,18 @@
+{
+  "projects": [
+    {
+      "id": "alpha",
+      "name": "Alpha Project",
+      "owner": "team-ops",
+      "archived": false,
+      "tags": ["enable-sync", "priority-high"]
+    },
+    {
+      "id": "beta",
+      "name": "Beta Project",
+      "owner": "team-ops",
+      "archived": true,
+      "tags": ["enable-sync"]
+    }
+  ]
+}

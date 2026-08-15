@@ -104,7 +104,7 @@ public class ProfilingRunner
         }
     }
 
-    public async Task<RecommendationManifest> RunProfilingAsync(
+    public async Task<AssessmentRunResult> RunProfilingAsync(
         string modelHfId,
         string? assistantModelId = null,
         string suite = "full")
@@ -193,13 +193,19 @@ public class ProfilingRunner
             var modelAssessorRoot = PythonEnvironmentManager.GetModelAssessorRootPath();
             var runManifestPath = FindSingleArtifact(modelAssessorRoot, runBaseDir, "run_manifest.json");
             var runManifestJson = File.ReadAllText(runManifestPath);
-            var runId = ReadRequiredString(runManifestJson, "run_id");
-            var runStatus = ReadOptionalString(runManifestJson, "status") ?? "unknown";
+            var runResult = ParseRunManifest(runManifestJson);
 
-            Debug.WriteLine($"[ProfilingRunner] Assessment run {runId} completed with status {runStatus}");
+            if (!runResult.IsSuccess)
+            {
+                Debug.WriteLine($"[ProfilingRunner] Assessment run {runResult.RunId} completed with non-success status {runResult.Status}");
+                throw new InvalidOperationException(
+                    $"Model-assessor run ended with non-success status '{runResult.Status}'");
+            }
+
+            Debug.WriteLine($"[ProfilingRunner] Assessment run {runResult.RunId} completed with status {runResult.Status}");
 
             var recommendationArgs =
-                $"-m scripts.next_phase.generate_recommendation_report --model-id {QuoteArgument(assessmentModelId)} --run-id {QuoteArgument(runId)} --runs-dir {QuoteArgument(runBaseDir)} --normalized-dir {QuoteArgument(normalizedBaseDir)} --recommendations-dir {QuoteArgument(recommendationBaseDir)} --summaries-dir {QuoteArgument(summaryBaseDir)}";
+                $"-m scripts.next_phase.generate_recommendation_report --model-id {QuoteArgument(assessmentModelId)} --run-id {QuoteArgument(runResult.RunId)} --runs-dir {QuoteArgument(runBaseDir)} --normalized-dir {QuoteArgument(normalizedBaseDir)} --recommendations-dir {QuoteArgument(recommendationBaseDir)} --summaries-dir {QuoteArgument(summaryBaseDir)}";
 
             if (!string.IsNullOrWhiteSpace(assistantModelId))
             {
@@ -252,7 +258,15 @@ public class ProfilingRunner
                 throw new InvalidOperationException("Failed to parse recommendation manifest");
 
             Debug.WriteLine($"[ProfilingRunner] Successfully parsed manifest with {manifest.Recommendations.Count} tiers");
-            return manifest;
+            return new AssessmentRunResult(
+                OperationId: operationId,
+                RunId: runResult.RunId,
+                ModelId: runResult.ModelId,
+                Status: runResult.Status,
+                Suite: runResult.Suite,
+                MtpMode: runResult.MtpMode,
+                CreatedAt: runResult.CreatedAt,
+                RecommendationManifest: manifest);
         }
         catch (OperationCanceledException)
         {
@@ -1202,10 +1216,44 @@ public class ProfilingRunner
         return Path.GetRelativePath(baseDirectory, path).Replace('\\', '/');
     }
 
-    private static string ReadRequiredString(string json, string propertyName)
+    public static AssessmentRunResult ParseRunManifest(string json)
     {
         using var document = JsonDocument.Parse(json);
-        if (document.RootElement.TryGetProperty(propertyName, out var property) &&
+        var root = document.RootElement;
+
+        var runId = GetRequiredString(root, "run_id");
+        var status = GetRequiredString(root, "status");
+        var modelId = GetRequiredString(root, "model_id");
+        var suite = GetRequiredString(root, "suite");
+        var mtpMode = GetRequiredString(root, "mtp_mode");
+        var createdAt = GetRequiredString(root, "created_at");
+
+        var recommendationManifest = new RecommendationManifest(
+            ModelHfId: modelId,
+            AssessmentVersion: "1.0-workload-winner-collapse",
+            Timestamp: DateTime.UtcNow.ToString("O"),
+            Recommendations: new Dictionary<string, TierRecommendation>(StringComparer.OrdinalIgnoreCase));
+
+        if (status != "success")
+        {
+            Debug.WriteLine($"[ProfilingRunner] Invalid run status '{status}' in run manifest");
+            throw new InvalidOperationException($"Model-assessor run ended with non-success status '{status}'");
+        }
+
+        return new AssessmentRunResult(
+            OperationId: string.Empty,
+            RunId: runId,
+            ModelId: modelId,
+            Status: status,
+            Suite: suite,
+            MtpMode: mtpMode,
+            CreatedAt: createdAt,
+            RecommendationManifest: recommendationManifest);
+    }
+
+    private static string GetRequiredString(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var property) &&
             property.ValueKind == JsonValueKind.String &&
             !string.IsNullOrWhiteSpace(property.GetString()))
         {
@@ -1214,6 +1262,13 @@ public class ProfilingRunner
 
         Debug.WriteLine($"[ProfilingRunner] Required property '{propertyName}' missing from JSON payload");
         throw new InvalidOperationException($"Required property '{propertyName}' missing from model-assessor output");
+    }
+
+    private static string ReadRequiredString(string json, string propertyName)
+    {
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        return GetRequiredString(root, propertyName);
     }
 
     private static string? ReadOptionalString(string json, string propertyName)

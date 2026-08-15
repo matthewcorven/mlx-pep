@@ -1,0 +1,204 @@
+{
+  "profiles": [
+    {
+      "id": "short_code_research_tools_mtp_off",
+      "workload": "short_code_research_tools",
+      "settings": {
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "temperature": 0.2,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": false,
+        "vlm_mtp_enabled": false
+      },
+      "benchmark": {
+        "prompt_lengths": [1024],
+        "generation_length": 256,
+        "batch_sizes": [2, 4]
+      }
+    },
+    {
+      "id": "short_code_research_tools_mtp_on",
+      "workload": "short_code_research_tools",
+      "settings": {
+        "max_context_window": 16384,
+        "max_tokens": 1536,
+        "temperature": 0.2,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": true,
+        "vlm_mtp_enabled": true
+      },
+      "benchmark": {
+        "prompt_lengths": [1024],
+        "generation_length": 256,
+        "batch_sizes": [2, 4]
+      }
+    },
+    {
+      "id": "long_code_research_tools_mtp_off",
+      "workload": "long_code_research_tools",
+      "settings": {
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "temperature": 0.25,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": false,
+        "vlm_mtp_enabled": false
+      },
+      "benchmark": {
+        "prompt_lengths": [4096, 8192],
+        "generation_length": 256,
+        "batch_sizes": [2]
+      }
+    },
+    {
+      "id": "long_code_research_tools_mtp_on",
+      "workload": "long_code_research_tools",
+      "settings": {
+        "max_context_window": 65536,
+        "max_tokens": 4096,
+        "temperature": 0.25,
+        "top_p": 0.95,
+        "top_k": 64,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": true,
+        "vlm_mtp_enabled": true
+      },
+      "benchmark": {
+        "prompt_lengths": [4096, 8192],
+        "generation_length": 256,
+        "batch_sizes": [2]
+      }
+    },
+    {
+      "id": "short_coding_mtp_off",
+      "workload": "short_coding",
+      "settings": {
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": false,
+        "vlm_mtp_enabled": false
+      },
+      "benchmark": {
+        "prompt_lengths": [1024],
+        "generation_length": 256,
+        "batch_sizes": []
+      }
+    },
+    {
+      "id": "short_coding_mtp_on",
+      "workload": "short_coding",
+      "settings": {
+        "max_context_window": 16384,
+        "max_tokens": 1024,
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": true,
+        "vlm_mtp_enabled": true
+      },
+      "benchmark": {
+        "prompt_lengths": [1024],
+        "generation_length": 256,
+        "batch_sizes": []
+      }
+    },
+    {
+      "id": "long_coding_mtp_off",
+      "workload": "long_coding",
+      "settings": {
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": false,
+        "vlm_mtp_enabled": false
+      },
+      "benchmark": {
+        "prompt_lengths": [4096, 8192],
+        "generation_length": 512,
+        "batch_sizes": []
+      }
+    },
+    {
+      "id": "long_coding_mtp_on",
+      "workload": "long_coding",
+      "settings": {
+        "max_context_window": 32768,
+        "max_tokens": 4096,
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": true,
+        "vlm_mtp_enabled": true
+      },
+      "benchmark": {
+        "prompt_lengths": [4096, 8192],
+        "generation_length": 512,
+        "batch_sizes": []
+      }
+    },
+    {
+      "id": "deep_research_mtp_off",
+      "workload": "deep_research",
+      "settings": {
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "temperature": 0.35,
+        "top_p": 0.97,
+        "top_k": 80,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": false,
+        "vlm_mtp_enabled": false
+      },
+      "benchmark": {
+        "prompt_lengths": [16384],
+        "generation_length": 512,
+        "batch_sizes": []
+      }
+    },
+    {
+      "id": "deep_research_mtp_on",
+      "workload": "deep_research",
+      "settings": {
+        "max_context_window": 131072,
+        "max_tokens": 8192,
+        "temperature": 0.35,
+        "top_p": 0.97,
+        "top_k": 80,
+        "min_p": 0.0,
+        "force_sampling": true,
+        "mtp_enabled": true,
+        "vlm_mtp_enabled": true
+      },
+      "benchmark": {
+        "prompt_lengths": [16384],
+        "generation_length": 512,
+        "batch_sizes": []
+      }
+    }
+  ]
+}

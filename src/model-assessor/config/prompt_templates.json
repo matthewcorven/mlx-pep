@@ -1,0 +1,24 @@
+{
+  "templates": {
+    "short_code_research_tools": {
+      "objective": "Quickly identify where a behavior is implemented and summarize the controlling path.",
+      "prompt": "You are investigating a codebase using external tools when needed.\n\nTask:\nFind where {BEHAVIOR_OR_SYMBOL} is implemented.\nSummarize the controlling code path.\nList the most relevant files.\nKeep the answer concise and technical.\nDo not propose code changes."
+    },
+    "long_code_research_tools": {
+      "objective": "Map a larger feature area across multiple files and explain the behavior flow.",
+      "prompt": "You are investigating a codebase using external tools when needed.\n\nTask:\nExplain how {FEATURE_OR_WORKFLOW} works end to end.\nIdentify the main entry points, major data flow, and any important abstraction boundaries.\nInclude the files that matter most.\nBe comprehensive but avoid unnecessary detail.\nDo not change code."
+    },
+    "short_coding": {
+      "objective": "Produce a small targeted code change or patch recommendation with high precision.",
+      "prompt": "You are making a focused engineering change.\n\nTask:\nImplement or describe the smallest change needed to {GOAL}.\nPrefer minimal edits.\nDo not widen scope.\nState assumptions briefly."
+    },
+    "long_coding": {
+      "objective": "Plan or implement a multi-file coding task that requires sustained reasoning and more output tokens.",
+      "prompt": "You are making a multi-file engineering change.\n\nTask:\nImplement or describe the changes needed to {GOAL}.\nPreserve existing conventions.\nGroup the work into major change areas.\nInclude validation steps.\nAvoid unrelated refactors."
+    },
+    "deep_research": {
+      "objective": "Synthesize a larger amount of evidence into an operator-facing recommendation.",
+      "prompt": "You are performing deep technical research.\n\nTask:\nAnalyze {TOPIC} using the provided evidence and external tools when needed.\nProduce a recommendation for a human operator.\nSeparate findings, tradeoffs, and recommendation.\nState uncertainty where appropriate."
+    }
+  }
+}

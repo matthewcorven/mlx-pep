@@ -1,0 +1,578 @@
+{
+  "cases": [
+    {
+      "case_id": "short-research-sync-rule",
+      "workload": "short_code_research_tools",
+      "profile_id": "short_code_research_tools_mtp_off",
+      "prompt_template_id": "short_code_research_tools",
+      "placeholder_values": {
+        "BEHAVIOR_OR_SYMBOL": "the sync enablement rule for summary requests in the synthetic fixture repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/architecture.md"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "app/router.py",
+            "importance": "must_have"
+          },
+          {
+            "fact": "dispatch_request",
+            "importance": "must_have"
+          },
+          {
+            "fact": "should_enable_sync",
+            "importance": "must_have"
+          },
+          {
+            "fact": "archived projects always skip sync",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "sync is enabled for all archived projects",
+            "severity": "critical"
+          },
+          {
+            "claim": "the behavior is implemented only in docs/architecture.md",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Names the controlling file before supporting docs.",
+            "detectable": "manual",
+            "description": "The answer should anchor on code, then mention docs as supporting evidence."
+          },
+          {
+            "signal": "Mentions only the most relevant files.",
+            "detectable": "manual",
+            "description": "A concise answer should avoid listing unrelated fixture files."
+          }
+        ],
+        "manual_review_notes": "Prefer answers that clearly distinguish the router entry point from the service rule helper."
+      }
+    },
+    {
+      "case_id": "short-research-sync-rule-mtp-on",
+      "workload": "short_code_research_tools",
+      "profile_id": "short_code_research_tools_mtp_on",
+      "prompt_template_id": "short_code_research_tools",
+      "placeholder_values": {
+        "BEHAVIOR_OR_SYMBOL": "the sync enablement rule for summary requests in the synthetic fixture repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/architecture.md"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "app/router.py",
+            "importance": "must_have"
+          },
+          {
+            "fact": "dispatch_request",
+            "importance": "must_have"
+          },
+          {
+            "fact": "should_enable_sync",
+            "importance": "must_have"
+          },
+          {
+            "fact": "archived projects always skip sync",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "sync is enabled for all archived projects",
+            "severity": "critical"
+          },
+          {
+            "claim": "the behavior is implemented only in docs/architecture.md",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Names the controlling file before supporting docs.",
+            "detectable": "manual",
+            "description": "The answer should anchor on code, then mention docs as supporting evidence."
+          },
+          {
+            "signal": "Mentions only the most relevant files.",
+            "detectable": "manual",
+            "description": "A concise answer should avoid listing unrelated fixture files."
+          }
+        ],
+        "manual_review_notes": "Prefer answers that clearly distinguish the router entry point from the service rule helper."
+      }
+    },
+    {
+      "case_id": "long-research-end-to-end-summary-flow",
+      "workload": "long_code_research_tools",
+      "profile_id": "long_code_research_tools_mtp_off",
+      "prompt_template_id": "long_code_research_tools",
+      "placeholder_values": {
+        "FEATURE_OR_WORKFLOW": "the synthetic repo summary request flow including sync gating and note aggregation"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/data/project_notes.py",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "dispatch_request",
+            "importance": "must_have"
+          },
+          {
+            "fact": "summarize_project",
+            "importance": "must_have"
+          },
+          {
+            "fact": "PROJECT_NOTES",
+            "importance": "strong"
+          },
+          {
+            "fact": "Summary responses include owner, project ID, sync state, and note count",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "project_notes.py decides whether sync runs",
+            "severity": "warning"
+          },
+          {
+            "claim": "the flow updates projects.json during request handling",
+            "severity": "critical"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Explains data flow across router, service, and note storage.",
+            "detectable": "manual",
+            "description": "The answer should synthesize the flow instead of enumerating files without context."
+          },
+          {
+            "signal": "Mentions the archived-project boundary as a behavior guardrail.",
+            "detectable": "automatic",
+            "description": "This is a central architecture boundary for the synthetic repo."
+          }
+        ],
+        "manual_review_notes": "Good answers connect config/projects.json to example data without claiming it is the execution entry point."
+      }
+    },
+    {
+      "case_id": "long-research-end-to-end-summary-flow-mtp-on",
+      "workload": "long_code_research_tools",
+      "profile_id": "long_code_research_tools_mtp_on",
+      "prompt_template_id": "long_code_research_tools",
+      "placeholder_values": {
+        "FEATURE_OR_WORKFLOW": "the synthetic repo summary request flow including sync gating and note aggregation"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/data/project_notes.py",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "dispatch_request",
+            "importance": "must_have"
+          },
+          {
+            "fact": "summarize_project",
+            "importance": "must_have"
+          },
+          {
+            "fact": "PROJECT_NOTES",
+            "importance": "strong"
+          },
+          {
+            "fact": "Summary responses include owner, project ID, sync state, and note count",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "project_notes.py decides whether sync runs",
+            "severity": "warning"
+          },
+          {
+            "claim": "the flow updates projects.json during request handling",
+            "severity": "critical"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Explains data flow across router, service, and note storage.",
+            "detectable": "manual",
+            "description": "The answer should synthesize the flow instead of enumerating files without context."
+          },
+          {
+            "signal": "Mentions the archived-project boundary as a behavior guardrail.",
+            "detectable": "automatic",
+            "description": "This is a central architecture boundary for the synthetic repo."
+          }
+        ],
+        "manual_review_notes": "Good answers connect config/projects.json to example data without claiming it is the execution entry point."
+      }
+    },
+    {
+      "case_id": "short-coding-project-slug-minimal-change",
+      "workload": "short_coding",
+      "profile_id": "short_coding_mtp_off",
+      "prompt_template_id": "short_coding",
+      "placeholder_values": {
+        "GOAL": "add a project_slug field to summary responses in the synthetic fixture repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/change_request.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "project_slug",
+            "importance": "must_have"
+          },
+          {
+            "fact": "summarize_project",
+            "importance": "must_have"
+          },
+          {
+            "fact": "keep the change minimal",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "remove sync_enabled from the summary payload",
+            "severity": "critical"
+          },
+          {
+            "claim": "refactor router.py into multiple modules",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Preserves the existing summary fields while adding project_slug.",
+            "detectable": "manual",
+            "description": "Small-scope answers should not drop established response fields."
+          },
+          {
+            "signal": "Mentions validation for archived and non-archived projects.",
+            "detectable": "automatic",
+            "description": "The request explicitly asks for validation guidance spanning both states."
+          }
+        ],
+        "manual_review_notes": "For code suggestions, accept pseudocode or patch prose if it is minimal and accurate."
+      }
+    },
+    {
+      "case_id": "short-coding-project-slug-minimal-change-mtp-on",
+      "workload": "short_coding",
+      "profile_id": "short_coding_mtp_on",
+      "prompt_template_id": "short_coding",
+      "placeholder_values": {
+        "GOAL": "add a project_slug field to summary responses in the synthetic fixture repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/change_request.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "project_slug",
+            "importance": "must_have"
+          },
+          {
+            "fact": "summarize_project",
+            "importance": "must_have"
+          },
+          {
+            "fact": "keep the change minimal",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "remove sync_enabled from the summary payload",
+            "severity": "critical"
+          },
+          {
+            "claim": "refactor router.py into multiple modules",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Preserves the existing summary fields while adding project_slug.",
+            "detectable": "manual",
+            "description": "Small-scope answers should not drop established response fields."
+          },
+          {
+            "signal": "Mentions validation for archived and non-archived projects.",
+            "detectable": "automatic",
+            "description": "The request explicitly asks for validation guidance spanning both states."
+          }
+        ],
+        "manual_review_notes": "For code suggestions, accept pseudocode or patch prose if it is minimal and accurate."
+      }
+    },
+    {
+      "case_id": "long-coding-multi-file-summary-update",
+      "workload": "long_coding",
+      "profile_id": "long_coding_mtp_off",
+      "prompt_template_id": "long_coding",
+      "placeholder_values": {
+        "GOAL": "implement the project_slug change request and outline validation across the synthetic repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/change_request.md",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "major change areas",
+            "importance": "strong"
+          },
+          {
+            "fact": "validation",
+            "importance": "must_have"
+          },
+          {
+            "fact": "project_slug",
+            "importance": "must_have"
+          },
+          {
+            "fact": "avoid unrelated refactors",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "rename project_id to project_slug",
+            "severity": "critical"
+          },
+          {
+            "claim": "change archived projects to allow sync",
+            "severity": "critical"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Groups the work into code, tests or validation, and documentation impact.",
+            "detectable": "manual",
+            "description": "Long-form coding answers should stay organized across multiple files."
+          },
+          {
+            "signal": "Includes validation that covers both alpha and beta fixture projects.",
+            "detectable": "manual",
+            "description": "The fixture data intentionally contains both archived and active examples."
+          }
+        ],
+        "manual_review_notes": "Answers can describe the implementation instead of giving a literal patch, but they should still be specific about touched files."
+      }
+    },
+    {
+      "case_id": "long-coding-multi-file-summary-update-mtp-on",
+      "workload": "long_coding",
+      "profile_id": "long_coding_mtp_on",
+      "prompt_template_id": "long_coding",
+      "placeholder_values": {
+        "GOAL": "implement the project_slug change request and outline validation across the synthetic repo"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/docs/change_request.md",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "major change areas",
+            "importance": "strong"
+          },
+          {
+            "fact": "validation",
+            "importance": "must_have"
+          },
+          {
+            "fact": "project_slug",
+            "importance": "must_have"
+          },
+          {
+            "fact": "avoid unrelated refactors",
+            "importance": "strong"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "rename project_id to project_slug",
+            "severity": "critical"
+          },
+          {
+            "claim": "change archived projects to allow sync",
+            "severity": "critical"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Groups the work into code, tests or validation, and documentation impact.",
+            "detectable": "manual",
+            "description": "Long-form coding answers should stay organized across multiple files."
+          },
+          {
+            "signal": "Includes validation that covers both alpha and beta fixture projects.",
+            "detectable": "manual",
+            "description": "The fixture data intentionally contains both archived and active examples."
+          }
+        ],
+        "manual_review_notes": "Answers can describe the implementation instead of giving a literal patch, but they should still be specific about touched files."
+      }
+    },
+    {
+      "case_id": "deep-research-operator-rollout-recommendation",
+      "workload": "deep_research",
+      "profile_id": "deep_research_mtp_off",
+      "prompt_template_id": "deep_research",
+      "placeholder_values": {
+        "TOPIC": "which synthetic repo rollout profile the operator should choose for sync behavior"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/docs/operator_brief.md",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "Enable sync only for tagged, active projects",
+            "importance": "must_have"
+          },
+          {
+            "fact": "archived-project guardrail",
+            "importance": "strong"
+          },
+          {
+            "fact": "tradeoffs",
+            "importance": "must_have"
+          },
+          {
+            "fact": "recommendation",
+            "importance": "must_have"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "Enable sync for all projects including archived ones is the safest option",
+            "severity": "critical"
+          },
+          {
+            "claim": "Keep sync disabled for all projects is the only option discussed in the fixture",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates findings, tradeoffs, and recommendation.",
+            "detectable": "manual",
+            "description": "The prompt template expects explicit structure for operator-facing research."
+          },
+          {
+            "signal": "States uncertainty or caveats when comparing rollout options.",
+            "detectable": "manual",
+            "description": "A good answer should note that the fixture is synthetic and limited in scope."
+          }
+        ],
+        "manual_review_notes": "Strong answers recommend the tagged-active path while explaining why always-on sync violates the archived guardrail."
+      }
+    },
+    {
+      "case_id": "deep-research-operator-rollout-recommendation-mtp-on",
+      "workload": "deep_research",
+      "profile_id": "deep_research_mtp_on",
+      "prompt_template_id": "deep_research",
+      "placeholder_values": {
+        "TOPIC": "which synthetic repo rollout profile the operator should choose for sync behavior"
+      },
+      "fixture_paths": [
+        "fixtures/synthetic_repo/docs/operator_brief.md",
+        "fixtures/synthetic_repo/docs/architecture.md",
+        "fixtures/synthetic_repo/app/router.py",
+        "fixtures/synthetic_repo/app/service.py",
+        "fixtures/synthetic_repo/config/projects.json"
+      ],
+      "expected_answer": {
+        "required_facts": [
+          {
+            "fact": "Enable sync only for tagged, active projects",
+            "importance": "must_have"
+          },
+          {
+            "fact": "archived-project guardrail",
+            "importance": "strong"
+          },
+          {
+            "fact": "tradeoffs",
+            "importance": "must_have"
+          },
+          {
+            "fact": "recommendation",
+            "importance": "must_have"
+          }
+        ],
+        "forbidden_claims": [
+          {
+            "claim": "Enable sync for all projects including archived ones is the safest option",
+            "severity": "critical"
+          },
+          {
+            "claim": "Keep sync disabled for all projects is the only option discussed in the fixture",
+            "severity": "warning"
+          }
+        ],
+        "quality_signals": [
+          {
+            "signal": "Separates findings, tradeoffs, and recommendation.",
+            "detectable": "manual",
+            "description": "The prompt template expects explicit structure for operator-facing research."
+          },
+          {
+            "signal": "States uncertainty or caveats when comparing rollout options.",
+            "detectable": "manual",
+            "description": "A good answer should note that the fixture is synthetic and limited in scope."
+          }
+        ],
+        "manual_review_notes": "Strong answers recommend the tagged-active path while explaining why always-on sync violates the archived guardrail."
+      }
+    }
+  ]
+}

@@ -56,14 +56,14 @@ public class AssessCommand
                 progress.CompleteStep("model-assessor available");
                 
                 progress.StartStep("run profiling workflow");
-                var manifest = await _profilingRunner.RunProfilingAsync(
+                var profilingResult = await _profilingRunner.RunProfilingAsync(
                     hfId,
                     assistantModelId,
                     suite);
                 progress.CompleteStep("profiling workflow complete");
 
                 progress.StartStep("map recommendation manifest to profiles");
-                profiles = _mapper.MapToProfiles(manifest);
+                profiles = _mapper.MapToProfiles(profilingResult.RecommendationManifest);
                 System.Diagnostics.Debug.WriteLine($"[AssessCommand] Successfully generated {profiles.Count} profiles from manifest");
                 context.Verbose("AssessCommand", $"Mapped manifest to {profiles.Count} profiles.");
                 progress.CompleteStep($"mapped {profiles.Count} profiles");

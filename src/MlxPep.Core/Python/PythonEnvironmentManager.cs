@@ -95,13 +95,14 @@ public class PythonEnvironmentManager
 
     private static IEnumerable<string> GetCandidateModelAssessorPaths()
     {
+        // Prefer the repo-local vendor copy first. External checkout paths are optional fallbacks.
+        yield return Path.Combine(RepoRoot, "src", "model-assessor");
+
         var configuredPath = Environment.GetEnvironmentVariable("MLX_PEP_MODEL_ASSESSOR_PATH");
         if (!string.IsNullOrWhiteSpace(configuredPath))
         {
             yield return ExpandHomeDirectory(configuredPath);
         }
-
-        yield return Path.Combine(RepoRoot, "src", "model-assessor");
 
         var repoParent = Directory.GetParent(RepoRoot)?.FullName;
         if (!string.IsNullOrWhiteSpace(repoParent))
