@@ -57,7 +57,7 @@ public class ProfilingRunner
     public async Task<bool> IsAvailableAsync()
     {
         Debug.WriteLine("[ProfilingRunner] Checking model-assessor availability");
-        
+
         // Check if model-assessor directory exists with benchmark scripts
         var scriptsPath = PythonEnvironmentManager.GetModelAssessorScriptsPath();
         if (!Directory.Exists(scriptsPath))
@@ -79,7 +79,7 @@ public class ProfilingRunner
         }
 
         Debug.WriteLine("[ProfilingRunner] Model-assessor scripts located, checking Python environment");
-        
+
         try
         {
             using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -108,10 +108,12 @@ public class ProfilingRunner
         string modelHfId,
         string? assistantModelId = null,
         string suite = "full",
-        string? topologyManifestPath = null)
+        string? topologyManifestPath = null,
+        Action<string>? liveOutput = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting profiling for {modelHfId} (suite={suite})");
-        
+        liveOutput?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.");
+
         if (string.IsNullOrWhiteSpace(modelHfId))
             throw new ArgumentException("Model HF ID cannot be empty", nameof(modelHfId));
 
@@ -144,6 +146,11 @@ public class ProfilingRunner
             var summaryBaseDir = Path.Combine("results", "mlx-pep-cli", operationId, "summaries");
             var clientConfigBaseDir = Path.Combine("results", "mlx-pep-cli", operationId, "client-configs");
             var mtpMode = string.IsNullOrWhiteSpace(assistantModelId) ? "off" : "profile";
+            var benchmarkProfilesPath = Path.Combine(PythonEnvironmentManager.GetModelAssessorRootPath(), "config", "benchmark_profiles.json");
+            var smokeSuitePath = Path.Combine(PythonEnvironmentManager.GetModelAssessorRootPath(), "config", "smoke_suite.json");
+
+            using var benchmarkProfiles = JsonDocument.Parse(File.ReadAllText(benchmarkProfilesPath));
+            var selectedProfileIds = ReadSelectedProfileIds(suite, mtpMode, benchmarkProfiles.RootElement, smokeSuitePath);
 
             Debug.WriteLine($"[ProfilingRunner] Using operation ID {operationId}");
             Debug.WriteLine($"[ProfilingRunner] Using MTP mode {mtpMode}");
@@ -179,9 +186,10 @@ public class ProfilingRunner
                 Debug.WriteLine($"[ProfilingRunner] Resolved requested model ID {modelHfId} to oMLX model ID {assessmentModelId}");
             }
 
+            var suiteArguments = BuildSuiteArguments(suite, mtpMode, selectedProfileIds);
             var args =
-                $"{QuoteArgument(AssessmentScriptPath)} --model-id {QuoteArgument(assessmentModelId)} --suite {QuoteArgument(suite)} --mtp {QuoteArgument(mtpMode)} --results-dir {QuoteArgument(runBaseDir)} --topology-manifest {QuoteArgument(resolvedTopologyManifestPath)}";
-            
+                $"{QuoteArgument(AssessmentScriptPath)} --model-id {QuoteArgument(assessmentModelId)} {suiteArguments} --mtp {QuoteArgument(mtpMode)} --results-dir {QuoteArgument(runBaseDir)} --topology-manifest {QuoteArgument(resolvedTopologyManifestPath)}";
+
             if (!string.IsNullOrWhiteSpace(assistantModelId))
             {
                 Debug.WriteLine($"[ProfilingRunner] Using assistant model: {assistantModelId}");
@@ -195,7 +203,8 @@ public class ProfilingRunner
             using var cts = new System.Threading.CancellationTokenSource(
                 TimeSpan.FromMinutes(DefaultTimeoutMinutes));
 
-            var result = await RunProcessAsync("python3", args, cts.Token);
+            liveOutput?.Invoke($"Launching assessment subprocess: python3 {args}");
+            var result = await RunProcessAsync("python3", args, cts.Token, liveOutput);
 
             if (result.ExitCode != 0)
             {
@@ -232,7 +241,8 @@ public class ProfilingRunner
                 Debug.WriteLine("[ProfilingRunner] Recommendation generator will run without assistant model filter");
             }
 
-            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token);
+            liveOutput?.Invoke("Launching recommendation report generation.");
+            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token, liveOutput);
 
             if (recommendationResult.ExitCode != 0)
             {
@@ -250,7 +260,8 @@ public class ProfilingRunner
 
             var clientConfigArgs =
                 $"-m scripts.next_phase.generate_client_config_artifacts --recommendation-manifest {QuoteArgument(GetRelativePath(modelAssessorRoot, recommendationManifestPath))} --client-configs-dir {QuoteArgument(clientConfigBaseDir)}";
-            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token);
+            liveOutput?.Invoke("Launching client config artifact generation.");
+            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token, liveOutput);
 
             if (clientConfigResult.ExitCode != 0)
             {
@@ -299,10 +310,12 @@ public class ProfilingRunner
     private async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
         string fileName,
         string arguments,
-        System.Threading.CancellationToken ct)
+        System.Threading.CancellationToken ct,
+        Action<string>? liveOutput = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting process: {fileName} {arguments}");
-        
+        liveOutput?.Invoke($"Starting subprocess: {fileName} {arguments}");
+
         var psi = new ProcessStartInfo
         {
             FileName = fileName,
@@ -327,40 +340,54 @@ public class ProfilingRunner
         using var process = new Process { StartInfo = psi };
         process.Start();
 
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        var outputTask = Task.WhenAll(stdoutTask, stderrTask);
+        var stdoutBuilder = new StringBuilder();
+        var stderrBuilder = new StringBuilder();
+
+        var stdoutTask = ReadStreamAsync(process.StandardOutput, line =>
+        {
+            stdoutBuilder.AppendLine(line);
+            liveOutput?.Invoke($"[stdout] {line.TrimEnd()}");
+        });
+
+        var stderrTask = ReadStreamAsync(process.StandardError, line =>
+        {
+            stderrBuilder.AppendLine(line);
+            liveOutput?.Invoke($"[stderr] {line.TrimEnd()}");
+        });
 
         try
         {
             var completed = await Task.WhenAny(
-                outputTask,
+                Task.WhenAll(stdoutTask, stderrTask),
                 Task.Delay(Timeout.Infinite, ct));
 
-            if (completed == outputTask)
+            if (completed == Task.WhenAll(stdoutTask, stderrTask))
             {
                 Debug.WriteLine("[ProfilingRunner] Process output completed before timeout");
-                // Output tasks completed normally
-                await outputTask;
-                var stdout = await stdoutTask;
-                var stderr = await stderrTask;
+                await Task.WhenAll(stdoutTask, stderrTask);
                 process.WaitForExit();
                 Debug.WriteLine($"[ProfilingRunner] Process exited with code {process.ExitCode}");
-                return (process.ExitCode, stdout, stderr);
+                return (process.ExitCode, stdoutBuilder.ToString(), stderrBuilder.ToString());
             }
-            else
-            {
-                // Timeout via cancellation token
-                Debug.WriteLine("[ProfilingRunner] Process timeout, killing");
-                process.Kill(true);
-                throw new OperationCanceledException("Process timeout");
-            }
+
+            Debug.WriteLine("[ProfilingRunner] Process timeout, killing");
+            process.Kill(true);
+            throw new OperationCanceledException("Process timeout");
         }
         catch (OperationCanceledException)
         {
             Debug.WriteLine("[ProfilingRunner] Cancellation during process wait");
             try { process.Kill(true); } catch { }
             throw;
+        }
+    }
+
+    private static async Task ReadStreamAsync(TextReader reader, Action<string> onLine)
+    {
+        string? line;
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            onLine(line);
         }
     }
 
@@ -384,7 +411,7 @@ public class ProfilingRunner
                 continue;
 
             Debug.WriteLine($"[ProfilingRunner] Loading .env from {path}");
-            
+
             try
             {
                 foreach (var line in File.ReadLines(path))
@@ -403,7 +430,7 @@ public class ProfilingRunner
                         }
 
                         var value = parts[1].Trim().Trim('"', '\'');
-                        
+
                         // Expand ~ to home directory
                         if (value.StartsWith("~/", StringComparison.Ordinal))
                         {
@@ -421,7 +448,7 @@ public class ProfilingRunner
                         {
                             Debug.WriteLine($"[ProfilingRunner] Using literal environment value for {key}");
                         }
-                        
+
                         environment[key] = value;
                         Debug.WriteLine($"[ProfilingRunner] Set {key}={FormatEnvironmentValueForLog(key, value)}");
                     }
@@ -430,7 +457,7 @@ public class ProfilingRunner
                         Debug.WriteLine($"[ProfilingRunner] Skipping malformed .env line: {line}");
                     }
                 }
-                
+
                 return; // Successfully loaded, stop looking
             }
             catch (Exception ex)
@@ -467,7 +494,7 @@ public class ProfilingRunner
         var smokeSuitePath = Path.Combine(modelAssessorRoot, "config", "smoke_suite.json");
 
         using var benchmarkProfiles = JsonDocument.Parse(File.ReadAllText(benchmarkProfilesPath));
-        var selectedProfileIds = ReadSelectedProfileIds(suite, benchmarkProfiles.RootElement, smokeSuitePath);
+        var selectedProfileIds = ReadSelectedProfileIds(suite, mtpMode, benchmarkProfiles.RootElement, smokeSuitePath);
         var profilesById = ReadProfilesById(benchmarkProfiles.RootElement);
 
         var baseUrl = ResolveOmlxBaseUrl();
@@ -510,14 +537,17 @@ public class ProfilingRunner
         return relativePath.Replace('\\', '/');
     }
 
-    private static List<string> ReadSelectedProfileIds(string suite, JsonElement benchmarkProfilesRoot, string smokeSuitePath)
+    private static List<string> ReadSelectedProfileIds(string suite, string mtpMode, JsonElement benchmarkProfilesRoot, string smokeSuitePath)
     {
         if (string.Equals(suite, "full", StringComparison.OrdinalIgnoreCase))
         {
             Debug.WriteLine("[ProfilingRunner] Selecting all benchmark profiles for full suite");
-            return benchmarkProfilesRoot
+            return FilterProfilesForMtpMode(
+                benchmarkProfilesRoot
                 .GetProperty("profiles")
                 .EnumerateArray()
+                .ToList(),
+                mtpMode)
                 .Select(profile => profile.GetProperty("id").GetString())
                 .Where(profileId => !string.IsNullOrWhiteSpace(profileId))
                 .Select(profileId => profileId!)
@@ -528,10 +558,24 @@ public class ProfilingRunner
         {
             Debug.WriteLine("[ProfilingRunner] Selecting smoke suite profiles");
             using var smokeSuite = JsonDocument.Parse(File.ReadAllText(smokeSuitePath));
-            return smokeSuite.RootElement
+            var smokeProfileIds = smokeSuite.RootElement
                 .GetProperty("profiles")
                 .EnumerateArray()
                 .Select(profile => profile.GetString())
+                .Where(profileId => !string.IsNullOrWhiteSpace(profileId))
+                .Select(profileId => profileId!)
+                .ToList();
+
+            var profileLookup = benchmarkProfilesRoot
+                .GetProperty("profiles")
+                .EnumerateArray()
+                .Where(profile => profile.TryGetProperty("id", out var idElement) && !string.IsNullOrWhiteSpace(idElement.GetString()))
+                .ToDictionary(profile => profile.GetProperty("id").GetString()!, profile => profile, StringComparer.OrdinalIgnoreCase);
+
+            return FilterProfilesForMtpMode(
+                smokeProfileIds.Where(profileLookup.ContainsKey).Select(profileId => profileLookup[profileId]).ToList(),
+                mtpMode)
+                .Select(profile => profile.GetProperty("id").GetString())
                 .Where(profileId => !string.IsNullOrWhiteSpace(profileId))
                 .Select(profileId => profileId!)
                 .ToList();
@@ -539,6 +583,49 @@ public class ProfilingRunner
 
         Debug.WriteLine($"[ProfilingRunner] Unsupported suite '{suite}' for single-instance topology generation");
         throw new InvalidOperationException($"Unsupported assessment suite '{suite}'");
+    }
+
+    private static List<JsonElement> FilterProfilesForMtpMode(List<JsonElement> profiles, string mtpMode)
+    {
+        if (!string.Equals(mtpMode, "off", StringComparison.OrdinalIgnoreCase))
+        {
+            Debug.WriteLine($"[ProfilingRunner] Keeping {profiles.Count} benchmark profiles for mtp mode {mtpMode}");
+            return profiles;
+        }
+
+        var filtered = profiles.Where(profile =>
+        {
+            if (profile.TryGetProperty("settings", out var settingsElement) && settingsElement.ValueKind == JsonValueKind.Object)
+            {
+                var mtpEnabled = ReadBooleanSetting(settingsElement, "mtp_enabled") || ReadBooleanSetting(settingsElement, "vlm_mtp_enabled");
+                if (mtpEnabled)
+                {
+                    var profileId = profile.TryGetProperty("id", out var idElement) ? idElement.GetString() : "unknown";
+                    Debug.WriteLine($"[ProfilingRunner] Skipping MTP-enabled profile {profileId} because mtp mode is off");
+                    return false;
+                }
+            }
+
+            return true;
+        }).ToList();
+
+        Debug.WriteLine($"[ProfilingRunner] Filtered benchmark profiles for mtp off: {filtered.Count} of {profiles.Count} remain");
+        return filtered;
+    }
+
+    private static string BuildSuiteArguments(string suite, string mtpMode, List<string> selectedProfileIds)
+    {
+        if (string.Equals(mtpMode, "off", StringComparison.OrdinalIgnoreCase))
+        {
+            var explicitProfileArgs = string.Join(
+                " ",
+                selectedProfileIds.Select(profileId => $"--profile-id {QuoteArgument(profileId)}"));
+            Debug.WriteLine($"[ProfilingRunner] Using explicit single-suite profile selection for mtp off: {string.Join(", ", selectedProfileIds)}");
+            return $"--suite single {explicitProfileArgs}";
+        }
+
+        Debug.WriteLine($"[ProfilingRunner] Using suite-based profile selection for suite {suite}");
+        return $"--suite {QuoteArgument(suite)}";
     }
 
     private static Dictionary<string, BenchmarkProfile> ReadProfilesById(JsonElement benchmarkProfilesRoot)

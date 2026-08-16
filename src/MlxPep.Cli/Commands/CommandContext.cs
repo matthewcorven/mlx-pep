@@ -38,6 +38,14 @@ public class CommandContext
         }
     }
 
+    public void ProgressMessage(string source, string message)
+    {
+        if (ProgressOutput || VerboseOutput)
+        {
+            Console.Error.WriteLine($"[progress][{source}] {message}");
+        }
+    }
+
     public CliProgressScope CreateProgressScope(string operation, int totalSteps)
     {
         return new CliProgressScope(ProgressOutput, operation, totalSteps, ProgressCallback);

@@ -55,13 +55,14 @@ public class AssessCommand
                 System.Diagnostics.Debug.WriteLine("[AssessCommand] Model-assessor available, running profiling");
                 context.Verbose("AssessCommand", "Model-assessor availability check succeeded; entering profiling workflow.");
                 progress.CompleteStep("model-assessor available");
-                
+
                 progress.StartStep("run profiling workflow");
                 var profilingResult = await _profilingRunner.RunProfilingAsync(
                     hfId,
                     assistantModelId,
                     suite,
-                    topologyManifestPath);
+                    topologyManifestPath,
+                    message => context.ProgressMessage("ProfilingRunner", message));
                 progress.CompleteStep("profiling workflow complete");
 
                 progress.StartStep("map recommendation manifest to profiles");
