@@ -57,20 +57,36 @@ public class PythonEnvironmentManager
     /// </summary>
     private static string FindRepoRoot()
     {
-        var currentDir = new FileInfo(typeof(PythonEnvironmentManager).Assembly.Location).DirectoryName;
-        
-        if (currentDir == null)
-            throw new InvalidOperationException("Cannot determine assembly location");
-
-        while (currentDir != null)
+        var overrideRoot = Environment.GetEnvironmentVariable("MLX_PEP_REPO_ROOT");
+        if (!string.IsNullOrWhiteSpace(overrideRoot))
         {
-            if (File.Exists(Path.Combine(currentDir, ".git")) ||
-                File.Exists(Path.Combine(currentDir, "mlx-pep.slnx")))
+            var expanded = ExpandHomeDirectory(overrideRoot);
+            if (Directory.Exists(expanded) && (Directory.Exists(Path.Combine(expanded, ".git")) || File.Exists(Path.Combine(expanded, "mlx-pep.slnx"))))
             {
-                return currentDir;
+                return expanded;
             }
+        }
 
-            currentDir = Directory.GetParent(currentDir)?.FullName;
+        var searchRoots = new[]
+        {
+            Environment.CurrentDirectory,
+            AppContext.BaseDirectory,
+            new FileInfo(typeof(PythonEnvironmentManager).Assembly.Location).DirectoryName
+        };
+
+        foreach (var startDir in searchRoots.Where(dir => !string.IsNullOrWhiteSpace(dir)))
+        {
+            var currentDir = startDir;
+            while (currentDir != null)
+            {
+                if (Directory.Exists(Path.Combine(currentDir, ".git")) ||
+                    File.Exists(Path.Combine(currentDir, "mlx-pep.slnx")))
+                {
+                    return currentDir;
+                }
+
+                currentDir = Directory.GetParent(currentDir)?.FullName;
+            }
         }
 
         throw new InvalidOperationException("Cannot find repository root (mlx-pep.slnx or .git not found)");

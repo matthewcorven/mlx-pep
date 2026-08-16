@@ -357,14 +357,13 @@ public class ProfilingRunner
 
         try
         {
-            var completed = await Task.WhenAny(
-                Task.WhenAll(stdoutTask, stderrTask),
-                Task.Delay(Timeout.Infinite, ct));
+            var outputTask = Task.WhenAll(stdoutTask, stderrTask);
+            var completed = await Task.WhenAny(outputTask, Task.Delay(Timeout.Infinite, ct));
 
-            if (completed == Task.WhenAll(stdoutTask, stderrTask))
+            if (completed == outputTask)
             {
                 Debug.WriteLine("[ProfilingRunner] Process output completed before timeout");
-                await Task.WhenAll(stdoutTask, stderrTask);
+                await outputTask;
                 process.WaitForExit();
                 Debug.WriteLine($"[ProfilingRunner] Process exited with code {process.ExitCode}");
                 return (process.ExitCode, stdoutBuilder.ToString(), stderrBuilder.ToString());

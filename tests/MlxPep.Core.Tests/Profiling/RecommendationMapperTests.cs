@@ -332,8 +332,8 @@ public class RecommendationMapperTests
                     System: new Dictionary<string, object> { { "os", "Linux" } },
                     Omlx: new Dictionary<string, object> { { "compute_units", "ALL" } },
                     Harness: new Dictionary<string, object> { { "framework", "vscode" } },
-                    Sampler: new Dictionary<string, object> 
-                    { 
+                    Sampler: new Dictionary<string, object>
+                    {
                         { "temperature", "0.7" },  // Wrong type: string instead of double
                         { "topP", "0.9" },         // Wrong type: string instead of double
                         { "topK", "50" },          // Wrong type: string instead of int
