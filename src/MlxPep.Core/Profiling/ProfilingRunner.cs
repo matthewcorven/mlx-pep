@@ -1306,13 +1306,20 @@ public class ProfilingRunner
                 Debug.WriteLine($"[ProfilingRunner] Rejecting benchmark result {benchmarkRelativePath} with status {benchmarkStatus}");
                 rejectedBenchmarks.Add($"{benchmarkRelativePath} ({benchmarkStatus})");
             }
+            else
+            {
+                Debug.WriteLine($"[ProfilingRunner] Accepted benchmark result {benchmarkRelativePath} with status {benchmarkStatus}");
+            }
         }
 
         if (rejectedBenchmarks.Count > 0)
         {
+            Debug.WriteLine($"[ProfilingRunner] Rejecting assessment because benchmark results were incomplete: {string.Join(", ", rejectedBenchmarks)}");
             throw new InvalidOperationException(
                 $"Benchmark results were rejected because they did not complete successfully: {string.Join(", ", rejectedBenchmarks)}");
         }
+
+        Debug.WriteLine("[ProfilingRunner] All benchmark result artifacts completed successfully");
     }
 
     private static bool IsAcceptedBenchmarkStatus(string status)

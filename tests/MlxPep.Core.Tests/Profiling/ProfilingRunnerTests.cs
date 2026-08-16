@@ -1,10 +1,17 @@
 namespace MlxPep.Core.Tests.Profiling;
 
+using System.Diagnostics;
 using System;
 using System.Threading.Tasks;
 using Xunit;
 using MlxPep.Core.Profiling;
 
+[CollectionDefinition("DebugTrace", DisableParallelization = true)]
+public sealed class DebugTraceCollectionDefinition
+{
+}
+
+[Collection("DebugTrace")]
 public class ProfilingRunnerTests
 {
     private readonly ProfilingRunner _runner = new();
@@ -114,11 +121,17 @@ public class ProfilingRunnerTests
                 }
                 """;
 
-            var exception = Assert.Throws<InvalidOperationException>(
-                () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+            var output = CaptureDebugOutput(() =>
+            {
+                var exception = Assert.Throws<InvalidOperationException>(
+                    () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
 
-            Assert.Contains("partial", exception.Message, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("06_bench_results.json", exception.Message, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("partial", exception.Message, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("06_bench_results.json", exception.Message, StringComparison.OrdinalIgnoreCase);
+            });
+
+            Assert.Contains("Rejecting benchmark result", output, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Rejecting assessment because benchmark results were incomplete", output, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -154,10 +167,16 @@ public class ProfilingRunnerTests
                 }
                 """;
 
-            var exception = Record.Exception(
-                () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+            var output = CaptureDebugOutput(() =>
+            {
+                var exception = Record.Exception(
+                    () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
 
-            Assert.Null(exception);
+                Assert.Null(exception);
+            });
+
+            Assert.Contains("Accepted benchmark result", output, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("All benchmark result artifacts completed successfully", output, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -252,5 +271,24 @@ public class ProfilingRunnerTests
 
         Assert.True(threwException, "Expected an exception to be thrown");
         Assert.True(exceptionIsJson, "Expected a JSON-related exception");
+    }
+
+    private static string CaptureDebugOutput(Action action)
+    {
+        using var writer = new StringWriter();
+        using var listener = new TextWriterTraceListener(writer);
+        Trace.Listeners.Add(listener);
+        Trace.AutoFlush = true;
+
+        try
+        {
+            action();
+            listener.Flush();
+            return writer.ToString();
+        }
+        finally
+        {
+            Trace.Listeners.Remove(listener);
+        }
     }
 }
