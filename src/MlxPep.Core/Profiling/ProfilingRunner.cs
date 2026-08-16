@@ -209,7 +209,6 @@ public class ProfilingRunner
             var runManifestPath = FindSingleArtifact(modelAssessorRoot, runBaseDir, "run_manifest.json");
             var runManifestJson = File.ReadAllText(runManifestPath);
             var runResult = ParseRunManifest(runManifestJson);
-            ValidateBenchmarkResults(modelAssessorRoot, runManifestJson);
 
             if (!runResult.IsSuccess)
             {
@@ -218,6 +217,7 @@ public class ProfilingRunner
                     $"Model-assessor run ended with non-success status '{runResult.Status}'");
             }
 
+            ValidateBenchmarkResults(modelAssessorRoot, runManifestJson);
             Debug.WriteLine($"[ProfilingRunner] Assessment run {runResult.RunId} completed with status {runResult.Status}");
 
             var recommendationArgs =
