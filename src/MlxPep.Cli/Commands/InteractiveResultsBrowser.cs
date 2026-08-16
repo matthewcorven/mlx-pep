@@ -165,13 +165,7 @@ public static class InteractiveResultsBrowser
         var assistantModelId = Console.ReadLine();
 
         var command = new AssessCommand();
-        var progressContext = new CommandContext(progressOutput: true)
-        {
-            ProgressCallback = update =>
-            {
-                Console.Error.WriteLine($"[progress][{update.Operation}] overall {update.OverallPercent,6:0.0}% ({update.StepNumber}/{update.TotalSteps}) work {update.WorkPercent,6:0.0}% {update.Detail}");
-            }
-        };
+        var progressContext = new CommandContext(progressOutput: true);
 
         var result = command.ExecuteAsync(
             hfId,

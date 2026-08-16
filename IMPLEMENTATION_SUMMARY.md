@@ -88,7 +88,7 @@ if (!string.IsNullOrWhiteSpace(topologyManifestPath))
 {
     if (!File.Exists(topologyManifestPath))
         throw new FileNotFoundException($"Topology manifest file not found: {topologyManifestPath}");
-    
+
     resolvedTopologyManifestPath = Path.GetFullPath(topologyManifestPath);
     Debug.WriteLine($"[ProfilingRunner] Using provided topology manifest at {resolvedTopologyManifestPath}");
 }

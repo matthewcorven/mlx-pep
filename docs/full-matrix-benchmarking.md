@@ -181,7 +181,7 @@ mlx-pep assess meta-llama/Llama-2-70b-hf \
   - Using instances: vllm-0, vllm-1, ollama-0
   - Load strategy: round-robin with fallback
   - Running 256 test cases...
-  
+
 ✓ Full benchmark complete
   - Total requests: 256
   - Total latency: 1024.5s
