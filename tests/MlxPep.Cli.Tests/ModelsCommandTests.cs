@@ -156,6 +156,28 @@ public class ModelsGetCommandTests
     }
 
     [Fact]
+    public void CreateProgressScope_WithCallback_ReportsOverallAndChildPercentages()
+    {
+        var context = new CommandContext(progressOutput: true)
+        {
+            ProgressCallback = update =>
+            {
+                Assert.Equal("assess", update.Operation);
+                Assert.True(update.StepNumber >= 1);
+                Assert.True(update.TotalSteps >= 1);
+                Assert.InRange(update.WorkPercent, 0, 100);
+                Assert.InRange(update.OverallPercent, 0, 100);
+                Assert.False(string.IsNullOrWhiteSpace(update.Detail));
+            }
+        };
+
+        using var progress = context.CreateProgressScope("assess", 5);
+        progress.StartStep("validate input and environment");
+        progress.ReportWork(50, "halfway through validation");
+        progress.CompleteStep("input validation complete");
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WhenServiceThrows_ReturnsFailure()
     {
         var service = new FakeModelsService

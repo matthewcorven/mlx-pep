@@ -165,7 +165,21 @@ public static class InteractiveResultsBrowser
         var assistantModelId = Console.ReadLine();
 
         var command = new AssessCommand();
-        var result = command.ExecuteAsync(hfId, string.IsNullOrWhiteSpace(assistantModelId) ? null : assistantModelId, suite, publish: false, context: new CommandContext(false)).GetAwaiter().GetResult();
+        var progressContext = new CommandContext(progressOutput: true)
+        {
+            ProgressCallback = update =>
+            {
+                Console.Error.WriteLine($"[progress][{update.Operation}] overall {update.OverallPercent,6:0.0}% ({update.StepNumber}/{update.TotalSteps}) work {update.WorkPercent,6:0.0}% {update.Detail}");
+            }
+        };
+
+        var result = command.ExecuteAsync(
+            hfId,
+            string.IsNullOrWhiteSpace(assistantModelId) ? null : assistantModelId,
+            suite,
+            publish: false,
+            context: progressContext).GetAwaiter().GetResult();
+
         Console.WriteLine(result.Message ?? (result.ExitCode == 0 ? "Assessment completed." : "Assessment failed."));
         Pause();
     }

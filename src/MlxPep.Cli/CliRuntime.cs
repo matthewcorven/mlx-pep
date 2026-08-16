@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MlxPep.Cli.Commands;
 
 namespace MlxPep.Cli;
 
@@ -74,40 +75,39 @@ public sealed class CliProgressScope : IDisposable
     private readonly bool _enabled;
     private readonly string _operation;
     private readonly int _totalSteps;
+    private readonly Action<ProgressUpdate>? _progressCallback;
     private int _currentStep;
     private string _currentTitle = "idle";
     private bool _disposed;
 
-    public CliProgressScope(bool enabled, string operation, int totalSteps)
+    public CliProgressScope(bool enabled, string operation, int totalSteps, Action<ProgressUpdate>? progressCallback = null)
     {
         _enabled = enabled;
         _operation = operation;
         _totalSteps = Math.Max(totalSteps, 1);
+        _progressCallback = progressCallback;
     }
 
     public void StartStep(string title)
     {
         _currentStep = Math.Min(_currentStep + 1, _totalSteps);
         _currentTitle = title;
-        if (_enabled)
-        {
-            CliRuntime.WriteProgress(_operation, _currentStep, _totalSteps, 0, $"{title} started");
-        }
+        NotifyProgress(0, $"{title} started");
     }
 
     public void ReportWork(double workPercent, string? detail = null)
     {
-        if (_enabled && _currentStep > 0)
+        if (_currentStep > 0)
         {
-            CliRuntime.WriteProgress(_operation, _currentStep, _totalSteps, workPercent, detail ?? _currentTitle);
+            NotifyProgress(workPercent, detail ?? _currentTitle);
         }
     }
 
     public void CompleteStep(string? detail = null)
     {
-        if (_enabled && _currentStep > 0)
+        if (_currentStep > 0)
         {
-            CliRuntime.WriteProgress(_operation, _currentStep, _totalSteps, 100, detail ?? $"{_currentTitle} complete");
+            NotifyProgress(100, detail ?? $"{_currentTitle} complete");
         }
     }
 
@@ -119,9 +119,26 @@ public sealed class CliProgressScope : IDisposable
         }
 
         _disposed = true;
-        if (_enabled && _currentStep > 0)
+        if (_currentStep > 0)
         {
-            CliRuntime.WriteProgress(_operation, Math.Min(_currentStep, _totalSteps), _totalSteps, 100, "operation finished");
+            NotifyProgress(100, "operation finished");
         }
+    }
+
+    private void NotifyProgress(double workPercent, string detail)
+    {
+        if (!_enabled)
+        {
+            return;
+        }
+
+        var safeWorkPercent = Math.Clamp(workPercent, 0, 100);
+        var safeStepNumber = Math.Max(Math.Min(_currentStep, _totalSteps), 1);
+        var completedUnits = (safeStepNumber - 1) + (safeWorkPercent / 100d);
+        var overallPercent = Math.Clamp((completedUnits / _totalSteps) * 100d, 0, 100);
+
+        var progress = new ProgressUpdate(_operation, safeStepNumber, _totalSteps, safeWorkPercent, overallPercent, detail);
+        _progressCallback?.Invoke(progress);
+        CliRuntime.WriteProgress(_operation, safeStepNumber, _totalSteps, safeWorkPercent, detail);
     }
 }
