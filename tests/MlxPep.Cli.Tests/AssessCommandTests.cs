@@ -38,7 +38,7 @@ public class AssessCommandTests
 
         Assert.Equal(1, result.ExitCode);
         Assert.Contains("partial", result.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("[verbose][AssessCommand]", errorOutput);
+        Assert.Contains("[verbose][AssessCommand]", errorOutput, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("[progress][assess]", errorOutput);
         Assert.Contains("assess rejected", errorOutput, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("partial", errorOutput, StringComparison.OrdinalIgnoreCase);

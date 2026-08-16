@@ -313,12 +313,12 @@ public class ProfilingRunnerTests
             try
             {
                 action();
-                listener.Flush();
                 return writer.ToString();
             }
             finally
             {
                 Trace.AutoFlush = originalAutoFlush;
+                listener.Flush();
                 Trace.Listeners.Remove(listener);
             }
         }
