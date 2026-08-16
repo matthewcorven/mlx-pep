@@ -1,17 +1,190 @@
 # mlx-pep
 
-mlx-pep assesses local oMLX-hosted models, saves derived local profiles, generates harness-facing configuration guidance, and lets you review previous complete runs from the CLI or terminal UI.
+**Assess local models. Save profiles. Configure harnesses. Ship smarter.**
 
-Try this:
+mlx-pep is a model assessment tool for Apple Silicon Macs. Run your oMLX-hosted models against a benchmark suite, get performance profiles (high/balanced/efficient), and apply them to VS Code, GitHub Copilot CLI, and other code editors.
+
+---
+
+## Why mlx-pep?
+
+### The Problem
+
+You've installed MLX and are hosting models locally on your Mac. But how do you know which model runs fast enough for real-time code completion? What settings should you use? Which quantization level balances quality and speed for YOUR hardware?
+
+Manual tuning is frustrating. Benchmark scripts exist, but translating results to editor config is manual and error-prone.
+
+### The Solution
+
+mlx-pep automates this:
+
+1. **Assess** your model on your Mac (smoke suite: 30 sec | full suite: 5 min)
+2. **Get three profiles** tuned for your hardware (high/balanced/efficient)
+3. **Apply to your editor** — mlx-pep handles the harness-specific config
+4. **Repeat** when you upgrade hardware or try new models
+
+**Result:** You spend 5 minutes per model and get production-ready config, not guesswork.
+
+---
+
+## Quick Start (5 minutes)
+
+### 1. Check prerequisites
 
 ```bash
-dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- assess mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit --suite smoke
-dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- results show --model mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit
-dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- apply ~/.mlx-pep/profiles/<timestamp>/<model>/profiles.jsonl --harness vscode --dry-run
-dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- tui
+# Apple Silicon Mac (M1/M2/M3/M4) — required
+# .NET 10.0+ — required
+dotnet --version
+
+# oMLX server running — required
+curl http://127.0.0.1:8000/api/version
 ```
 
-mlx-pep is built around a .NET CLI and a terminal browser. The assessment pipeline delegates to the adjacent Python `model-assessor` workflow, saves local profiles, emits markdown-table-heavy summaries, and generates structured client guidance for humans, scripts, and AI agents.
+### 2. Build mlx-pep
+
+```bash
+git clone https://github.com/matthewcorven/mlx-pep.git
+cd mlx-pep
+dotnet build src/MlxPep.Cli/MlxPep.Cli.csproj
+```
+
+### 3. Run your first assessment
+
+```bash
+export OMLX_BASE_URL=http://127.0.0.1:8000
+export OMLX_API_KEY=<your-key>
+
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- \
+  assess mlx-community/Llama-2-7b-hf --suite smoke
+```
+
+### 4. View results
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- \
+  results show --model mlx-community/Llama-2-7b-hf
+```
+
+**Next:** [Full Quick Start Guide](docs/QUICK-START.md) with detailed troubleshooting.
+
+---
+
+## Concepts
+
+### Profile
+
+A **profile** is a tuned configuration for a model on your specific Mac:
+
+```json
+{
+  "name": "balanced",
+  "estimated_tokens_per_second": 38.1,
+  "quantization": "q4",
+  "num_threads": 6,
+  "memory_estimate_mb": 14500
+}
+```
+
+mlx-pep generates three profiles per model (high/balanced/efficient) reflecting different hardware tuning choices.
+
+### Assessment
+
+An **assessment** is one complete benchmark run for a model:
+
+- **Smoke suite**: Quick (30 sec), tests common scenarios
+- **Full suite**: Comprehensive (5 min), tests all combinations
+
+Assessments measure: tokens/sec, latency, memory usage, quality (perplexity).
+
+### Harness
+
+A **harness** is a target application that uses the model:
+
+| Harness | Config Type |
+|---------|-------------|
+| VS Code | `.vscode/settings.json` |
+| Copilot CLI | `~/.copilot/config.json` |
+| Claude Code | Environment variables |
+| OpenCode | Extension settings |
+
+When you "apply" a profile, mlx-pep translates it to the harness's native config format.
+
+---
+
+## Installation
+
+### Prerequisites
+
+- **macOS 13.4+** (Ventura, Sonoma, or Sequoia)
+- **Apple Silicon** (M1, M2, M3, M4)
+- **.NET 10.0 SDK** — install via [dotnet.microsoft.com](https://dotnet.microsoft.com/en-us/download) or Homebrew:
+  ```bash
+  brew install dotnet@10
+  ```
+- **oMLX server running** (see [mlx-lm docs](https://ml-explore.github.io/mlx/build/latest/index.html))
+
+### Get the code
+
+```bash
+git clone https://github.com/matthewcorven/mlx-pep.git
+cd mlx-pep
+dotnet build src/MlxPep.Cli/MlxPep.Cli.csproj
+```
+
+### Set environment
+
+```bash
+export OMLX_BASE_URL=http://127.0.0.1:8000
+export OMLX_API_KEY=<your-omlx-api-key>
+export HF_HUB_CACHE=~/.cache/huggingface/hub
+```
+
+### Verify setup
+
+```bash
+dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- help
+```
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development environment setup.
+
+---
+
+## Feature Status
+
+### ✅ MVP (Current)
+
+- Smoke + full benchmark suites for MLX models
+- Three profile tiers (high/balanced/efficient)
+- Apply to VS Code, Copilot CLI, Claude Code, OpenCode
+- Result browser (CLI + TUI)
+- Export as markdown/JSON
+
+### 🟡 Fast-Follow (Q3-Q4 2026)
+
+- **Community profile browser** — share and reuse profiles
+- **Batch assessment mode** — profile multiple models at once
+- **Linux/ARM64 support** — extend beyond Apple Silicon
+- **AWS Lambda harness** — serverless model hosting
+- **Background assessment mode** — non-blocking CLI
+- **Custom benchmark suites** — user-defined test sets
+
+### 🔲 Future (Roadmap)
+
+- Hardware auto-detection and recommendation
+- Per-harness tuning (not just generic profiles)
+- Model comparison dashboard
+- Integration with MLX registry for upstream recommendations
+
+---
+
+## What mlx-pep Does
+
+- Assess a local oMLX model against smoke or full benchmark suites.
+- Save derived `high`, `balanced`, and `efficient` local profiles.
+- Generate local client guidance artifacts for VS Code, VS Code Insiders, Claude Code, GitHub Copilot CLI, and OpenCode.
+- Show previous verified-complete local runs as markdown tables or JSON.
+- Export run summaries as markdown or JSON.
+- Apply saved profiles to supported harness targets in dry-run or write mode.
 
 ---
 
@@ -24,33 +197,23 @@ mlx-pep is built around a .NET CLI and a terminal browser. The assessment pipeli
 - Export run summaries as markdown or JSON.
 - Apply saved profiles to supported harness targets in dry-run or write mode.
 
-## Build and run
+---
 
-```bash
-dotnet build src/MlxPep.Cli/MlxPep.Cli.csproj
-dotnet build src/MlxPep.Tui/MlxPep.Tui.csproj
-```
+## Usage
 
-Run the CLI:
+### Run the CLI
 
 ```bash
 dotnet run --project src/MlxPep.Cli/MlxPep.Cli.csproj -- help
 ```
 
-Run the standalone terminal browser:
+### Run the terminal UI
 
 ```bash
 dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
 ```
 
-Run the TUI with the local oMLX environment configured:
-
-```bash
-export OMLX_BASE_URL=http://127.0.0.1:8000
-export OMLX_API_KEY=<your-omlx-api-key>
-
-dotnet run --project src/MlxPep.Tui/MlxPep.Tui.csproj
-```
+The TUI provides interactive browsing of models, assessments, and profiles.
 
 VS Code debugging:
 
