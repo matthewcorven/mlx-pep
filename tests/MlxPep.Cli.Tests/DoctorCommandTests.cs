@@ -251,4 +251,75 @@ public class DoctorCommandTests
             Assert.True(output.Contains("✓") || output.Contains("✗"));
         }
     }
+
+    [Fact]
+    public async Task ExecuteAsync_WithJsonFlag_ContainsInstallGuidanceForMissingTools()
+    {
+        // Arrange
+        var command = new DoctorCommand();
+        var context = new CommandContext { JsonOutput = true };
+
+        var oldOutput = Console.Out;
+        var oldError = Console.Error;
+        using var writer = new StringWriter();
+        using var errorWriter = new StringWriter();
+        Console.SetOut(writer);
+        Console.SetError(errorWriter);
+
+        try
+        {
+            // Act
+            var result = await command.ExecuteAsync(context);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(0, result.ExitCode);
+
+            var output = writer.ToString() + errorWriter.ToString();
+            using var json = JsonDocument.Parse(output);
+            var deps = json.RootElement.GetProperty("dependencies");
+            Assert.True(deps.TryGetProperty("hf-cli", out var hfCli));
+            Assert.True(hfCli.TryGetProperty("install", out var install));
+            Assert.False(string.IsNullOrWhiteSpace(install.GetString()));
+        }
+        finally
+        {
+            Console.SetOut(oldOutput);
+            Console.SetError(oldError);
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithJsonFlag_DoesNotLeakPackageManagerWarnings()
+    {
+        // Arrange
+        var command = new DoctorCommand();
+        var context = new CommandContext { JsonOutput = true };
+
+        var oldOutput = Console.Out;
+        var oldError = Console.Error;
+        using var writer = new StringWriter();
+        using var errorWriter = new StringWriter();
+        Console.SetOut(writer);
+        Console.SetError(errorWriter);
+
+        try
+        {
+            // Act
+            var result = await command.ExecuteAsync(context);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(0, result.ExitCode);
+
+            var combined = writer.ToString() + errorWriter.ToString();
+            Assert.DoesNotContain("Package(s) not found", combined);
+            Assert.DoesNotContain("WARNING:", combined);
+        }
+        finally
+        {
+            Console.SetOut(oldOutput);
+            Console.SetError(oldError);
+        }
+    }
 }
