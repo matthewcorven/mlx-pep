@@ -12,7 +12,7 @@ public class AssessCommandTests
     {
         var command = new AssessCommand(
             profilingRunner: new FakeProfilingRunner(
-                new InvalidOperationException("Model-assessor run ended with non-success status 'partial'")));
+                "Model-assessor run ended with non-success status 'partial'"));
         var context = new CommandContext { JsonOutput = true };
 
         var (result, output) = await ModelsCommandTestHelpers.CaptureOutputAsync(
@@ -30,7 +30,7 @@ public class AssessCommandTests
     {
         var command = new AssessCommand(
             profilingRunner: new FakeProfilingRunner(
-                new InvalidOperationException("Model-assessor run ended with non-success status 'partial'")));
+                "Model-assessor run ended with non-success status 'partial'"));
         var context = new CommandContext(jsonOutput: false, verboseOutput: true, progressOutput: true);
 
         var (result, errorOutput) = await ModelsCommandTestHelpers.CaptureErrorAsync(
@@ -46,11 +46,11 @@ public class AssessCommandTests
 
     private sealed class FakeProfilingRunner : ProfilingRunner
     {
-        private readonly Exception? _exception;
+        private readonly string? _exceptionMessage;
 
-        public FakeProfilingRunner(Exception? exception = null)
+        public FakeProfilingRunner(string? exceptionMessage = null)
         {
-            _exception = exception;
+            _exceptionMessage = exceptionMessage;
         }
 
         public override Task<bool> IsAvailableAsync() => Task.FromResult(true);
@@ -61,9 +61,9 @@ public class AssessCommandTests
             string suite = "full",
             string? topologyManifestPath = null)
         {
-            if (_exception != null)
+            if (_exceptionMessage != null)
             {
-                throw _exception;
+                throw new InvalidOperationException(_exceptionMessage);
             }
 
             throw new NotSupportedException("This test double only exercises rejection paths.");
