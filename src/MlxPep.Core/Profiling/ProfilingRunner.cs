@@ -1273,12 +1273,28 @@ public class ProfilingRunner
         var root = document.RootElement;
 
         if (!root.TryGetProperty("artifact_paths", out var artifactPaths) ||
-            artifactPaths.ValueKind != JsonValueKind.Object ||
-            !artifactPaths.TryGetProperty("benchmark_results", out var benchmarkResults) ||
-            benchmarkResults.ValueKind != JsonValueKind.Array)
+            artifactPaths.ValueKind != JsonValueKind.Object)
         {
-            Debug.WriteLine("[ProfilingRunner] Run manifest does not contain benchmark_results artifact paths");
-            throw new InvalidOperationException("Model-assessor run manifest does not contain benchmark result artifacts");
+            Debug.WriteLine("[ProfilingRunner] Run manifest does not include artifact_paths; no benchmark results to validate");
+            return;
+        }
+
+        if (!artifactPaths.TryGetProperty("benchmark_results", out var benchmarkResults))
+        {
+            Debug.WriteLine("[ProfilingRunner] Run manifest does not include benchmark_results; no benchmark results to validate");
+            return;
+        }
+
+        if (benchmarkResults.ValueKind != JsonValueKind.Array)
+        {
+            Debug.WriteLine("[ProfilingRunner] Run manifest benchmark_results entry is not an array");
+            throw new InvalidOperationException("Model-assessor run manifest contains an invalid benchmark_results entry");
+        }
+
+        if (benchmarkResults.GetArrayLength() == 0)
+        {
+            Debug.WriteLine("[ProfilingRunner] Run manifest benchmark_results array is empty; no benchmark results to validate");
+            return;
         }
 
         var rejectedBenchmarks = new List<string>();

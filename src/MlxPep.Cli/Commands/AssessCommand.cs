@@ -11,6 +11,7 @@ using System.Text.Json;
 /// </summary>
 public class AssessCommand
 {
+    private static readonly JsonSerializerOptions OutputJsonOptions = new() { WriteIndented = true };
     private readonly PublishService _publishService;
     private readonly ProfilingRunner _profilingRunner;
     private readonly RecommendationMapper _mapper;
@@ -116,7 +117,7 @@ public class AssessCommand
                                 errors = validationResult.Errors
                             }
                         };
-                        Console.WriteLine(JsonSerializer.Serialize(errorResult, new JsonSerializerOptions { WriteIndented = true }));
+                        Console.WriteLine(JsonSerializer.Serialize(errorResult, OutputJsonOptions));
                     }
                     else
                     {
@@ -145,7 +146,7 @@ public class AssessCommand
                             warningCount = validationResult.Warnings.Count
                         }
                     };
-                    Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+                    Console.WriteLine(JsonSerializer.Serialize(result, OutputJsonOptions));
                 }
                 else
                 {
@@ -173,7 +174,7 @@ public class AssessCommand
                         profiles = profiles.Select(p => new { id = p.Id, tier = p.Tier, saved = true }).ToArray(),
                         published = false
                     };
-                    Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+                    Console.WriteLine(JsonSerializer.Serialize(result, OutputJsonOptions));
                 }
                 else
                 {
@@ -202,7 +203,7 @@ public class AssessCommand
                     published = publish,
                     error = $"Failed to assess model: {ex.Message}"
                 };
-                Console.WriteLine(JsonSerializer.Serialize(errorResult, new JsonSerializerOptions { WriteIndented = true }));
+                Console.WriteLine(JsonSerializer.Serialize(errorResult, OutputJsonOptions));
             }
 
             return CommandResult.Failure($"Failed to assess model: {ex.Message}");

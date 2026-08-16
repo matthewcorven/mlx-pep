@@ -189,6 +189,32 @@ public class ProfilingRunnerTests
     }
 
     [Fact]
+    public void ValidateBenchmarkResults_WithMissingBenchmarkResults_DoesNotThrow()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z",
+              "artifact_paths":{}
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Record.Exception(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Null(exception);
+        });
+
+        Assert.Contains("no benchmark results to validate", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ParseRunManifest_WithUppercaseSuccessStatus_ThrowsInvalidOperationException()
     {
         var manifestJson = "{\"run_id\":\"run-123\",\"status\":\"SUCCESS\",\"model_id\":\"test/model\",\"suite\":\"full\",\"mtp_mode\":\"off\",\"created_at\":\"2026-08-14T00:00:00Z\"}";
