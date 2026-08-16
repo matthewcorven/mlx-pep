@@ -1,0 +1,60 @@
+{
+  "bench_id": "bench-3c0168c93c07",
+  "context_profile": "code_python",
+  "error": null,
+  "results": [
+    {
+      "cached_tokens": 0,
+      "completion_tokens": 512,
+      "e2e_latency_s": 143.745,
+      "gen_tps": 16.9,
+      "peak_memory_bytes": 19178373198,
+      "pp": 16384,
+      "processing_tps": 144.5,
+      "prompt_tokens": 16384,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 18.1,
+          "p_avg": 14.2,
+          "total_avg": 15.2,
+          "total_max": 72.5
+        },
+        "gpu": {
+          "util_avg": 94.3,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 17.86,
+          "mlx_cache_peak": 1.65,
+          "phys_footprint_peak": 19.72,
+          "system_used_peak": 66.13,
+          "system_wired_peak": 23.94,
+          "total_ram": 128
+        },
+        "sample_count": 567,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "single",
+      "tg": 512,
+      "total_throughput": 117.5,
+      "tpot_ms": 59.31,
+      "ttft_ms": 113404.2
+    }
+  ],
+  "status": "completed",
+  "upload_state": {
+    "failed_count": 0,
+    "feature_flags": [],
+    "owner_hash": null,
+    "phase": "uploading",
+    "results": [],
+    "skipped_features": [],
+    "skipped_reason": null,
+    "success_count": 0,
+    "total": 0
+  }
+}

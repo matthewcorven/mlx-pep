@@ -1,0 +1,10 @@
+{
+  "assistant_model_id": null,
+  "base_url": "http://127.0.0.1:8000",
+  "instance_id": "instance-1",
+  "mtp_enabled": false,
+  "port": 8000,
+  "profile_id": "short_coding_mtp_on",
+  "topology_reason": "CLI assess runs pin all selected profiles to the current local oMLX instance.",
+  "workload": "short_coding"
+}

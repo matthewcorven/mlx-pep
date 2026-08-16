@@ -1,0 +1,101 @@
+{
+  "bench_id": "bench-2b97831d4fdd",
+  "context_profile": "code_python",
+  "error": null,
+  "results": [
+    {
+      "cached_tokens": 0,
+      "completion_tokens": 512,
+      "e2e_latency_s": 58.752,
+      "gen_tps": 17.6,
+      "peak_memory_bytes": 18262196282,
+      "pp": 4096,
+      "processing_tps": 138.0,
+      "prompt_tokens": 4096,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 20.3,
+          "p_avg": 13.8,
+          "total_avg": 15.4,
+          "total_max": 58.0
+        },
+        "gpu": {
+          "util_avg": 97.1,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 16.96,
+          "mlx_cache_peak": 0.73,
+          "phys_footprint_peak": 18.07,
+          "system_used_peak": 63.04,
+          "system_wired_peak": 22.36,
+          "total_ram": 128
+        },
+        "sample_count": 231,
+        "thermal": {
+          "max": 2,
+          "start": 2
+        }
+      },
+      "test_type": "single",
+      "tg": 512,
+      "total_throughput": 78.4,
+      "tpot_ms": 56.81,
+      "ttft_ms": 29691.7
+    },
+    {
+      "cached_tokens": 0,
+      "completion_tokens": 512,
+      "e2e_latency_s": 84.398,
+      "gen_tps": 17.6,
+      "peak_memory_bytes": 18548457550,
+      "pp": 8192,
+      "processing_tps": 148.1,
+      "prompt_tokens": 8192,
+      "system_metrics": {
+        "cpu": {
+          "e_avg": 16.3,
+          "p_avg": 12.6,
+          "total_avg": 13.5,
+          "total_max": 48.2
+        },
+        "gpu": {
+          "util_avg": 88.2,
+          "util_max": 100.0
+        },
+        "interval_s": 0.25,
+        "memory": {
+          "mlx_active_peak": 17.24,
+          "mlx_cache_peak": 0.95,
+          "phys_footprint_peak": 18.63,
+          "system_used_peak": 63.52,
+          "system_wired_peak": 22.8,
+          "total_ram": 128
+        },
+        "sample_count": 333,
+        "thermal": {
+          "max": 1,
+          "start": 1
+        }
+      },
+      "test_type": "single",
+      "tg": 512,
+      "total_throughput": 103.1,
+      "tpot_ms": 56.86,
+      "ttft_ms": 55314.7
+    }
+  ],
+  "status": "completed",
+  "upload_state": {
+    "failed_count": 0,
+    "feature_flags": [],
+    "owner_hash": null,
+    "phase": "uploading",
+    "results": [],
+    "skipped_features": [],
+    "skipped_reason": null,
+    "success_count": 0,
+    "total": 0
+  }
+}

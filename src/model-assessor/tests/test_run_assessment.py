@@ -1,3 +1,4 @@
+import pathlib
 import unittest
 
 from scripts.next_phase.run_assessment import build_profile_execution_plan, summarize_benchmark_guard_findings
@@ -124,6 +125,17 @@ class RunAssessmentTopologyPlanTests(unittest.TestCase):
         self.assertEqual(execution_plan[1]["base_url"], "http://127.0.0.1:8000")
         self.assertFalse(execution_plan[1]["mtp_enabled"])
         self.assertIsNone(execution_plan[1]["assistant_model_id"])
+
+    def test_smoke_wrapper_stages_benchmark_evaluation_and_report(self):
+        script_path = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "run_smoke_suite.sh"
+        text = script_path.read_text(encoding="utf-8")
+
+        self.assertIn('profile_id = item.get("id")', text)
+        self.assertIn('run_assessment.py', text)
+        self.assertIn('run_prompt_evals.py', text)
+        self.assertIn('generate_recommendation_report.py', text)
+        self.assertLess(text.index('run_assessment.py'), text.index('run_prompt_evals.py'))
+        self.assertLess(text.index('run_prompt_evals.py'), text.index('generate_recommendation_report.py'))
 
 
 if __name__ == "__main__":
