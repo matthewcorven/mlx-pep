@@ -11,6 +11,7 @@
 - .NET 10.0+
 - Python 3.8+
 - Git
+- `pytest` for Python validation via a project virtual environment
 - (Same hardware/OS requirements as [docs/QUICK-START.md](docs/QUICK-START.md#prerequisites-checklist))
 
 ---
@@ -180,7 +181,18 @@ Add new fields to the profile JSONL schema:
 ### Running Tests
 
 ```bash
-# Run all tests
+# Create and activate a project-local virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install developer Python tooling
+python -m pip install --upgrade pip
+python -m pip install -r requirements-dev.txt
+
+# Run Python tests
+python -m pytest src/model-assessor/tests -q
+
+# Run all .NET tests
 dotnet test
 
 # Run specific test file

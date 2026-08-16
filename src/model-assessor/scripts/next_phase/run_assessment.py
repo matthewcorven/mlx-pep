@@ -6,8 +6,11 @@ import sys
 from typing import Any, Dict, List, Optional
 
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+MODEL_ASSESSOR_ROOT = pathlib.Path(__file__).resolve().parents[2]
+for candidate in (MODEL_ASSESSOR_ROOT, SCRIPT_DIR):
+    candidate_str = str(candidate)
+    if candidate_str not in sys.path:
+        sys.path.insert(0, candidate_str)
 
 from runner_lib import (  # noqa: E402
     OMLXHarness,
