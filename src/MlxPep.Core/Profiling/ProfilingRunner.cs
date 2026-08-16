@@ -54,7 +54,7 @@ public class ProfilingRunner
 
     public string? LastClientConfigArtifactDirectory { get; private set; }
 
-    public async Task<bool> IsAvailableAsync()
+    public virtual async Task<bool> IsAvailableAsync()
     {
         Debug.WriteLine("[ProfilingRunner] Checking model-assessor availability");
         
@@ -104,7 +104,7 @@ public class ProfilingRunner
         }
     }
 
-    public async Task<AssessmentRunResult> RunProfilingAsync(
+    public virtual async Task<AssessmentRunResult> RunProfilingAsync(
         string modelHfId,
         string? assistantModelId = null,
         string suite = "full",
@@ -209,6 +209,7 @@ public class ProfilingRunner
             var runManifestPath = FindSingleArtifact(modelAssessorRoot, runBaseDir, "run_manifest.json");
             var runManifestJson = File.ReadAllText(runManifestPath);
             var runResult = ParseRunManifest(runManifestJson);
+            ValidateBenchmarkResults(modelAssessorRoot, runManifestJson);
 
             if (!runResult.IsSuccess)
             {
@@ -1264,6 +1265,62 @@ public class ProfilingRunner
             MtpMode: mtpMode,
             CreatedAt: createdAt,
             RecommendationManifest: recommendationManifest);
+    }
+
+    public static void ValidateBenchmarkResults(string modelAssessorRootPath, string runManifestJson)
+    {
+        using var document = JsonDocument.Parse(runManifestJson);
+        var root = document.RootElement;
+
+        if (!root.TryGetProperty("artifact_paths", out var artifactPaths) ||
+            artifactPaths.ValueKind != JsonValueKind.Object ||
+            !artifactPaths.TryGetProperty("benchmark_results", out var benchmarkResults) ||
+            benchmarkResults.ValueKind != JsonValueKind.Array)
+        {
+            Debug.WriteLine("[ProfilingRunner] Run manifest does not contain benchmark_results artifact paths");
+            throw new InvalidOperationException("Model-assessor run manifest does not contain benchmark result artifacts");
+        }
+
+        var rejectedBenchmarks = new List<string>();
+        foreach (var benchmarkResult in benchmarkResults.EnumerateArray())
+        {
+            if (benchmarkResult.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(benchmarkResult.GetString()))
+            {
+                Debug.WriteLine("[ProfilingRunner] Encountered blank benchmark result artifact path in run manifest");
+                throw new InvalidOperationException("Model-assessor run manifest contains an invalid benchmark result artifact path");
+            }
+
+            var benchmarkRelativePath = benchmarkResult.GetString()!;
+            var benchmarkPath = Path.Combine(modelAssessorRootPath, benchmarkRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(benchmarkPath))
+            {
+                Debug.WriteLine($"[ProfilingRunner] Benchmark result artifact missing at {benchmarkPath}");
+                throw new InvalidOperationException($"Benchmark result artifact was not found: {benchmarkRelativePath}");
+            }
+
+            using var benchmarkDocument = JsonDocument.Parse(File.ReadAllText(benchmarkPath));
+            var benchmarkRoot = benchmarkDocument.RootElement;
+            var benchmarkStatus = GetRequiredString(benchmarkRoot, "status");
+            if (!IsAcceptedBenchmarkStatus(benchmarkStatus))
+            {
+                Debug.WriteLine($"[ProfilingRunner] Rejecting benchmark result {benchmarkRelativePath} with status {benchmarkStatus}");
+                rejectedBenchmarks.Add($"{benchmarkRelativePath} ({benchmarkStatus})");
+            }
+        }
+
+        if (rejectedBenchmarks.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Benchmark results were rejected because they did not complete successfully: {string.Join(", ", rejectedBenchmarks)}");
+        }
+    }
+
+    private static bool IsAcceptedBenchmarkStatus(string status)
+    {
+        return status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("complete", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("success", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("done", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string GetRequiredString(JsonElement element, string propertyName)

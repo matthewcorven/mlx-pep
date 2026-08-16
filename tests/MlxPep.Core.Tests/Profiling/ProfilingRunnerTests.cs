@@ -90,6 +90,85 @@ public class ProfilingRunnerTests
     }
 
     [Fact]
+    public void ValidateBenchmarkResults_WithPartialBenchmarkStatus_ThrowsInvalidOperationException()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"profiling-runner-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(tempRoot, "runs", "run-123", "profile-a"));
+
+        try
+        {
+            var benchmarkRelativePath = "runs/run-123/profile-a/06_bench_results.json";
+            var benchmarkAbsolutePath = Path.Combine(tempRoot, "runs", "run-123", "profile-a", "06_bench_results.json");
+            File.WriteAllText(benchmarkAbsolutePath, "{\"status\":\"partial\",\"results\":[]}");
+            var manifestJson = $$"""
+                {
+                  "run_id":"run-123",
+                  "status":"success",
+                  "model_id":"test/model",
+                  "suite":"full",
+                  "mtp_mode":"off",
+                  "created_at":"2026-08-14T00:00:00Z",
+                  "artifact_paths":{
+                    "benchmark_results":["{{benchmarkRelativePath}}"]
+                  }
+                }
+                """;
+
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+
+            Assert.Contains("partial", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("06_bench_results.json", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithCompletedBenchmarkStatus_DoesNotThrow()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"profiling-runner-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(tempRoot, "runs", "run-123", "profile-a"));
+
+        try
+        {
+            var benchmarkRelativePath = "runs/run-123/profile-a/06_bench_results.json";
+            var benchmarkAbsolutePath = Path.Combine(tempRoot, "runs", "run-123", "profile-a", "06_bench_results.json");
+            File.WriteAllText(benchmarkAbsolutePath, "{\"status\":\"completed\",\"results\":[]}");
+            var manifestJson = $$"""
+                {
+                  "run_id":"run-123",
+                  "status":"success",
+                  "model_id":"test/model",
+                  "suite":"full",
+                  "mtp_mode":"off",
+                  "created_at":"2026-08-14T00:00:00Z",
+                  "artifact_paths":{
+                    "benchmark_results":["{{benchmarkRelativePath}}"]
+                  }
+                }
+                """;
+
+            var exception = Record.Exception(
+                () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+
+            Assert.Null(exception);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void ParseRunManifest_WithUppercaseSuccessStatus_ThrowsInvalidOperationException()
     {
         var manifestJson = "{\"run_id\":\"run-123\",\"status\":\"SUCCESS\",\"model_id\":\"test/model\",\"suite\":\"full\",\"mtp_mode\":\"off\",\"created_at\":\"2026-08-14T00:00:00Z\"}";

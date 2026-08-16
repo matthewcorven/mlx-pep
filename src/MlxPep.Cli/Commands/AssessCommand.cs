@@ -191,6 +191,20 @@ public class AssessCommand
         {
             System.Diagnostics.Debug.WriteLine($"[AssessCommand] Exception: {ex.GetType().Name}: {ex.Message}");
             context.Verbose("AssessCommand", $"Assess command failed with {ex.GetType().Name}: {ex.Message}");
+            progress.CompleteStep($"assess rejected: {ex.Message}");
+            if (context.JsonOutput)
+            {
+                var errorResult = new
+                {
+                    command = "assess",
+                    status = "error",
+                    hfId = hfId,
+                    published = publish,
+                    error = $"Failed to assess model: {ex.Message}"
+                };
+                Console.WriteLine(JsonSerializer.Serialize(errorResult, new JsonSerializerOptions { WriteIndented = true }));
+            }
+
             return CommandResult.Failure($"Failed to assess model: {ex.Message}");
         }
         finally
