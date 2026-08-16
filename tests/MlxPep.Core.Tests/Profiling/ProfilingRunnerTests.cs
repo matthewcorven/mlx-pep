@@ -14,6 +14,7 @@ public sealed class DebugTraceCollectionDefinition
 [Collection("DebugTrace")]
 public class ProfilingRunnerTests
 {
+    private static readonly object TraceSyncRoot = new();
     private readonly ProfilingRunner _runner = new();
 
     [Fact]
@@ -275,20 +276,25 @@ public class ProfilingRunnerTests
 
     private static string CaptureDebugOutput(Action action)
     {
-        using var writer = new StringWriter();
-        using var listener = new TextWriterTraceListener(writer);
-        Trace.Listeners.Add(listener);
-        Trace.AutoFlush = true;
+        lock (TraceSyncRoot)
+        {
+            using var writer = new StringWriter();
+            using var listener = new TextWriterTraceListener(writer);
+            var originalAutoFlush = Trace.AutoFlush;
+            Trace.Listeners.Add(listener);
+            Trace.AutoFlush = true;
 
-        try
-        {
-            action();
-            listener.Flush();
-            return writer.ToString();
-        }
-        finally
-        {
-            Trace.Listeners.Remove(listener);
+            try
+            {
+                action();
+                listener.Flush();
+                return writer.ToString();
+            }
+            finally
+            {
+                Trace.AutoFlush = originalAutoFlush;
+                Trace.Listeners.Remove(listener);
+            }
         }
     }
 }

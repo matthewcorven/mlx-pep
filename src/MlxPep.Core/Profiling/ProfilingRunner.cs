@@ -1298,7 +1298,8 @@ public class ProfilingRunner
                 throw new InvalidOperationException($"Benchmark result artifact was not found: {benchmarkRelativePath}");
             }
 
-            using var benchmarkDocument = JsonDocument.Parse(File.ReadAllText(benchmarkPath));
+            using var benchmarkStream = File.OpenRead(benchmarkPath);
+            using var benchmarkDocument = JsonDocument.Parse(benchmarkStream);
             var benchmarkRoot = benchmarkDocument.RootElement;
             var benchmarkStatus = GetRequiredString(benchmarkRoot, "status");
             if (!IsAcceptedBenchmarkStatus(benchmarkStatus))
