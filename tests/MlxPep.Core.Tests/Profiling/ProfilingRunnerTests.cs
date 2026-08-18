@@ -189,7 +189,32 @@ public class ProfilingRunnerTests
     }
 
     [Fact]
-    public void ValidateBenchmarkResults_WithMissingBenchmarkResults_DoesNotThrow()
+    public void ValidateBenchmarkResults_WithMissingArtifactPaths_ThrowsInvalidOperationException()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z"
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Contains("artifact_paths", exception.Message, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("does not include artifact_paths", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithMissingBenchmarkResults_ThrowsInvalidOperationException()
     {
         const string manifestJson = """
             {
@@ -205,13 +230,41 @@ public class ProfilingRunnerTests
 
         var output = CaptureDebugOutput(() =>
         {
-            var exception = Record.Exception(
+            var exception = Assert.Throws<InvalidOperationException>(
                 () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
 
-            Assert.Null(exception);
+            Assert.Contains("benchmark_results", exception.Message, StringComparison.OrdinalIgnoreCase);
         });
 
-        Assert.Contains("no benchmark results to validate", output, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("does not include benchmark_results", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithEmptyBenchmarkResults_ThrowsInvalidOperationException()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z",
+              "artifact_paths":{
+                "benchmark_results":[]
+              }
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Contains("empty", exception.Message, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("benchmark_results array is empty", output, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

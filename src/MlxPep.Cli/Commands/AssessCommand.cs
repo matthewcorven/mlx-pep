@@ -39,6 +39,7 @@ public class AssessCommand
     {
         context ??= new CommandContext();
         using var progress = context.CreateProgressScope("assess", publish ? 6 : 5);
+        var published = false;
 
         System.Diagnostics.Debug.WriteLine($"[AssessCommand] Starting assess for {hfId} (suite={suite})");
         context.Verbose("AssessCommand", $"Starting assess command for model '{hfId}' with suite '{suite}' and publish={publish}.");
@@ -62,7 +63,8 @@ public class AssessCommand
                     hfId,
                     assistantModelId,
                     suite,
-                    topologyManifestPath);
+                    topologyManifestPath,
+                    CreateProfilingOutputHandler(context));
                 progress.CompleteStep("profiling workflow complete");
 
                 progress.StartStep("map recommendation manifest to profiles");
@@ -132,6 +134,7 @@ public class AssessCommand
 
                 if (context.JsonOutput)
                 {
+                    published = true;
                     var result = new
                     {
                         command = "assess",
@@ -150,6 +153,7 @@ public class AssessCommand
                 }
                 else
                 {
+                    published = true;
                     context.Verbose("AssessCommand", "Publish validation succeeded; rendering text success output.");
                     Console.WriteLine($"Assessing model: {hfId}");
                     Console.WriteLine($"Generated {profiles.Count} profiles");
@@ -200,7 +204,7 @@ public class AssessCommand
                     command = "assess",
                     status = "error",
                     hfId = hfId,
-                    published = publish,
+                    published = published,
                     error = $"Failed to assess model: {ex.Message}"
                 };
                 Console.WriteLine(JsonSerializer.Serialize(errorResult, OutputJsonOptions));
@@ -212,5 +216,32 @@ public class AssessCommand
         {
             context.Verbose("AssessCommand", "Assess command finished execution path.");
         }
+    }
+
+    private static Action<string, bool>? CreateProfilingOutputHandler(CommandContext context)
+    {
+        if (context.JsonOutput || (!context.VerboseOutput && !context.ProgressOutput))
+        {
+            System.Diagnostics.Debug.WriteLine("[AssessCommand] Subprocess output streaming disabled for current output mode");
+            return null;
+        }
+
+        System.Diagnostics.Debug.WriteLine("[AssessCommand] Subprocess output streaming enabled");
+        return (line, isError) =>
+        {
+            if (string.IsNullOrEmpty(line))
+            {
+                return;
+            }
+
+            if (isError)
+            {
+                Console.Error.WriteLine(line);
+            }
+            else
+            {
+                Console.Out.WriteLine(line);
+            }
+        };
     }
 }

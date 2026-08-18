@@ -108,7 +108,8 @@ public class ProfilingRunner
         string modelHfId,
         string? assistantModelId = null,
         string suite = "full",
-        string? topologyManifestPath = null)
+        string? topologyManifestPath = null,
+        Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting profiling for {modelHfId} (suite={suite})");
         
@@ -195,7 +196,7 @@ public class ProfilingRunner
             using var cts = new System.Threading.CancellationTokenSource(
                 TimeSpan.FromMinutes(DefaultTimeoutMinutes));
 
-            var result = await RunProcessAsync("python3", args, cts.Token);
+            var result = await RunProcessAsync("python3", args, cts.Token, outputHandler);
 
             if (result.ExitCode != 0)
             {
@@ -233,7 +234,7 @@ public class ProfilingRunner
                 Debug.WriteLine("[ProfilingRunner] Recommendation generator will run without assistant model filter");
             }
 
-            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token);
+            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token, outputHandler);
 
             if (recommendationResult.ExitCode != 0)
             {
@@ -251,7 +252,7 @@ public class ProfilingRunner
 
             var clientConfigArgs =
                 $"-m scripts.next_phase.generate_client_config_artifacts --recommendation-manifest {QuoteArgument(GetRelativePath(modelAssessorRoot, recommendationManifestPath))} --client-configs-dir {QuoteArgument(clientConfigBaseDir)}";
-            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token);
+            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token, outputHandler);
 
             if (clientConfigResult.ExitCode != 0)
             {
@@ -300,7 +301,8 @@ public class ProfilingRunner
     private async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
         string fileName,
         string arguments,
-        System.Threading.CancellationToken ct)
+        System.Threading.CancellationToken ct,
+        Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting process: {fileName} {arguments}");
         
@@ -328,40 +330,54 @@ public class ProfilingRunner
         using var process = new Process { StartInfo = psi };
         process.Start();
 
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        var outputTask = Task.WhenAll(stdoutTask, stderrTask);
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+        var stdoutTask = PumpOutputAsync(process.StandardOutput, stdout, outputHandler, isError: false);
+        var stderrTask = PumpOutputAsync(process.StandardError, stderr, outputHandler, isError: true);
 
         try
         {
-            var completed = await Task.WhenAny(
-                outputTask,
-                Task.Delay(Timeout.Infinite, ct));
-
-            if (completed == outputTask)
-            {
-                Debug.WriteLine("[ProfilingRunner] Process output completed before timeout");
-                // Output tasks completed normally
-                await outputTask;
-                var stdout = await stdoutTask;
-                var stderr = await stderrTask;
-                process.WaitForExit();
-                Debug.WriteLine($"[ProfilingRunner] Process exited with code {process.ExitCode}");
-                return (process.ExitCode, stdout, stderr);
-            }
-            else
-            {
-                // Timeout via cancellation token
-                Debug.WriteLine("[ProfilingRunner] Process timeout, killing");
-                process.Kill(true);
-                throw new OperationCanceledException("Process timeout");
-            }
+            await process.WaitForExitAsync(ct);
+            await Task.WhenAll(stdoutTask, stderrTask);
+            Debug.WriteLine("[ProfilingRunner] Process output completed before timeout");
+            Debug.WriteLine($"[ProfilingRunner] Process exited with code {process.ExitCode}");
+            return (process.ExitCode, stdout.ToString(), stderr.ToString());
         }
         catch (OperationCanceledException)
         {
             Debug.WriteLine("[ProfilingRunner] Cancellation during process wait");
             try { process.Kill(true); } catch { }
+            try { await Task.WhenAll(stdoutTask, stderrTask); } catch (Exception ex) { Debug.WriteLine($"[ProfilingRunner] Suppressed output pump exception during cancellation: {ex.Message}"); }
             throw;
+        }
+    }
+
+    private static async Task PumpOutputAsync(
+        StreamReader reader,
+        StringBuilder buffer,
+        Action<string, bool>? outputHandler,
+        bool isError)
+    {
+        while (true)
+        {
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ProfilingRunner] Output pump failed: {ex.Message}");
+                throw;
+            }
+
+            if (line == null)
+            {
+                break;
+            }
+
+            buffer.Append(line).Append('\n');
+            outputHandler?.Invoke(line, isError);
         }
     }
 
@@ -1275,14 +1291,14 @@ public class ProfilingRunner
         if (!root.TryGetProperty("artifact_paths", out var artifactPaths) ||
             artifactPaths.ValueKind != JsonValueKind.Object)
         {
-            Debug.WriteLine("[ProfilingRunner] Run manifest does not include artifact_paths; no benchmark results to validate");
-            return;
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest does not include artifact_paths");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest did not include artifact_paths");
         }
 
         if (!artifactPaths.TryGetProperty("benchmark_results", out var benchmarkResults))
         {
-            Debug.WriteLine("[ProfilingRunner] Run manifest does not include benchmark_results; no benchmark results to validate");
-            return;
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest does not include benchmark_results");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest did not include benchmark_results");
         }
 
         if (benchmarkResults.ValueKind != JsonValueKind.Array)
@@ -1293,8 +1309,8 @@ public class ProfilingRunner
 
         if (benchmarkResults.GetArrayLength() == 0)
         {
-            Debug.WriteLine("[ProfilingRunner] Run manifest benchmark_results array is empty; no benchmark results to validate");
-            return;
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest benchmark_results array is empty");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest benchmark_results array was empty");
         }
 
         var rejectedBenchmarks = new List<string>();
