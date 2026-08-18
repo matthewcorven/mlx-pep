@@ -1,6 +1,5 @@
 namespace MlxPep.Cli.Tests.Commands;
 
-using System.Reflection;
 using System.Threading;
 using System.Text.Json;
 using MlxPep.Cli.Commands;
@@ -188,12 +187,29 @@ public class AssessCommandTests
         {
             outputHandler?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.", false);
 
-            const string pythonScript =
-                "import sys, time; print('streamed stdout', flush=True); print('streamed stderr', file=sys.stderr, flush=True); time.sleep(0.1)";
-            var arguments = $"-c \"{pythonScript}\"";
+            var pythonExecutable = GetPythonExecutableName();
+            Assert.True(
+                IsPythonAvailable(pythonExecutable),
+                $"Python executable '{pythonExecutable}' is required for subprocess streaming tests.");
+            var tempScriptPath = Path.Combine(Path.GetTempPath(), $"assess-command-{Guid.NewGuid():N}.py");
 
-            outputHandler?.Invoke($"Launching assessment subprocess: python3 {arguments}", false);
-            await InvokeRunProcessAsync(arguments, outputHandler);
+            try
+            {
+                File.WriteAllText(
+                    tempScriptPath,
+                    "import sys, time\nprint('streamed stdout', flush=True)\nprint('streamed stderr', file=sys.stderr, flush=True)\ntime.sleep(0.1)\n");
+
+                var arguments = QuoteArgument(tempScriptPath);
+                outputHandler?.Invoke($"Launching assessment subprocess: {pythonExecutable} {arguments}", false);
+                await InvokeRunProcessAsync(pythonExecutable, arguments, outputHandler);
+            }
+            finally
+            {
+                if (File.Exists(tempScriptPath))
+                {
+                    File.Delete(tempScriptPath);
+                }
+            }
 
             var manifest = new RecommendationManifest(
                 ModelHfId: modelHfId,
@@ -219,17 +235,40 @@ public class AssessCommandTests
                 RecommendationManifest: manifest);
         }
 
-        private async Task InvokeRunProcessAsync(string arguments, Action<string, bool>? outputHandler)
+        private async Task InvokeRunProcessAsync(string fileName, string arguments, Action<string, bool>? outputHandler)
         {
-            var method = typeof(ProfilingRunner).GetMethod("RunProcessAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(method);
+            var result = await RunProcessAsync(fileName, arguments, CancellationToken.None, outputHandler);
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Expected subprocess success but got exit code {result.ExitCode}: {result.Stderr}");
+            }
+        }
 
-            var task = (Task)method!.Invoke(this, new object?[] { "python3", arguments, CancellationToken.None, outputHandler })!;
-            await task;
+        private static bool IsPythonAvailable(string pythonExecutable)
+        {
+            try
+            {
+                using var process = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = pythonExecutable,
+                        Arguments = "--version",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
 
-            var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
-            var exitCode = (int)result.GetType().GetField("Item1")!.GetValue(result)!;
-            Assert.Equal(0, exitCode);
+                process.Start();
+                process.WaitForExit(2000);
+                return process.ExitCode == 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

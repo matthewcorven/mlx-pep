@@ -82,9 +82,10 @@ public class ProfilingRunner
         
         try
         {
+            var pythonExecutable = GetPythonExecutableName();
             using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
             var result = await RunProcessAsync(
-                "python3",
+                pythonExecutable,
                 $"{QuoteArgument(AssessmentScriptPath)} --help",
                 cts.Token);
 
@@ -197,8 +198,9 @@ public class ProfilingRunner
             using var cts = new System.Threading.CancellationTokenSource(
                 TimeSpan.FromMinutes(DefaultTimeoutMinutes));
 
-            outputHandler?.Invoke($"Launching assessment subprocess: python3 {args}", false);
-            var result = await RunProcessAsync("python3", args, cts.Token, outputHandler);
+            var pythonExecutable = GetPythonExecutableName();
+            outputHandler?.Invoke($"Launching assessment subprocess: {pythonExecutable} {args}", false);
+            var result = await RunProcessAsync(pythonExecutable, args, cts.Token, outputHandler);
 
             if (result.ExitCode != 0)
             {
@@ -237,7 +239,7 @@ public class ProfilingRunner
             }
 
             outputHandler?.Invoke("Launching recommendation report generation.", false);
-            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token, outputHandler);
+            var recommendationResult = await RunProcessAsync(pythonExecutable, recommendationArgs, cts.Token, outputHandler);
 
             if (recommendationResult.ExitCode != 0)
             {
@@ -256,7 +258,7 @@ public class ProfilingRunner
             var clientConfigArgs =
                 $"-m scripts.next_phase.generate_client_config_artifacts --recommendation-manifest {QuoteArgument(GetRelativePath(modelAssessorRoot, recommendationManifestPath))} --client-configs-dir {QuoteArgument(clientConfigBaseDir)}";
             outputHandler?.Invoke("Launching client config artifact generation.", false);
-            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token, outputHandler);
+            var clientConfigResult = await RunProcessAsync(pythonExecutable, clientConfigArgs, cts.Token, outputHandler);
 
             if (clientConfigResult.ExitCode != 0)
             {
@@ -302,14 +304,13 @@ public class ProfilingRunner
         }
     }
 
-    private async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
+    protected virtual async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
         string fileName,
         string arguments,
         System.Threading.CancellationToken ct,
         Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting process: {fileName} {arguments}");
-        outputHandler?.Invoke($"Starting subprocess: {fileName} {arguments}", false);
         
         var psi = new ProcessStartInfo
         {
@@ -1401,9 +1402,14 @@ public class ProfilingRunner
         return null;
     }
 
-    private static string QuoteArgument(string value)
+    protected static string QuoteArgument(string value)
     {
         return $"\"{value.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+    }
+
+    protected static string GetPythonExecutableName()
+    {
+        return OperatingSystem.IsWindows() ? "python" : "python3";
     }
 
     private sealed record AssessmentCandidate(
