@@ -112,6 +112,7 @@ public class ProfilingRunner
         Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting profiling for {modelHfId} (suite={suite})");
+        outputHandler?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.", false);
         
         if (string.IsNullOrWhiteSpace(modelHfId))
             throw new ArgumentException("Model HF ID cannot be empty", nameof(modelHfId));
@@ -196,6 +197,7 @@ public class ProfilingRunner
             using var cts = new System.Threading.CancellationTokenSource(
                 TimeSpan.FromMinutes(DefaultTimeoutMinutes));
 
+            outputHandler?.Invoke($"Launching assessment subprocess: python3 {args}", false);
             var result = await RunProcessAsync("python3", args, cts.Token, outputHandler);
 
             if (result.ExitCode != 0)
@@ -234,6 +236,7 @@ public class ProfilingRunner
                 Debug.WriteLine("[ProfilingRunner] Recommendation generator will run without assistant model filter");
             }
 
+            outputHandler?.Invoke("Launching recommendation report generation.", false);
             var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token, outputHandler);
 
             if (recommendationResult.ExitCode != 0)
@@ -252,6 +255,7 @@ public class ProfilingRunner
 
             var clientConfigArgs =
                 $"-m scripts.next_phase.generate_client_config_artifacts --recommendation-manifest {QuoteArgument(GetRelativePath(modelAssessorRoot, recommendationManifestPath))} --client-configs-dir {QuoteArgument(clientConfigBaseDir)}";
+            outputHandler?.Invoke("Launching client config artifact generation.", false);
             var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token, outputHandler);
 
             if (clientConfigResult.ExitCode != 0)
@@ -305,6 +309,7 @@ public class ProfilingRunner
         Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting process: {fileName} {arguments}");
+        outputHandler?.Invoke($"Starting subprocess: {fileName} {arguments}", false);
         
         var psi = new ProcessStartInfo
         {
@@ -377,7 +382,7 @@ public class ProfilingRunner
             }
 
             buffer.Append(line).Append('\n');
-            outputHandler?.Invoke(line, isError);
+            outputHandler?.Invoke($"[{(isError ? "stderr" : "stdout")}] {line.TrimEnd()}", isError);
         }
     }
 

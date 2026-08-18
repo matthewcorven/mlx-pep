@@ -234,14 +234,7 @@ public class AssessCommand
                 return;
             }
 
-            if (isError)
-            {
-                Console.Error.WriteLine(line);
-            }
-            else
-            {
-                Console.Out.WriteLine(line);
-            }
+            context.ProgressMessage("ProfilingRunner", line);
         };
     }
 }

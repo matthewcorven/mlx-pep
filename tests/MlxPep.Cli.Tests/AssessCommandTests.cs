@@ -1,5 +1,7 @@
 namespace MlxPep.Cli.Tests.Commands;
 
+using System.Reflection;
+using System.Threading;
 using System.Text.Json;
 using MlxPep.Cli.Commands;
 using MlxPep.Core;
@@ -17,7 +19,7 @@ public class AssessCommandTests
         var context = new CommandContext { JsonOutput = true };
 
         var (result, output) = await ModelsCommandTestHelpers.CaptureOutputAsync(
-            () => command.ExecuteAsync("mlx-community/test-model", context: context));
+            () => command.ExecuteAsync("mlx-community/test-model", publish: true, context: context));
         var json = JsonDocument.Parse(output);
 
         Assert.Equal(1, result.ExitCode);
@@ -50,15 +52,17 @@ public class AssessCommandTests
     public async Task ExecuteAsync_WithVerboseAndProgress_WhenProfilingSucceeds_StreamsSubprocessOutput()
     {
         var command = new AssessCommand(
-            profilingRunner: new FakeProfilingRunner(streamedStdout: "streamed stdout", streamedStderr: "streamed stderr"));
+            profilingRunner: new RealProcessProfilingRunner());
         var context = new CommandContext(jsonOutput: false, verboseOutput: true, progressOutput: true);
 
         var (result, output, errorOutput) = await CaptureConsoleAsync(
             () => command.ExecuteAsync("mlx-community/test-model", context: context));
 
         Assert.Equal(0, result.ExitCode);
-        Assert.Contains("streamed stdout", output, StringComparison.Ordinal);
-        Assert.Contains("streamed stderr", errorOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain("streamed stdout", output, StringComparison.Ordinal);
+        Assert.Contains("[progress][ProfilingRunner] Starting assessment workflow", errorOutput, StringComparison.Ordinal);
+        Assert.Contains("[progress][ProfilingRunner] [stdout] streamed stdout", errorOutput, StringComparison.Ordinal);
+        Assert.Contains("[progress][ProfilingRunner] [stderr] streamed stderr", errorOutput, StringComparison.Ordinal);
         Assert.Contains("[progress][assess]", errorOutput, StringComparison.Ordinal);
     }
 
@@ -66,15 +70,16 @@ public class AssessCommandTests
     public async Task ExecuteAsync_WithProgressOnly_WhenProfilingSucceeds_StreamsSubprocessOutput()
     {
         var command = new AssessCommand(
-            profilingRunner: new FakeProfilingRunner(streamedStdout: "streamed stdout", streamedStderr: "streamed stderr"));
+            profilingRunner: new RealProcessProfilingRunner());
         var context = new CommandContext(jsonOutput: false, verboseOutput: false, progressOutput: true);
 
         var (result, output, errorOutput) = await CaptureConsoleAsync(
             () => command.ExecuteAsync("mlx-community/test-model", context: context));
 
         Assert.Equal(0, result.ExitCode);
-        Assert.Contains("streamed stdout", output, StringComparison.Ordinal);
-        Assert.Contains("streamed stderr", errorOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain("streamed stdout", output, StringComparison.Ordinal);
+        Assert.Contains("[progress][ProfilingRunner] [stdout] streamed stdout", errorOutput, StringComparison.Ordinal);
+        Assert.Contains("[progress][ProfilingRunner] [stderr] streamed stderr", errorOutput, StringComparison.Ordinal);
         Assert.Contains("[progress][assess]", errorOutput, StringComparison.Ordinal);
     }
 
@@ -167,6 +172,64 @@ public class AssessCommandTests
                 MtpMode: "off",
                 CreatedAt: "2026-08-18T00:00:00Z",
                 RecommendationManifest: manifest));
+        }
+    }
+
+    private sealed class RealProcessProfilingRunner : ProfilingRunner
+    {
+        public override Task<bool> IsAvailableAsync() => Task.FromResult(true);
+
+        public override async Task<AssessmentRunResult> RunProfilingAsync(
+            string modelHfId,
+            string? assistantModelId = null,
+            string suite = "full",
+            string? topologyManifestPath = null,
+            Action<string, bool>? outputHandler = null)
+        {
+            outputHandler?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.", false);
+
+            const string pythonScript =
+                "import sys, time; print('streamed stdout', flush=True); print('streamed stderr', file=sys.stderr, flush=True); time.sleep(0.1)";
+            var arguments = $"-c \"{pythonScript}\"";
+
+            outputHandler?.Invoke($"Launching assessment subprocess: python3 {arguments}", false);
+            await InvokeRunProcessAsync(arguments, outputHandler);
+
+            var manifest = new RecommendationManifest(
+                ModelHfId: modelHfId,
+                AssessmentVersion: "test",
+                Timestamp: DateTime.UtcNow.ToString("O"),
+                Recommendations: new Dictionary<string, TierRecommendation>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["high"] = new(
+                        Tier: "high",
+                        System: new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase),
+                        Omlx: new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase),
+                        Harness: new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase))
+                });
+
+            return new AssessmentRunResult(
+                OperationId: "operation-123",
+                RunId: "run-123",
+                ModelId: modelHfId,
+                Status: "success",
+                Suite: suite,
+                MtpMode: "off",
+                CreatedAt: "2026-08-18T00:00:00Z",
+                RecommendationManifest: manifest);
+        }
+
+        private async Task InvokeRunProcessAsync(string arguments, Action<string, bool>? outputHandler)
+        {
+            var method = typeof(ProfilingRunner).GetMethod("RunProcessAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            var task = (Task)method!.Invoke(this, new object?[] { "python3", arguments, CancellationToken.None, outputHandler })!;
+            await task;
+
+            var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+            var exitCode = (int)result.GetType().GetField("Item1")!.GetValue(result)!;
+            Assert.Equal(0, exitCode);
         }
     }
 }
