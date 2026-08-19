@@ -24,7 +24,7 @@ public class RecommendationMapper
         var profiles = new List<Profile>();
 
         var tierOrder = new[] { "high", "balanced", "efficient" };
-        
+
         foreach (var tier in tierOrder)
         {
             var tierKey = manifest.Recommendations.Keys.FirstOrDefault(
@@ -136,7 +136,7 @@ public class RecommendationMapper
         using var sha = SHA256.Create();
         var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
         var hex = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-        
+
         // Return first 12 chars for readability
         return $"{modelHfId.Split('/').Last()}-{tier}-{hex.Substring(0, 12)}";
     }

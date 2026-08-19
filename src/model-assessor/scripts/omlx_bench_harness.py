@@ -4,9 +4,12 @@ import json
 import pathlib
 import sys
 
-SCRIPT_DIR = pathlib.Path(__file__).resolve().parent / "next_phase"
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+MODEL_ASSESSOR_ROOT = SCRIPT_DIR.parent
+for candidate in (MODEL_ASSESSOR_ROOT, SCRIPT_DIR):
+    candidate_str = str(candidate)
+    if candidate_str not in sys.path:
+        sys.path.insert(0, candidate_str)
 
 from runner_lib import OMLXHarness, load_json, merge_settings, pick_model, resolve_profile, save_json  # noqa: E402
 

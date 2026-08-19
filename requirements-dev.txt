@@ -1,0 +1,2 @@
+# Developer tooling for Python-based validation and test runs.
+pytest>=8.0

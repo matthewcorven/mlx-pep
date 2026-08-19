@@ -1,9 +1,0 @@
-{
-  "batch_sizes": [],
-  "generation_length": 512,
-  "model_id": "Qwen3.8-27B-4bit",
-  "prompt_lengths": [
-    4096,
-    8192
-  ]
-}

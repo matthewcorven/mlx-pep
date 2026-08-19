@@ -72,6 +72,11 @@ public class DoctorCommand
                 toolDep["message"] = kvp.Value.Message;
             }
 
+            if (!kvp.Value.Installed && !string.IsNullOrWhiteSpace(kvp.Value.InstallGuidance))
+            {
+                toolDep["install"] = kvp.Value.InstallGuidance;
+            }
+
             dependencies[kvp.Key] = toolDep;
         }
 

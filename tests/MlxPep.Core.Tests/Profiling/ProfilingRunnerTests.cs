@@ -2,6 +2,10 @@ namespace MlxPep.Core.Tests.Profiling;
 
 using System.Diagnostics;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 using MlxPep.Core.Profiling;
@@ -58,10 +62,67 @@ public class ProfilingRunnerTests
         // (implementation doesn't validate suite parameter, so it just tries to run the subprocess)
         var exception = await Record.ExceptionAsync(
             () => _runner.RunProfilingAsync("test/model", null, "full"));
-        
+
         // Should have some exception (either timeout or process failure)
         Assert.NotNull(exception);
     }
+
+        [Fact]
+        public void ReadSelectedProfileIds_WithMtpOff_ExcludesMtpEnabledProfiles()
+        {
+                var benchmarkProfilesJson = """
+                {
+                    "profiles": [
+                        { "id": "short_code_research_tools_mtp_off", "workload": "short_code_research_tools", "settings": { "mtp_enabled": false, "vlm_mtp_enabled": false } },
+                        { "id": "short_code_research_tools_mtp_on", "workload": "short_code_research_tools", "settings": { "mtp_enabled": true, "vlm_mtp_enabled": true } },
+                        { "id": "short_coding_mtp_off", "workload": "short_coding", "settings": { "mtp_enabled": false, "vlm_mtp_enabled": false } },
+                        { "id": "short_coding_mtp_on", "workload": "short_coding", "settings": { "mtp_enabled": true, "vlm_mtp_enabled": true } }
+                    ]
+                }
+                """;
+
+                var smokeSuiteJson = """
+                {
+                    "profiles": [
+                        "short_code_research_tools_mtp_off",
+                        "short_code_research_tools_mtp_on",
+                        "short_coding_mtp_off",
+                        "short_coding_mtp_on"
+                    ]
+                }
+                """;
+
+                using var benchmarkProfiles = JsonDocument.Parse(benchmarkProfilesJson);
+                var smokeSuitePath = Path.GetTempFileName();
+                File.WriteAllText(smokeSuitePath, smokeSuiteJson);
+
+                try
+                {
+                        var method = typeof(ProfilingRunner).GetMethod(
+                                "ReadSelectedProfileIds",
+                                BindingFlags.NonPublic | BindingFlags.Static);
+
+                        Assert.NotNull(method);
+
+                        var result = (List<string>)method!.Invoke(null, new object[]
+                        {
+                                "smoke",
+                                "off",
+                                benchmarkProfiles.RootElement,
+                                smokeSuitePath
+                        })!;
+
+                        Assert.Equal(new[]
+                        {
+                                "short_code_research_tools_mtp_off",
+                                "short_coding_mtp_off"
+                        }, result);
+                }
+                finally
+                {
+                        File.Delete(smokeSuitePath);
+                }
+        }
 
     [Fact]
     public void ParseRunManifest_WithPartialStatus_ThrowsInvalidOperationException()

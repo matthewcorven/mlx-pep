@@ -47,9 +47,9 @@ All runs have the same error pattern.
 
 ### Bootstrap Failure
 
-**Error Type**: Connection Refused  
-**Error Code**: Errno 61  
-**Target Server**: `http://127.0.0.1:8000`  
+**Error Type**: Connection Refused
+**Error Code**: Errno 61
+**Target Server**: `http://127.0.0.1:8000`
 **Status**: ❌ Server Not Running
 
 **Evidence** (from most recent run):

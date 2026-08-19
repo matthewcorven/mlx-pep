@@ -170,39 +170,51 @@ public class DependencyDetectionService
             DisplayName = "model-assessor (Python package)"
         };
 
-        // model-assessor is a Python package; check via pip
+        var guidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
+        result.InstallGuidance = guidance;
+
         try
         {
             using var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "pip",
-                    Arguments = "show model-assessor",
+                    FileName = "python3",
+                    Arguments = "-m pip show model-assessor --disable-pip-version-check",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     CreateNoWindow = true
                 }
             };
 
-            if (!process.Start() || !process.WaitForExit(5000))
+            if (!process.Start())
             {
                 result.Installed = false;
-                result.Message = "pip show failed or timed out";
-                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
+                result.Message = "python3 -m pip could not be started";
                 return result;
             }
+
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
+            if (!process.WaitForExit(5000))
+            {
+                result.Installed = false;
+                result.Message = "python3 -m pip show timed out";
+                return result;
+            }
+
+            var output = await stdoutTask;
+            var stderr = await stderrTask;
+            result.RawOutput = output.Trim();
 
             if (process.ExitCode != 0)
             {
                 result.Installed = false;
-                result.Message = "Package not found via pip";
-                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
+                result.Message = "Package not found via python3 -m pip";
                 return result;
             }
-
-            var output = await process.StandardOutput.ReadToEndAsync();
-            result.RawOutput = output.Trim();
 
             // Parse version from "Version: X.Y.Z"
             var versionMatch = System.Text.RegularExpressions.Regex.Match(output, @"Version:\s+(\S+)");
@@ -211,20 +223,17 @@ public class DependencyDetectionService
                 result.Installed = true;
                 result.Version = versionMatch.Groups[1].Value;
                 result.Scope = "python-package";
-                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
             }
             else
             {
                 result.Installed = false;
                 result.Message = "Could not parse version";
-                result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
             }
         }
         catch (Exception ex)
         {
             result.Installed = false;
             result.Message = ex.Message;
-            result.InstallGuidance = DependencyInstallationGuidance.GetGuidance("model-assessor");
         }
 
         return result;

@@ -31,7 +31,7 @@ public class ProfilingRunnerIntegrationTests
     {
         // Arrange: Create SamplerSettings directly with double temperature
         var settings = new SamplerSettings(Temperature: 0.7, TopP: 0.9, TopK: 40);
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-direct-double",
@@ -59,7 +59,7 @@ public class ProfilingRunnerIntegrationTests
     {
         // Arrange: Create SamplerSettings with null optional values
         var settings = new SamplerSettings(Temperature: null, TopP: null, TopK: null);
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-null-values",
@@ -87,7 +87,7 @@ public class ProfilingRunnerIntegrationTests
     {
         // Arrange: Create SamplerSettings with just temperature
         var settings = new SamplerSettings(Temperature: 0.5);
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-minimal",
@@ -119,7 +119,7 @@ public class ProfilingRunnerIntegrationTests
             TopP: 0.99999,        // Very close to 1.0
             TopK: int.MaxValue    // Max int
         );
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-edge-cases",
@@ -223,7 +223,7 @@ public class ProfilingRunnerIntegrationTests
             RepetitionPenalty: 1.0,
             ContextTokens: 8192
         );
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-all-params",
@@ -257,7 +257,7 @@ public class ProfilingRunnerIntegrationTests
             RepetitionPenalty: null,
             ContextTokens: 4096
         );
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-mixed-null",
@@ -291,7 +291,7 @@ public class ProfilingRunnerIntegrationTests
             RepetitionPenalty: 0.0,   // Zero penalty
             ContextTokens: 1          // Minimum tokens
         );
-        
+
         var profile = new Profile(
             SchemaVersion: 1,
             Id: "test-profile-boundaries",

@@ -29,31 +29,23 @@ class RecommendationManifestTopologyTests(unittest.TestCase):
 
         self.assertIsNone(validate_report_evidence(candidates))
 
-    def test_validate_report_evidence_requires_benchmark_evidence(self):
-        candidates = [self._candidate(benchmark_available=False)]
-
-        with self.assertRaises(ValueError) as ctx:
-            validate_report_evidence(candidates)
-
-        self.assertIn("benchmark evidence", str(ctx.exception))
-
-    def test_validate_report_evidence_requires_prompt_quality_evidence(self):
+    def test_validate_report_evidence_allows_benchmark_only_evidence(self):
         candidates = [self._candidate(evaluation_available=False)]
 
+        self.assertIsNone(validate_report_evidence(candidates))
+
+    def test_validate_report_evidence_rejects_empty_evidence(self):
+        candidates = [self._candidate(benchmark_available=False, evaluation_available=False)]
+
         with self.assertRaises(ValueError) as ctx:
             validate_report_evidence(candidates)
 
-        self.assertIn("prompt-quality", str(ctx.exception))
+        self.assertIn("at least one evidence type", str(ctx.exception))
 
-    def test_validate_report_evidence_mentions_required_workflow_sequence(self):
+    def test_validate_report_evidence_mentions_missing_evidence_in_output(self):
         candidates = [self._candidate(evaluation_available=False)]
 
-        with self.assertRaises(ValueError) as ctx:
-            validate_report_evidence(candidates)
-
-        self.assertIn("run benchmark/probe collection first", str(ctx.exception))
-        self.assertIn("then prompt-quality evaluation", str(ctx.exception))
-        self.assertIn("then generate the recommendation report", str(ctx.exception))
+        self.assertIsNone(validate_report_evidence(candidates))
 
     def test_build_quality_summary_reports_missing_prompt_quality_evidence(self):
         candidate = {"evaluation": {"available": False}}

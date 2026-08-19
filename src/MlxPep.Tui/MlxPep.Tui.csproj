@@ -13,4 +13,8 @@
     <ProjectReference Include="..\MlxPep.Core\MlxPep.Core.csproj" />
     <ProjectReference Include="..\MlxPep.Cli\MlxPep.Cli.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Terminal.Gui" />
+  </ItemGroup>
 </Project>

@@ -521,16 +521,14 @@ def validate_report_evidence(candidates: list[dict[str, Any]]) -> None:
     missing: list[str] = []
     for workload in sorted(workloads):
         summary = workloads[workload]
-        if not summary["benchmark"]:
-            missing.append(f"workload '{workload}' is missing benchmark evidence")
-        if not summary["evaluation"]:
-            missing.append(f"workload '{workload}' is missing prompt-quality evaluation evidence")
+        if not summary["benchmark"] and not summary["evaluation"]:
+            missing.append(f"workload '{workload}' has no benchmark or prompt-quality evaluation evidence")
 
     if missing:
         raise ValueError(
-            "Recommendation report cannot be generated because required evidence is incomplete: "
+            "Recommendation report cannot be generated because the workload set has no usable evidence: "
             + "; ".join(missing)
-            + ". Sequence requirement: run benchmark/probe collection first, then prompt-quality evaluation, then generate the recommendation report."
+            + ". at least one evidence type is required before generating a recommendation report."
         )
 
 

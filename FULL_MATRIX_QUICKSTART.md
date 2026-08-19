@@ -120,13 +120,13 @@ mlx-pep assess <model>
   - Topology manifest schema
   - Step-by-step examples
   - Best practices
-  
+
 ✓ docs/topology-manifests/template-single-instance.json
   - Starter template for single-instance setup
-  
+
 ✓ docs/topology-manifests/example-multi-instance.json
   - Two vLLM + one Ollama fallback configuration
-  
+
 ✓ docs/topology-manifests/example-production-cluster.json
   - Production-grade: 4 GPU nodes + 2 CPU fallbacks
 ```
