@@ -363,12 +363,12 @@ public class ProfilingRunner
                 return (process.ExitCode, stdoutBuilder.ToString(), stderrBuilder.ToString());
             }
 
-    Debug.WriteLine("[ProfilingRunner] Process timeout, killing");
-    process.Kill(true);
-    throw new OperationCanceledException("Process timeout");
-}
-catch (OperationCanceledException)
-{
+            Debug.WriteLine("[ProfilingRunner] Process timeout, killing");
+            process.Kill(true);
+            throw new OperationCanceledException("Process timeout");
+        }
+        catch (OperationCanceledException)
+        {
             Debug.WriteLine("[ProfilingRunner] Cancellation during process wait");
             try { process.Kill(true); } catch { }
             try { await Task.WhenAll(stdoutTask, stderrTask); } catch (Exception ex) { Debug.WriteLine($"[ProfilingRunner] Suppressed output pump exception during cancellation: {ex.Message}"); }
