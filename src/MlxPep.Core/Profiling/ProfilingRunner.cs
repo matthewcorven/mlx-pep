@@ -54,7 +54,7 @@ public class ProfilingRunner
 
     public string? LastClientConfigArtifactDirectory { get; private set; }
 
-    public async Task<bool> IsAvailableAsync()
+    public virtual async Task<bool> IsAvailableAsync()
     {
         Debug.WriteLine("[ProfilingRunner] Checking model-assessor availability");
 
@@ -82,9 +82,10 @@ public class ProfilingRunner
 
         try
         {
+            var pythonExecutable = GetPythonExecutableName();
             using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
             var result = await RunProcessAsync(
-                "python3",
+                pythonExecutable,
                 $"{QuoteArgument(AssessmentScriptPath)} --help",
                 cts.Token);
 
@@ -104,15 +105,15 @@ public class ProfilingRunner
         }
     }
 
-    public async Task<AssessmentRunResult> RunProfilingAsync(
+    public virtual async Task<AssessmentRunResult> RunProfilingAsync(
         string modelHfId,
         string? assistantModelId = null,
         string suite = "full",
         string? topologyManifestPath = null,
-        Action<string>? liveOutput = null)
+        Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting profiling for {modelHfId} (suite={suite})");
-        liveOutput?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.");
+        outputHandler?.Invoke($"Starting assessment workflow for model '{modelHfId}' in suite '{suite}'.", false);
 
         if (string.IsNullOrWhiteSpace(modelHfId))
             throw new ArgumentException("Model HF ID cannot be empty", nameof(modelHfId));
@@ -203,8 +204,9 @@ public class ProfilingRunner
             using var cts = new System.Threading.CancellationTokenSource(
                 TimeSpan.FromMinutes(DefaultTimeoutMinutes));
 
-            liveOutput?.Invoke($"Launching assessment subprocess: python3 {args}");
-            var result = await RunProcessAsync("python3", args, cts.Token, liveOutput);
+            var pythonExecutable = GetPythonExecutableName();
+            outputHandler?.Invoke($"Launching assessment subprocess: {pythonExecutable} {args}", false);
+            var result = await RunProcessAsync(pythonExecutable, args, cts.Token, outputHandler);
 
             if (result.ExitCode != 0)
             {
@@ -226,6 +228,7 @@ public class ProfilingRunner
                     $"Model-assessor run ended with non-success status '{runResult.Status}'");
             }
 
+            ValidateBenchmarkResults(modelAssessorRoot, runManifestJson);
             Debug.WriteLine($"[ProfilingRunner] Assessment run {runResult.RunId} completed with status {runResult.Status}");
 
             var recommendationArgs =
@@ -241,8 +244,8 @@ public class ProfilingRunner
                 Debug.WriteLine("[ProfilingRunner] Recommendation generator will run without assistant model filter");
             }
 
-            liveOutput?.Invoke("Launching recommendation report generation.");
-            var recommendationResult = await RunProcessAsync("python3", recommendationArgs, cts.Token, liveOutput);
+            outputHandler?.Invoke("Launching recommendation report generation.", false);
+            var recommendationResult = await RunProcessAsync(pythonExecutable, recommendationArgs, cts.Token, outputHandler);
 
             if (recommendationResult.ExitCode != 0)
             {
@@ -260,8 +263,8 @@ public class ProfilingRunner
 
             var clientConfigArgs =
                 $"-m scripts.next_phase.generate_client_config_artifacts --recommendation-manifest {QuoteArgument(GetRelativePath(modelAssessorRoot, recommendationManifestPath))} --client-configs-dir {QuoteArgument(clientConfigBaseDir)}";
-            liveOutput?.Invoke("Launching client config artifact generation.");
-            var clientConfigResult = await RunProcessAsync("python3", clientConfigArgs, cts.Token, liveOutput);
+            outputHandler?.Invoke("Launching client config artifact generation.", false);
+            var clientConfigResult = await RunProcessAsync(pythonExecutable, clientConfigArgs, cts.Token, outputHandler);
 
             if (clientConfigResult.ExitCode != 0)
             {
@@ -307,14 +310,14 @@ public class ProfilingRunner
         }
     }
 
-    private async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
+    protected virtual async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
         string fileName,
         string arguments,
         System.Threading.CancellationToken ct,
-        Action<string>? liveOutput = null)
+        Action<string, bool>? outputHandler = null)
     {
         Debug.WriteLine($"[ProfilingRunner] Starting process: {fileName} {arguments}");
-        liveOutput?.Invoke($"Starting subprocess: {fileName} {arguments}");
+        outputHandler?.Invoke($"Starting subprocess: {fileName} {arguments}", false);
 
         var psi = new ProcessStartInfo
         {
@@ -343,17 +346,8 @@ public class ProfilingRunner
         var stdoutBuilder = new StringBuilder();
         var stderrBuilder = new StringBuilder();
 
-        var stdoutTask = ReadStreamAsync(process.StandardOutput, line =>
-        {
-            stdoutBuilder.AppendLine(line);
-            liveOutput?.Invoke($"[stdout] {line.TrimEnd()}");
-        });
-
-        var stderrTask = ReadStreamAsync(process.StandardError, line =>
-        {
-            stderrBuilder.AppendLine(line);
-            liveOutput?.Invoke($"[stderr] {line.TrimEnd()}");
-        });
+        var stdoutTask = PumpOutputAsync(process.StandardOutput, stdoutBuilder, outputHandler, isError: false);
+        var stderrTask = PumpOutputAsync(process.StandardError, stderrBuilder, outputHandler, isError: true);
 
         try
         {
@@ -377,16 +371,37 @@ public class ProfilingRunner
         {
             Debug.WriteLine("[ProfilingRunner] Cancellation during process wait");
             try { process.Kill(true); } catch { }
+            try { await Task.WhenAll(stdoutTask, stderrTask); } catch (Exception ex) { Debug.WriteLine($"[ProfilingRunner] Suppressed output pump exception during cancellation: {ex.Message}"); }
             throw;
         }
     }
 
-    private static async Task ReadStreamAsync(TextReader reader, Action<string> onLine)
+    private static async Task PumpOutputAsync(
+        StreamReader reader,
+        StringBuilder buffer,
+        Action<string, bool>? outputHandler,
+        bool isError)
     {
-        string? line;
-        while ((line = await reader.ReadLineAsync()) != null)
+        while (true)
         {
-            onLine(line);
+            string? line;
+            try
+            {
+                line = await reader.ReadLineAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ProfilingRunner] Output pump failed: {ex.Message}");
+                throw;
+            }
+
+            if (line == null)
+            {
+                break;
+            }
+
+            buffer.Append(line).Append('\n');
+            outputHandler?.Invoke($"[{(isError ? "stderr" : "stdout")}] {line.TrimEnd()}", isError);
         }
     }
 
@@ -1352,6 +1367,86 @@ public class ProfilingRunner
             RecommendationManifest: recommendationManifest);
     }
 
+    public static void ValidateBenchmarkResults(string modelAssessorRootPath, string runManifestJson)
+    {
+        using var document = JsonDocument.Parse(runManifestJson);
+        var root = document.RootElement;
+
+        if (!root.TryGetProperty("artifact_paths", out var artifactPaths) ||
+            artifactPaths.ValueKind != JsonValueKind.Object)
+        {
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest does not include artifact_paths");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest did not include artifact_paths");
+        }
+
+        if (!artifactPaths.TryGetProperty("benchmark_results", out var benchmarkResults))
+        {
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest does not include benchmark_results");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest did not include benchmark_results");
+        }
+
+        if (benchmarkResults.ValueKind != JsonValueKind.Array)
+        {
+            Debug.WriteLine("[ProfilingRunner] Run manifest benchmark_results entry is not an array");
+            throw new InvalidOperationException("Model-assessor run manifest contains an invalid benchmark_results entry");
+        }
+
+        if (benchmarkResults.GetArrayLength() == 0)
+        {
+            Debug.WriteLine("[ProfilingRunner] Rejecting assessment because run manifest benchmark_results array is empty");
+            throw new InvalidOperationException("Benchmark results were rejected because the run manifest benchmark_results array was empty");
+        }
+
+        var rejectedBenchmarks = new List<string>();
+        foreach (var benchmarkResult in benchmarkResults.EnumerateArray())
+        {
+            if (benchmarkResult.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(benchmarkResult.GetString()))
+            {
+                Debug.WriteLine("[ProfilingRunner] Encountered blank benchmark result artifact path in run manifest");
+                throw new InvalidOperationException("Model-assessor run manifest contains an invalid benchmark result artifact path");
+            }
+
+            var benchmarkRelativePath = benchmarkResult.GetString()!;
+            var benchmarkPath = Path.Combine(modelAssessorRootPath, benchmarkRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(benchmarkPath))
+            {
+                Debug.WriteLine($"[ProfilingRunner] Benchmark result artifact missing at {benchmarkPath}");
+                throw new InvalidOperationException($"Benchmark result artifact was not found: {benchmarkRelativePath}");
+            }
+
+            using var benchmarkStream = File.OpenRead(benchmarkPath);
+            using var benchmarkDocument = JsonDocument.Parse(benchmarkStream);
+            var benchmarkRoot = benchmarkDocument.RootElement;
+            var benchmarkStatus = GetRequiredString(benchmarkRoot, "status");
+            if (!IsAcceptedBenchmarkStatus(benchmarkStatus))
+            {
+                Debug.WriteLine($"[ProfilingRunner] Rejecting benchmark result {benchmarkRelativePath} with status {benchmarkStatus}");
+                rejectedBenchmarks.Add($"{benchmarkRelativePath} ({benchmarkStatus})");
+            }
+            else
+            {
+                Debug.WriteLine($"[ProfilingRunner] Accepted benchmark result {benchmarkRelativePath} with status {benchmarkStatus}");
+            }
+        }
+
+        if (rejectedBenchmarks.Count > 0)
+        {
+            Debug.WriteLine($"[ProfilingRunner] Rejecting assessment because benchmark results were incomplete: {string.Join(", ", rejectedBenchmarks)}");
+            throw new InvalidOperationException(
+                $"Benchmark results were rejected because they did not complete successfully: {string.Join(", ", rejectedBenchmarks)}");
+        }
+
+        Debug.WriteLine("[ProfilingRunner] All benchmark result artifacts completed successfully");
+    }
+
+    private static bool IsAcceptedBenchmarkStatus(string status)
+    {
+        return status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("complete", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("success", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("done", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string GetRequiredString(JsonElement element, string propertyName)
     {
         if (element.TryGetProperty(propertyName, out var property) &&
@@ -1385,9 +1480,14 @@ public class ProfilingRunner
         return null;
     }
 
-    private static string QuoteArgument(string value)
+    protected static string QuoteArgument(string value)
     {
         return $"\"{value.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+    }
+
+    protected static string GetPythonExecutableName()
+    {
+        return OperatingSystem.IsWindows() ? "python" : "python3";
     }
 
     private sealed record AssessmentCandidate(

@@ -17,6 +17,7 @@ artifacts/
 ## Python prototype
 __pycache__/
 *.pyc
+src/model-assessor/results/mlx-pep-cli/[0-9]*/
 # Squad: ignore runtime state (logs, inbox, sessions)
 # Note: .squad/casting/* is identity and MUST be committed to main, not ignored
 .squad/orchestration-log/

@@ -1,5 +1,6 @@
 namespace MlxPep.Core.Tests.Profiling;
 
+using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,15 @@ using System.Threading.Tasks;
 using Xunit;
 using MlxPep.Core.Profiling;
 
+[CollectionDefinition("DebugTrace", DisableParallelization = true)]
+public sealed class DebugTraceCollectionDefinition
+{
+}
+
+[Collection("DebugTrace")]
 public class ProfilingRunnerTests
 {
+    private static readonly object TraceSyncRoot = new();
     private readonly ProfilingRunner _runner = new();
 
     [Fact]
@@ -151,6 +159,219 @@ public class ProfilingRunnerTests
     }
 
     [Fact]
+    public void ValidateBenchmarkResults_WithPartialBenchmarkStatus_ThrowsInvalidOperationException()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"profiling-runner-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(tempRoot, "runs", "run-123", "profile-a"));
+
+        try
+        {
+            var benchmarkRelativePath = "runs/run-123/profile-a/06_bench_results.json";
+            var benchmarkAbsolutePath = Path.Combine(tempRoot, "runs", "run-123", "profile-a", "06_bench_results.json");
+            File.WriteAllText(benchmarkAbsolutePath, "{\"status\":\"partial\",\"results\":[]}");
+            var manifestJson = $$"""
+                {
+                  "run_id":"run-123",
+                  "status":"success",
+                  "model_id":"test/model",
+                  "suite":"full",
+                  "mtp_mode":"off",
+                  "created_at":"2026-08-14T00:00:00Z",
+                  "artifact_paths":{
+                    "benchmark_results":["{{benchmarkRelativePath}}"]
+                  }
+                }
+                """;
+
+            var output = CaptureDebugOutput(() =>
+            {
+                var exception = Assert.Throws<InvalidOperationException>(
+                    () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+
+                Assert.Contains("partial", exception.Message, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("06_bench_results.json", exception.Message, StringComparison.OrdinalIgnoreCase);
+            });
+
+            Assert.Contains("Rejecting benchmark result", output, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Rejecting assessment because benchmark results were incomplete", output, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithCompletedBenchmarkStatus_DoesNotThrow()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"profiling-runner-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(tempRoot, "runs", "run-123", "profile-a"));
+
+        try
+        {
+            var benchmarkRelativePath = "runs/run-123/profile-a/06_bench_results.json";
+            var benchmarkAbsolutePath = Path.Combine(tempRoot, "runs", "run-123", "profile-a", "06_bench_results.json");
+            File.WriteAllText(benchmarkAbsolutePath, "{\"status\":\"completed\",\"results\":[]}");
+            var manifestJson = $$"""
+                {
+                  "run_id":"run-123",
+                  "status":"success",
+                  "model_id":"test/model",
+                  "suite":"full",
+                  "mtp_mode":"off",
+                  "created_at":"2026-08-14T00:00:00Z",
+                  "artifact_paths":{
+                    "benchmark_results":["{{benchmarkRelativePath}}"]
+                  }
+                }
+                """;
+
+            var output = CaptureDebugOutput(() =>
+            {
+                var exception = Record.Exception(
+                    () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+
+                Assert.Null(exception);
+            });
+
+            Assert.Contains("Accepted benchmark result", output, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("All benchmark result artifacts completed successfully", output, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithMissingArtifactPaths_ThrowsInvalidOperationException()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z"
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Contains("artifact_paths", exception.Message, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("does not include artifact_paths", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithMissingBenchmarkResults_ThrowsInvalidOperationException()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z",
+              "artifact_paths":{}
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Contains("benchmark_results", exception.Message, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("does not include benchmark_results", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithEmptyBenchmarkResults_ThrowsInvalidOperationException()
+    {
+        const string manifestJson = """
+            {
+              "run_id":"run-123",
+              "status":"success",
+              "model_id":"test/model",
+              "suite":"full",
+              "mtp_mode":"off",
+              "created_at":"2026-08-14T00:00:00Z",
+              "artifact_paths":{
+                "benchmark_results":[]
+              }
+            }
+            """;
+
+        var output = CaptureDebugOutput(() =>
+        {
+            var exception = Assert.Throws<InvalidOperationException>(
+                () => ProfilingRunner.ValidateBenchmarkResults(Path.GetTempPath(), manifestJson));
+
+            Assert.Contains("empty", exception.Message, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("benchmark_results array is empty", output, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ValidateBenchmarkResults_WithMissingBenchmarkResultArtifact_ThrowsInvalidOperationException()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"profiling-runner-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(tempRoot, "runs", "run-123", "profile-a"));
+
+        try
+        {
+            const string benchmarkRelativePath = "runs/run-123/profile-a/06_bench_results.json";
+            var manifestJson = $$"""
+                {
+                  "run_id":"run-123",
+                  "status":"success",
+                  "model_id":"test/model",
+                  "suite":"full",
+                  "mtp_mode":"off",
+                  "created_at":"2026-08-14T00:00:00Z",
+                  "artifact_paths":{
+                    "benchmark_results":["{{benchmarkRelativePath}}"]
+                  }
+                }
+                """;
+
+            var output = CaptureDebugOutput(() =>
+            {
+                var exception = Assert.Throws<InvalidOperationException>(
+                    () => ProfilingRunner.ValidateBenchmarkResults(tempRoot, manifestJson));
+
+                Assert.Contains("not found", exception.Message, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("06_bench_results.json", exception.Message, StringComparison.OrdinalIgnoreCase);
+            });
+
+            Assert.Contains("Benchmark result artifact missing", output, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void ParseRunManifest_WithUppercaseSuccessStatus_ThrowsInvalidOperationException()
     {
         var manifestJson = "{\"run_id\":\"run-123\",\"status\":\"SUCCESS\",\"model_id\":\"test/model\",\"suite\":\"full\",\"mtp_mode\":\"off\",\"created_at\":\"2026-08-14T00:00:00Z\"}";
@@ -234,5 +455,29 @@ public class ProfilingRunnerTests
 
         Assert.True(threwException, "Expected an exception to be thrown");
         Assert.True(exceptionIsJson, "Expected a JSON-related exception");
+    }
+
+    private static string CaptureDebugOutput(Action action)
+    {
+        lock (TraceSyncRoot)
+        {
+            using var writer = new StringWriter();
+            using var listener = new TextWriterTraceListener(writer);
+            var originalAutoFlush = Trace.AutoFlush;
+            Trace.Listeners.Add(listener);
+            Trace.AutoFlush = true;
+
+            try
+            {
+                action();
+                return writer.ToString();
+            }
+            finally
+            {
+                Trace.AutoFlush = originalAutoFlush;
+                listener.Flush();
+                Trace.Listeners.Remove(listener);
+            }
+        }
     }
 }
